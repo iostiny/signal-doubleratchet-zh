@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>06 · 消息乱序处理</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #fdfaf6; --bg-card: #ffffff;
+      --text-primary: #1f2937; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --cherry: #aa1141; --cherry-deep: #9a0036; --cherry-pink: #ea68b6; --cherry-glass: #fce4e4;
+      --teal: #0e7490; --teal-soft: #cffafe;
+      --amber: #b45309; --amber-soft: #fef3c7;
+      --green: #15803d; --green-soft: #dcfce7;
+      --rule: #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC','JetBrains Mono',-apple-system,sans-serif; background: var(--bg-page); min-height: 100vh; padding: 2rem; color: var(--text-primary); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; }
+    .header-row { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--cherry); }
+    .header-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--cherry); color: white; border-radius: 8px; font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.9rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; color: var(--cherry-deep); letter-spacing: -0.01em; }
+    .crumb { margin-left: auto; padding: 4px 12px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 12px; font-size: 0.7rem; font-weight: 500; }
+    .subtitle { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.6rem; margin-left: 44px; }
+    .diagram-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 3px rgba(170,17,65,0.04); padding: 1.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1100px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .card { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--rule); padding: 1.1rem 1.2rem; border-left-width: 4px; }
+    .card.c-cherry { border-left-color: var(--cherry); }
+    .card.c-amber { border-left-color: var(--amber); }
+    .card.c-teal { border-left-color: var(--teal); }
+    .card.c-green { border-left-color: var(--green); }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .card-num { font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: var(--cherry-glass); color: var(--cherry-deep); }
+    .card.c-amber .card-num { background: var(--amber-soft); color: var(--amber); }
+    .card.c-teal .card-num { background: var(--teal-soft); color: var(--teal); }
+    .card.c-green .card-num { background: var(--green-soft); color: var(--green); }
+    .card h3 { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+    .card ul { list-style: none; color: var(--text-secondary); font-size: 0.8rem; }
+    .card li { margin-bottom: 0.4rem; line-height: 1.55; }
+    .takeaway { padding: 1.1rem 1.4rem; background: linear-gradient(to right,#fff5f7,#fce4e4,#fff5f7); border-left: 4px solid var(--cherry); border-radius: 8px; color: var(--cherry-deep); font-size: 0.92rem; line-height: 1.65; }
+    .takeaway strong { color: var(--cherry); }
+    .reference { margin-top: 1.5rem; padding: 1.4rem 1.6rem; background: var(--bg-card); border: 1px dashed var(--cherry-pink); border-radius: 12px; }
+    .reference h3 { font-size: 1rem; font-weight: 700; color: var(--cherry-deep); margin-bottom: 0.3rem; }
+    .ref-intro { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic; }
+    .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; }
+    .ref-item { padding: 0.85rem 1rem; background: linear-gradient(to bottom, #fff5f7, #ffffff); border-left: 3px solid var(--cherry-pink); border-radius: 6px; }
+    .ref-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--cherry-deep); margin-bottom: 0.4rem; }
+    .ref-tag { display: inline-block; font-size: 0.62rem; padding: 1px 6px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 4px; margin-right: 0.4rem; font-weight: 500; font-family: 'JetBrains Mono',monospace; vertical-align: middle; }
+    .ref-item p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.4rem; }
+    .ref-item code { display: block; font-size: 0.72rem; padding: 0.35rem 0.55rem; background: rgba(170, 17, 65, 0.06); color: var(--cherry-deep); border-radius: 4px; font-family: 'JetBrains Mono',monospace; word-break: break-all; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono',monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <span class="header-num">06</span>
+        <h1>消息乱序处理</h1>
+        <span class="crumb">Skipped Keys · Cache</span>
+      </div>
+      <p class="subtitle">收到 M3 → M1 → M2 时, 用 chain_index + 跳过 MK 缓存正确解密 · 同链乱序 vs 跨棘轮乱序</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 880" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr-cherry" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#b45309"/>
+          </marker>
+          <marker id="arr-slate" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+          </marker>
+          <marker id="arr-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#15803d"/>
+          </marker>
+        </defs>
+
+        <!-- ROW 1 (Y=20-58): 场景描述 -->
+        <rect x="40" y="20" width="1120" height="38" rx="8"
+              fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+        <text x="600" y="44" text-anchor="middle" fill="#9a0036" font-size="11.5" font-weight="600">
+          🌪️ 场景: Alice 连发 M₁ M₂ M₃ (chain_index = 1, 2, 3) · 由于网络抖动, Bob 收到顺序为 M₃ → M₁ → M₂
+        </text>
+
+        <!-- ROW 2 (Y=80-200): 网络时序 -->
+        <text x="40" y="98" fill="#9a0036" font-size="12" font-weight="700">📡 网络层 — 发送 vs 到达</text>
+
+        <!-- Alice 发送侧 -->
+        <text x="100" y="130" fill="#aa1141" font-size="11" font-weight="600">Alice 发送顺序:</text>
+        <rect x="240" y="115" width="80" height="36" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="280" y="132" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">M₁</text>
+        <text x="280" y="146" text-anchor="middle" fill="#9a0036" font-size="9">idx=1</text>
+
+        <rect x="350" y="115" width="80" height="36" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="390" y="132" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">M₂</text>
+        <text x="390" y="146" text-anchor="middle" fill="#9a0036" font-size="9">idx=2</text>
+
+        <rect x="460" y="115" width="80" height="36" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="500" y="132" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">M₃</text>
+        <text x="500" y="146" text-anchor="middle" fill="#9a0036" font-size="9">idx=3</text>
+
+        <!-- 网络扰动箭头 (3 条曲线展示乱序) -->
+        <path d="M 500 152 Q 600 200 700 175" fill="none" stroke="#ea68b6" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr-cherry)"/>
+        <path d="M 280 152 Q 500 220 750 175" fill="none" stroke="#ea68b6" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr-cherry)"/>
+        <path d="M 390 152 Q 600 240 800 175" fill="none" stroke="#ea68b6" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr-cherry)"/>
+
+        <!-- Bob 接收侧 (在 right) -->
+        <text x="640" y="130" fill="#0e7490" font-size="11" font-weight="600">Bob 接收顺序 (乱):</text>
+
+        <rect x="700" y="170" width="80" height="36" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="740" y="187" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="700">M₃</text>
+        <text x="740" y="201" text-anchor="middle" fill="#0e7490" font-size="9">idx=3</text>
+
+        <rect x="790" y="170" width="80" height="36" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="830" y="187" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="700">M₁</text>
+        <text x="830" y="201" text-anchor="middle" fill="#0e7490" font-size="9">idx=1</text>
+
+        <rect x="880" y="170" width="80" height="36" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="920" y="187" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="700">M₂</text>
+        <text x="920" y="201" text-anchor="middle" fill="#0e7490" font-size="9">idx=2</text>
+
+        <!-- ROW 3 (Y=230-540): Bob 端 3 步处理 -->
+        <text x="40" y="246" fill="#9a0036" font-size="12" font-weight="700">🛠️ Bob 端处理 — 三步走</text>
+
+        <!-- Step 1: Recv M3 -->
+        <rect x="60" y="260" width="340" height="270" rx="10"
+              fill="#ffffff" stroke="#0e7490" stroke-width="2"/>
+        <rect x="60" y="260" width="340" height="32" rx="10" fill="#cffafe"/>
+        <rect x="60" y="282" width="340" height="10" fill="#cffafe"/>
+        <text x="80" y="282" fill="#0e7490" font-size="12" font-weight="700">Step ① 收到 M₃ (idx=3)</text>
+
+        <text x="80" y="312" fill="#374151" font-size="10" font-weight="600">收到前状态:</text>
+        <rect x="80" y="318" width="120" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+        <text x="140" y="333" text-anchor="middle" fill="#92400e" font-size="9.5">CK_recv = CK₀, idx=0</text>
+        <text x="220" y="333" fill="#374151" font-size="9.5">cache = {}</text>
+
+        <text x="80" y="358" fill="#aa1141" font-size="10" font-weight="600">问题: msg.idx=3 但我在 idx=0 → 缺 idx=1,2 的 MK</text>
+
+        <text x="80" y="378" fill="#374151" font-size="10" font-weight="600">动作 (前进 ChainKey 直到 idx=3):</text>
+        <text x="90" y="394" fill="#475569" font-size="9.5" font-family="JetBrains Mono">CK₀ → KDF → CK₁, MK₁ (缓存)</text>
+        <text x="90" y="408" fill="#475569" font-size="9.5" font-family="JetBrains Mono">CK₁ → KDF → CK₂, MK₂ (缓存)</text>
+        <text x="90" y="422" fill="#475569" font-size="9.5" font-family="JetBrains Mono">CK₂ → KDF → CK₃, MK₃ (使用 → 解 M₃)</text>
+
+        <text x="80" y="454" fill="#374151" font-size="10" font-weight="600">收到后状态:</text>
+        <rect x="80" y="460" width="120" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+        <text x="140" y="475" text-anchor="middle" fill="#92400e" font-size="9.5">CK_recv = CK₃, idx=3</text>
+        <rect x="220" y="460" width="170" height="22" rx="3" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+        <text x="305" y="475" text-anchor="middle" fill="#166534" font-size="9.5">cache = {1: MK₁, 2: MK₂}</text>
+
+        <text x="80" y="500" fill="#15803d" font-size="10" font-weight="600">✅ M₃ 解密成功</text>
+        <text x="200" y="500" fill="#aa1141" font-size="10" font-weight="600">⚠ MK₃ 立即清除 (用完即丢)</text>
+
+        <!-- 分隔箭头 -->
+        <line x1="408" y1="395" x2="425" y2="395" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-slate)"/>
+
+        <!-- Step 2: Recv M1 -->
+        <rect x="430" y="260" width="340" height="270" rx="10"
+              fill="#ffffff" stroke="#0e7490" stroke-width="2"/>
+        <rect x="430" y="260" width="340" height="32" rx="10" fill="#cffafe"/>
+        <rect x="430" y="282" width="340" height="10" fill="#cffafe"/>
+        <text x="450" y="282" fill="#0e7490" font-size="12" font-weight="700">Step ② 收到 M₁ (idx=1)</text>
+
+        <text x="450" y="312" fill="#374151" font-size="10" font-weight="600">收到前状态:</text>
+        <rect x="450" y="318" width="120" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+        <text x="510" y="333" text-anchor="middle" fill="#92400e" font-size="9.5">CK_recv = CK₃, idx=3</text>
+        <rect x="585" y="318" width="170" height="22" rx="3" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+        <text x="670" y="333" text-anchor="middle" fill="#166534" font-size="9.5">cache = {1: MK₁, 2: MK₂}</text>
+
+        <text x="450" y="358" fill="#aa1141" font-size="10" font-weight="600">问题: msg.idx=1 在我已推过的范围内 (过去)</text>
+
+        <text x="450" y="378" fill="#374151" font-size="10" font-weight="600">动作 (查 cache):</text>
+        <text x="460" y="394" fill="#475569" font-size="9.5" font-family="JetBrains Mono">cache.lookup(idx=1) → MK₁</text>
+        <text x="460" y="408" fill="#475569" font-size="9.5" font-family="JetBrains Mono">decrypt(M₁, MK₁) → 明文</text>
+        <text x="460" y="422" fill="#475569" font-size="9.5" font-family="JetBrains Mono">cache.evict(1) → 删除 MK₁</text>
+
+        <text x="450" y="454" fill="#374151" font-size="10" font-weight="600">收到后状态:</text>
+        <rect x="450" y="460" width="120" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+        <text x="510" y="475" text-anchor="middle" fill="#92400e" font-size="9.5">CK_recv = CK₃, idx=3</text>
+        <rect x="585" y="460" width="170" height="22" rx="3" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+        <text x="670" y="475" text-anchor="middle" fill="#166534" font-size="9.5">cache = {2: MK₂}</text>
+
+        <text x="450" y="500" fill="#15803d" font-size="10" font-weight="600">✅ M₁ 解密成功</text>
+        <text x="555" y="500" fill="#0e7490" font-size="10" font-weight="600">📌 ChainKey 没有倒退</text>
+
+        <line x1="778" y1="395" x2="795" y2="395" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-slate)"/>
+
+        <!-- Step 3: Recv M2 -->
+        <rect x="800" y="260" width="340" height="270" rx="10"
+              fill="#ffffff" stroke="#0e7490" stroke-width="2"/>
+        <rect x="800" y="260" width="340" height="32" rx="10" fill="#cffafe"/>
+        <rect x="800" y="282" width="340" height="10" fill="#cffafe"/>
+        <text x="820" y="282" fill="#0e7490" font-size="12" font-weight="700">Step ③ 收到 M₂ (idx=2)</text>
+
+        <text x="820" y="312" fill="#374151" font-size="10" font-weight="600">收到前状态:</text>
+        <rect x="820" y="318" width="120" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+        <text x="880" y="333" text-anchor="middle" fill="#92400e" font-size="9.5">CK_recv = CK₃, idx=3</text>
+        <rect x="955" y="318" width="170" height="22" rx="3" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+        <text x="1040" y="333" text-anchor="middle" fill="#166534" font-size="9.5">cache = {2: MK₂}</text>
+
+        <text x="820" y="358" fill="#aa1141" font-size="10" font-weight="600">问题: msg.idx=2 在我已推过的范围内 (过去)</text>
+
+        <text x="820" y="378" fill="#374151" font-size="10" font-weight="600">动作 (查 cache):</text>
+        <text x="830" y="394" fill="#475569" font-size="9.5" font-family="JetBrains Mono">cache.lookup(idx=2) → MK₂</text>
+        <text x="830" y="408" fill="#475569" font-size="9.5" font-family="JetBrains Mono">decrypt(M₂, MK₂) → 明文</text>
+        <text x="830" y="422" fill="#475569" font-size="9.5" font-family="JetBrains Mono">cache.evict(2) → 删除 MK₂</text>
+
+        <text x="820" y="454" fill="#374151" font-size="10" font-weight="600">最终状态:</text>
+        <rect x="820" y="460" width="120" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+        <text x="880" y="475" text-anchor="middle" fill="#92400e" font-size="9.5">CK_recv = CK₃, idx=3</text>
+        <rect x="955" y="460" width="170" height="22" rx="3" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+        <text x="1040" y="475" text-anchor="middle" fill="#166534" font-size="9.5">cache = {} 全部消费</text>
+
+        <text x="820" y="500" fill="#15803d" font-size="10" font-weight="600">✅ M₂ 解密成功 · 三条全部送达</text>
+
+        <!-- ROW 4 (Y=560-720): 跨棘轮乱序处理面板 -->
+        <rect x="40" y="560" width="1120" height="170" rx="10"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <rect x="40" y="560" width="1120" height="36" rx="10" fill="#fde68a"/>
+        <rect x="40" y="586" width="1120" height="10" fill="#fde68a"/>
+        <text x="60" y="584" fill="#92400e" font-size="13" font-weight="700">
+          🔀 进阶: 跨棘轮乱序 — 旧 RecvChain 的 skipped MK 也要保留
+        </text>
+
+        <text x="60" y="618" fill="#1f2937" font-size="11" font-weight="600">场景:</text>
+        <text x="120" y="618" fill="#374151" font-size="10.5">Alice 发了 (M₁ M₂ M₃), 然后 Bob 回了一条 → Alice 的下一条 M₄ 用了新 ratchet_key (DH 翻转)</text>
+        <text x="60" y="635" fill="#1f2937" font-size="11" font-weight="600">问题:</text>
+        <text x="120" y="635" fill="#374151" font-size="10.5">Bob 先收到 M₄ (新链, ratchet_key 变化) → RecvChain reset → 旧的 M₁ M₂ M₃ 后到时, 当前 RecvChain 已经不对应了</text>
+        <text x="60" y="652" fill="#1f2937" font-size="11" font-weight="600">解决:</text>
+        <text x="120" y="652" fill="#374151" font-size="10.5">Reset RecvChain 时, 先把旧链上未消费的 MK 全部缓存到一个二级 cache (按 ratchet_key 分组)</text>
+
+        <text x="60" y="682" fill="#1f2937" font-size="11" font-weight="600">缓存上限:</text>
+        <rect x="160" y="668" width="190" height="22" rx="4" fill="#ffffff" stroke="#b45309" stroke-width="1"/>
+        <text x="255" y="683" text-anchor="middle" fill="#92400e" font-size="9.5" font-family="JetBrains Mono">libsignal: MAX_SKIPPED = 1000</text>
+
+        <rect x="370" y="668" width="190" height="22" rx="4" fill="#ffffff" stroke="#b45309" stroke-width="1"/>
+        <text x="465" y="683" text-anchor="middle" fill="#92400e" font-size="9.5" font-family="JetBrains Mono">Olm/vodozemac: ≈ 40~2000</text>
+
+        <text x="580" y="683" fill="#374151" font-size="10">超过上限的旧 MK 直接丢弃 (DoS 防护)</text>
+
+        <text x="60" y="708" fill="#aa1141" font-size="10" font-weight="600">⚠ 副作用:</text>
+        <text x="160" y="708" fill="#374151" font-size="10">超过 MAX_SKIPPED 的 idx 跳跃将导致永久无法解密那些消息 (例如恶意客户端故意制造大跳跃)</text>
+
+        <!-- ROW 5 (Y=750-820): Takeaway -->
+        <rect x="40" y="750" width="1120" height="80" rx="10"
+              fill="#fff5f7" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="600" y="778" text-anchor="middle" fill="#9a0036" font-size="13" font-weight="700">
+          💡 带走结论
+        </text>
+        <text x="600" y="800" text-anchor="middle" fill="#aa1141" font-size="11">
+          同链乱序: chain_index 快进 + skipped MK 缓存
+        </text>
+        <text x="600" y="817" text-anchor="middle" fill="#aa1141" font-size="11">
+          跨链乱序: reset RecvChain 前把旧链未消费 MK 转存二级缓存 · MAX_SKIPPED 限制内才能恢复
+        </text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card c-teal">
+        <div class="card-header">
+          <span class="card-num">规则</span>
+          <h3>chain_index — 乱序的"路标"</h3>
+        </div>
+        <ul>
+          <li>• 每条加密消息头部携带 chain_index (u32)</li>
+          <li>• 表示这条消息在当前 ChainKey 下是第几个</li>
+          <li>• 比当前 idx 大 → 快进 ChainKey 并缓存中间 MK</li>
+          <li>• 小于等于 → 查 cache; 找不到则解密失败</li>
+        </ul>
+      </div>
+
+      <div class="card c-amber">
+        <div class="card-header">
+          <span class="card-num">缓存</span>
+          <h3>Skipped MK Store</h3>
+        </div>
+        <ul>
+          <li>• 一级缓存: 当前 RecvChain 内的未到达 MK</li>
+          <li>• 二级缓存: 旧 RecvChain (上一个 ratchet_key) 的剩余 MK</li>
+          <li>• 索引方式: (ratchet_key, chain_index) → MK</li>
+          <li>• 命中即用 + 立即从缓存清除</li>
+        </ul>
+      </div>
+
+      <div class="card c-cherry">
+        <div class="card-header">
+          <span class="card-num">DoS</span>
+          <h3>MAX_SKIPPED — 内存防护</h3>
+        </div>
+        <ul>
+          <li>• 防止恶意一方发送 idx=10⁹ 触发巨量计算</li>
+          <li>• libsignal: 1000; Olm/vodozemac: 默认 ~40, 可调</li>
+          <li>• 超限消息直接 reject (返回错误)</li>
+          <li>• 上限 + UI 重发机制 = 工程权衡</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <strong>💡 一句话理解：</strong>
+      Symmetric Ratchet 的 ChainKey "只能向前转，不能倒回"——
+      但乱序消息不是真的"倒回"，而是"先把链快进到目标位置, 把跳过的 MK 暂存"。
+      DH 翻转后的旧链 MK 也要保留一段, 这就是为什么实现 Double Ratchet 比讲解它要复杂得多。
+    </div>
+
+    <div class="reference">
+      <h3>📚 基础知识速查 · Reference</h3>
+      <p class="ref-intro">不熟悉以下底层概念? 这里是 30 秒回顾。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">算法</span>AEAD MAC 校验</h4>
+          <p>解密前必须先校验 MAC, 失败立即丢弃且不暴露错误细节 (防侧信道)。这是抗篡改的关键。</p>
+          <code>verify_mac() → if fail: discard</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">协议字段</span>chain_index</h4>
+          <p>u64 计数器, 标识消息在当前 ChainKey 序列中的位置, 从 0 开始递增。每次推进一格 ChainKey 时 +1。</p>
+          <code>pub chain_index: u64</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">工程</span>MAX_SKIPPED 上限</h4>
+          <p>防止恶意客户端发 idx=10⁹ 触发 OOM。libsignal 默认 1000, vodozemac/Olm 默认 ~40 (可调)。</p>
+          <code>const MAX_SKIPPED: u32 = 1000;</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">数据结构</span>Skipped MK Cache</h4>
+          <p>键 = (ratchet_key, chain_index), 值 = MessageKey。命中即用 + 立即清除。一般用 HashMap + 容量上限。</p>
+          <code>HashMap&lt;(PubKey, u64), MessageKey&gt;</code>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footer">Signal Double Ratchet · Diagram 06/11 · Out-of-Order Handling</p>
+  </div>
+</body>
+</html>

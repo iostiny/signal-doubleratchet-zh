@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 · Double Ratchet 状态机</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #fdfaf6; --bg-card: #ffffff;
+      --text-primary: #1f2937; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --cherry: #aa1141; --cherry-deep: #9a0036; --cherry-pink: #ea68b6; --cherry-glass: #fce4e4;
+      --teal: #0e7490; --teal-soft: #cffafe;
+      --amber: #b45309; --amber-soft: #fef3c7;
+      --green: #15803d; --green-soft: #dcfce7;
+      --rule: #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC','JetBrains Mono',-apple-system,sans-serif; background: var(--bg-page); min-height: 100vh; padding: 2rem; color: var(--text-primary); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; }
+    .header-row { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--cherry); }
+    .header-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--cherry); color: white; border-radius: 8px; font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.9rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; color: var(--cherry-deep); letter-spacing: -0.01em; }
+    .crumb { margin-left: auto; padding: 4px 12px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 12px; font-size: 0.7rem; font-weight: 500; }
+    .subtitle { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.6rem; margin-left: 44px; }
+    .diagram-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 3px rgba(170,17,65,0.04); padding: 1.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1100px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .card { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--rule); padding: 1.1rem 1.2rem; border-left-width: 4px; }
+    .card.c-cherry { border-left-color: var(--cherry); }
+    .card.c-amber { border-left-color: var(--amber); }
+    .card.c-teal { border-left-color: var(--teal); }
+    .card.c-green { border-left-color: var(--green); }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .card-num { font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: var(--cherry-glass); color: var(--cherry-deep); }
+    .card.c-amber .card-num { background: var(--amber-soft); color: var(--amber); }
+    .card.c-teal .card-num { background: var(--teal-soft); color: var(--teal); }
+    .card.c-green .card-num { background: var(--green-soft); color: var(--green); }
+    .card h3 { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+    .card ul { list-style: none; color: var(--text-secondary); font-size: 0.8rem; }
+    .card li { margin-bottom: 0.4rem; line-height: 1.55; }
+    .takeaway { padding: 1.1rem 1.4rem; background: linear-gradient(to right,#fff5f7,#fce4e4,#fff5f7); border-left: 4px solid var(--cherry); border-radius: 8px; color: var(--cherry-deep); font-size: 0.92rem; line-height: 1.65; }
+    .takeaway strong { color: var(--cherry); }
+    .reference { margin-top: 1.5rem; padding: 1.4rem 1.6rem; background: var(--bg-card); border: 1px dashed var(--cherry-pink); border-radius: 12px; }
+    .reference h3 { font-size: 1rem; font-weight: 700; color: var(--cherry-deep); margin-bottom: 0.3rem; }
+    .ref-intro { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic; }
+    .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; }
+    .ref-item { padding: 0.85rem 1rem; background: linear-gradient(to bottom, #fff5f7, #ffffff); border-left: 3px solid var(--cherry-pink); border-radius: 6px; }
+    .ref-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--cherry-deep); margin-bottom: 0.4rem; }
+    .ref-tag { display: inline-block; font-size: 0.62rem; padding: 1px 6px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 4px; margin-right: 0.4rem; font-weight: 500; font-family: 'JetBrains Mono',monospace; vertical-align: middle; }
+    .ref-item p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.4rem; }
+    .ref-item code { display: block; font-size: 0.72rem; padding: 0.35rem 0.55rem; background: rgba(170, 17, 65, 0.06); color: var(--cherry-deep); border-radius: 4px; font-family: 'JetBrains Mono',monospace; word-break: break-all; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono',monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <span class="header-num">05</span>
+        <h1>Double Ratchet 状态机 · Alice 视角</h1>
+        <span class="crumb">FSM · 状态演进</span>
+      </div>
+      <p class="subtitle">三层状态 (RootKey · SendChain · RecvChain) 在 send/recv 事件下如何切换、何时 reset</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#b45309"/>
+          </marker>
+          <marker id="arr-cherry" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-slate" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+          </marker>
+        </defs>
+
+        <!-- ROW 1 (Y=20-60): 状态层概览 -->
+        <rect x="40" y="20" width="1120" height="40" rx="8"
+              fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+        <text x="600" y="46" text-anchor="middle" fill="#9a0036" font-size="12" font-weight="600">
+          🎛️ Double Ratchet 状态 = 1× 跨轮主键 (RootKey) + 2× 单轮子链 (SendChain · RecvChain)
+        </text>
+
+        <!-- ROW 2 (Y=80-200): 状态层定义 (3 boxes 横排) -->
+        <rect x="60" y="90" width="340" height="100" rx="8"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="230" y="112" text-anchor="middle" fill="#92400e" font-size="13" font-weight="700">RootKey · 跨轮状态</text>
+        <line x1="80" y1="120" x2="380" y2="120" stroke="#b45309" stroke-width="0.5"/>
+        <text x="230" y="138" text-anchor="middle" fill="#374151" font-size="10">范围: 整个 Session 持续翻新</text>
+        <text x="230" y="156" text-anchor="middle" fill="#374151" font-size="10">触发: 每次 DH 翻转 (send fresh / recv fresh)</text>
+        <text x="230" y="174" text-anchor="middle" fill="#92400e" font-size="10" font-style="italic">作用: 生成下一对 (RK', ChainKey)</text>
+
+        <rect x="430" y="90" width="340" height="100" rx="8"
+              fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+        <text x="600" y="112" text-anchor="middle" fill="#9a0036" font-size="13" font-weight="700">SendChain · 单轮发送链</text>
+        <line x1="450" y1="120" x2="750" y2="120" stroke="#aa1141" stroke-width="0.5"/>
+        <text x="600" y="138" text-anchor="middle" fill="#374151" font-size="10">范围: 自上次"我翻"到下一次"我翻"</text>
+        <text x="600" y="156" text-anchor="middle" fill="#374151" font-size="10">触发推进: 每次 send 一条消息</text>
+        <text x="600" y="174" text-anchor="middle" fill="#9a0036" font-size="10" font-style="italic">作用: 派生 MK 加密</text>
+
+        <rect x="800" y="90" width="340" height="100" rx="8"
+              fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
+        <text x="970" y="112" text-anchor="middle" fill="#0e7490" font-size="13" font-weight="700">RecvChain · 单轮接收链</text>
+        <line x1="820" y1="120" x2="1120" y2="120" stroke="#0e7490" stroke-width="0.5"/>
+        <text x="970" y="138" text-anchor="middle" fill="#374151" font-size="10">范围: 自上次"对方翻"到下一次"对方翻"</text>
+        <text x="970" y="156" text-anchor="middle" fill="#374151" font-size="10">触发推进: 每次 recv 一条消息</text>
+        <text x="970" y="174" text-anchor="middle" fill="#0e7490" font-size="10" font-style="italic">作用: 派生 MK 解密</text>
+
+        <!-- ROW 3 (Y=220-540): 主状态机 — 时间轴展开 -->
+        <text x="40" y="240" fill="#9a0036" font-size="13" font-weight="700">📈 状态演进 (沿时间轴展开 Alice 的 5 步操作)</text>
+
+        <!-- 时间刻度 (Y=270) -->
+        <line x1="80" y1="270" x2="1120" y2="270" stroke="#475569" stroke-width="1"/>
+        <polygon points="1120,266 1128,270 1120,274" fill="#475569"/>
+        <text x="1135" y="274" fill="#6b7280" font-size="10">time</text>
+
+        <g id="time-marks">
+          <line x1="120" y1="265" x2="120" y2="275" stroke="#475569" stroke-width="1"/>
+          <text x="120" y="290" text-anchor="middle" fill="#6b7280" font-size="9.5" font-weight="600">t=0 init</text>
+
+          <line x1="320" y1="265" x2="320" y2="275" stroke="#475569" stroke-width="1"/>
+          <text x="320" y="290" text-anchor="middle" fill="#aa1141" font-size="9.5" font-weight="600">t=1 send #1</text>
+
+          <line x1="520" y1="265" x2="520" y2="275" stroke="#475569" stroke-width="1"/>
+          <text x="520" y="290" text-anchor="middle" fill="#0e7490" font-size="9.5" font-weight="600">t=2 recv (新 key)</text>
+
+          <line x1="720" y1="265" x2="720" y2="275" stroke="#475569" stroke-width="1"/>
+          <text x="720" y="290" text-anchor="middle" fill="#aa1141" font-size="9.5" font-weight="600">t=3 send #2</text>
+
+          <line x1="920" y1="265" x2="920" y2="275" stroke="#475569" stroke-width="1"/>
+          <text x="920" y="290" text-anchor="middle" fill="#0e7490" font-size="9.5" font-weight="600">t=4 recv (新 key)</text>
+        </g>
+
+        <!-- RootKey 行 (Y=320-360) -->
+        <text x="40" y="345" fill="#92400e" font-size="11" font-weight="600">RootKey:</text>
+
+        <rect x="100" y="328" width="50" height="34" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="125" y="349" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RK₁</text>
+
+        <line x1="150" y1="345" x2="298" y2="345" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <text x="224" y="338" text-anchor="middle" fill="#aa1141" font-size="9" font-weight="600">DH flip</text>
+
+        <rect x="300" y="328" width="50" height="34" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="325" y="349" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RK₂</text>
+
+        <line x1="350" y1="345" x2="498" y2="345" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <text x="424" y="338" text-anchor="middle" fill="#0e7490" font-size="9" font-weight="600">DH flip</text>
+
+        <rect x="500" y="328" width="50" height="34" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="525" y="349" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RK₃</text>
+
+        <line x1="550" y1="345" x2="698" y2="345" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <text x="624" y="338" text-anchor="middle" fill="#aa1141" font-size="9" font-weight="600">DH flip</text>
+
+        <rect x="700" y="328" width="50" height="34" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="725" y="349" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RK₄</text>
+
+        <line x1="750" y1="345" x2="898" y2="345" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <text x="824" y="338" text-anchor="middle" fill="#0e7490" font-size="9" font-weight="600">DH flip</text>
+
+        <rect x="900" y="328" width="50" height="34" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="925" y="349" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RK₅</text>
+
+        <line x1="950" y1="345" x2="1100" y2="345" stroke="#b45309" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="1110" y="349" fill="#92400e" font-size="11">…</text>
+
+        <!-- SendChain 行 (Y=400-460) -->
+        <text x="40" y="425" fill="#9a0036" font-size="11" font-weight="600">SendChain:</text>
+
+        <!-- empty before t=1 -->
+        <line x1="100" y1="425" x2="298" y2="425" stroke="#9ca3af" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="200" y="418" text-anchor="middle" fill="#9ca3af" font-size="9" font-style="italic">(空 / 等首次发)</text>
+
+        <!-- SK_1 active from t=1 to t=3 -->
+        <rect x="300" y="408" width="400" height="34" rx="5" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="500" y="429" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">
+          SK₁ (chain advances: idx 0 → 1 → 2 → ...)
+        </text>
+
+        <!-- Reset marker at t=3 -->
+        <line x1="700" y1="395" x2="700" y2="455" stroke="#aa1141" stroke-width="2" stroke-dasharray="4,2"/>
+        <text x="700" y="394" text-anchor="middle" fill="#aa1141" font-size="9" font-weight="700">⚡ RESET</text>
+
+        <!-- SK_2 active from t=3 onwards -->
+        <rect x="700" y="408" width="400" height="34" rx="5" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="900" y="429" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">
+          SK₂ (重新派生 · idx 0 → 1 → ...)
+        </text>
+
+        <!-- Annotation about reset trigger -->
+        <text x="700" y="464" text-anchor="middle" fill="#aa1141" font-size="9">↑ 触发: 在 recv 后第一次 send 时, Alice 生成新 ratchet key</text>
+
+        <!-- RecvChain 行 (Y=490-550) -->
+        <text x="40" y="510" fill="#0e7490" font-size="11" font-weight="600">RecvChain:</text>
+
+        <line x1="100" y1="510" x2="498" y2="510" stroke="#9ca3af" stroke-width="1" stroke-dasharray="3,3"/>
+        <text x="300" y="503" text-anchor="middle" fill="#9ca3af" font-size="9" font-style="italic">(空 / 等对方第一条)</text>
+
+        <!-- RK_1 active from t=2 to t=4 -->
+        <rect x="500" y="493" width="400" height="34" rx="5" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="700" y="514" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="700">
+          RK₁ (idx 0 → 1 → 2 → ...)
+        </text>
+
+        <!-- Reset marker at t=4 -->
+        <line x1="900" y1="480" x2="900" y2="540" stroke="#0e7490" stroke-width="2" stroke-dasharray="4,2"/>
+        <text x="900" y="479" text-anchor="middle" fill="#0e7490" font-size="9" font-weight="700">⚡ RESET</text>
+
+        <!-- RK_2 active from t=4 onwards -->
+        <rect x="900" y="493" width="200" height="34" rx="5" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="1000" y="514" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="700">
+          RK₂ (重派生)
+        </text>
+
+        <text x="900" y="549" text-anchor="middle" fill="#0e7490" font-size="9">↑ 触发: 收到的 msg.ratchet_key 与上次不同</text>
+
+        <!-- ROW 4 (Y=580-720): 4 个事件影响表 -->
+        <rect x="40" y="580" width="1120" height="160" rx="10"
+              fill="#ffffff" stroke="#aa1141" stroke-width="2"/>
+        <rect x="40" y="580" width="1120" height="36" rx="10" fill="#fce4e4"/>
+        <rect x="40" y="606" width="1120" height="10" fill="#fce4e4"/>
+        <text x="60" y="604" fill="#9a0036" font-size="13" font-weight="700">📋 4 种事件 — 各自影响哪些状态</text>
+
+        <!-- Table headers -->
+        <text x="60" y="638" fill="#374151" font-size="10" font-weight="700">事件</text>
+        <text x="280" y="638" fill="#374151" font-size="10" font-weight="700">触发条件</text>
+        <text x="500" y="638" fill="#92400e" font-size="10" font-weight="700">RootKey</text>
+        <text x="700" y="638" fill="#9a0036" font-size="10" font-weight="700">SendChain</text>
+        <text x="900" y="638" fill="#0e7490" font-size="10" font-weight="700">RecvChain</text>
+
+        <line x1="60" y1="644" x2="1140" y2="644" stroke="#e5e7eb" stroke-width="1"/>
+
+        <!-- Row 1: send fresh (after recv) -->
+        <text x="60" y="664" fill="#aa1141" font-size="10" font-weight="600">① send fresh</text>
+        <text x="280" y="664" fill="#374151" font-size="10">recv 后第一次 send</text>
+        <text x="500" y="664" fill="#92400e" font-size="10">+ KDF 翻一次</text>
+        <text x="700" y="664" fill="#aa1141" font-size="10">⚡ RESET 重派生</text>
+        <text x="900" y="664" fill="#9ca3af" font-size="10">不变</text>
+
+        <!-- Row 2: send continue -->
+        <text x="60" y="684" fill="#aa1141" font-size="10" font-weight="600">② send continue</text>
+        <text x="280" y="684" fill="#374151" font-size="10">同会话连续 send</text>
+        <text x="500" y="684" fill="#9ca3af" font-size="10">不变</text>
+        <text x="700" y="684" fill="#9a0036" font-size="10">→ advance idx +1</text>
+        <text x="900" y="684" fill="#9ca3af" font-size="10">不变</text>
+
+        <!-- Row 3: recv fresh -->
+        <text x="60" y="704" fill="#0e7490" font-size="10" font-weight="600">③ recv fresh</text>
+        <text x="280" y="704" fill="#374151" font-size="10">msg.ratchet_key 与上次不同</text>
+        <text x="500" y="704" fill="#92400e" font-size="10">+ KDF 翻一次</text>
+        <text x="700" y="704" fill="#9ca3af" font-size="10">不变</text>
+        <text x="900" y="704" fill="#0e7490" font-size="10">⚡ RESET 重派生</text>
+
+        <!-- Row 4: recv continue -->
+        <text x="60" y="724" fill="#0e7490" font-size="10" font-weight="600">④ recv continue</text>
+        <text x="280" y="724" fill="#374151" font-size="10">msg.ratchet_key 与上次相同</text>
+        <text x="500" y="724" fill="#9ca3af" font-size="10">不变</text>
+        <text x="700" y="724" fill="#9ca3af" font-size="10">不变</text>
+        <text x="900" y="724" fill="#0e7490" font-size="10">→ advance idx +1</text>
+
+        <!-- ROW 5 (Y=760-790): Takeaway -->
+        <rect x="40" y="760" width="1120" height="32" rx="8"
+              fill="#fff5f7" stroke="#aa1141" stroke-width="1.2"/>
+        <text x="600" y="781" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">
+          💡 双棘轮 = 1 条 DH 主链 (RootKey) + 2 条按需重置的对称子链 (Send/Recv) · 子链 reset 由"对方密钥变化"驱动
+        </text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card c-amber">
+        <div class="card-header">
+          <span class="card-num">RK</span>
+          <h3>RootKey · 跨轮主键</h3>
+        </div>
+        <ul>
+          <li>• 整个 Session 唯一存在的"线索"，跨越所有翻转</li>
+          <li>• 每次 DH 翻转都喂入 KDF, 出新 RK + 新 ChainKey</li>
+          <li>• send/recv 两个方向的 flip 都会推进它</li>
+          <li>• 如果 Session 被 pickle 持久化, 必须保存 RK</li>
+        </ul>
+      </div>
+
+      <div class="card c-cherry">
+        <div class="card-header">
+          <span class="card-num">SK</span>
+          <h3>SendChain · 我发送的链</h3>
+        </div>
+        <ul>
+          <li>• 仅在"我已收到对方新 key"后才会更新</li>
+          <li>• 触发更新的是"我的下一次 send", 不是 recv 本身</li>
+          <li>• 同一个 SK 可发任意条消息（chain_index 递增）</li>
+          <li>• 旧 SK 立即丢弃，节省存储</li>
+        </ul>
+      </div>
+
+      <div class="card c-teal">
+        <div class="card-header">
+          <span class="card-num">RK*</span>
+          <h3>RecvChain · 我接收的链</h3>
+        </div>
+        <ul>
+          <li>• 镜像对方的 SendChain（Alice 的 RecvChain = Bob 的 SendChain）</li>
+          <li>• 收到 ratchet_key 变化的 msg 时立即 reset</li>
+          <li>• 同 ratchet_key 的多条消息推进同一条 RecvChain</li>
+          <li>• 旧 RecvChain 可保留少量 skipped MK 处理乱序（详见 #06）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <strong>💡 一句话理解：</strong>
+      Double Ratchet 的"双" =
+      <strong>外层一根 DH 主链</strong>（RootKey, 跨轮持续翻新, 提供后向安全）
+      + <strong>内层两根对称子链</strong>（SendChain/RecvChain, 各自按对方密钥变化重置, 链内每步派生消息密钥提供前向安全）。
+      子链的 reset 才是"双棘轮"的关键 — 它把"前向安全"和"后向安全"焊在一起。
+    </div>
+
+    <div class="reference">
+      <h3>📚 基础知识速查 · Reference</h3>
+      <p class="ref-intro">不熟悉以下底层概念? 这里是 30 秒回顾。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">设计模式</span>有限状态机 (FSM)</h4>
+          <p>由"状态 + 事件 + 转移函数"组成的模型。Signal 的"棘轮翻转"可建模为 FSM, 转移由 send / recv 事件驱动。</p>
+          <code>state' = transition(state, event)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">工程</span>不可变状态 (Immutable State)</h4>
+          <p>每次"翻转"产生新状态对象, 旧状态直接丢弃 (zeroize)。便于推理、测试与并发安全。</p>
+          <code>let new_state = ratchet.flip();<br>old_state.zeroize();</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">协议</span>Double Ratchet 三层状态</h4>
+          <p>RootKey (跨轮持久) + SendChain (单轮发送) + RecvChain (单轮接收)。这是 Signal 最核心的状态空间设计。</p>
+          <code>{ rk, send_chain, recv_chain, dh_pair }</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">概念</span>持久化 (Pickle)</h4>
+          <p>把内存里的 Session 状态序列化到磁盘, 重启后恢复。Olm/vodozemac 的 pickle 必须保护 RootKey 等敏感字段。</p>
+          <code>session.pickle(passphrase) → bytes</code>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footer">Signal Double Ratchet · Diagram 05/11 · State Machine (Alice's POV)</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signal Double Ratchet · 深入浅出图谱</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #fdfaf6;
+      --bg-card: #ffffff;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --cherry: #aa1141;
+      --cherry-deep: #9a0036;
+      --cherry-pink: #ea68b6;
+      --cherry-glass: #fce4e4;
+      --cherry-soft: #ffa6a6;
+      --teal: #0e7490;
+      --amber: #b45309;
+      --green: #15803d;
+      --violet: #6d28d9;
+      --rule: #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', 'JetBrains Mono', -apple-system, sans-serif;
+      background: var(--bg-page);
+      min-height: 100vh;
+      padding: 2.5rem 2rem;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* Header */
+    .hero {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--cherry);
+    }
+    .hero-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--cherry-deep);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .hero-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+    .hero-meta {
+      display: inline-flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .hero-meta span {
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      background: var(--cherry-glass);
+      color: var(--cherry-deep);
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    /* Intro */
+    .intro {
+      max-width: 900px;
+      margin: 0 auto 3rem;
+      padding: 1.5rem 1.8rem;
+      background: linear-gradient(to right, #fff5f7, #ffffff, #fff5f7);
+      border-left: 4px solid var(--cherry);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+    .intro p { margin-bottom: 0.6rem; }
+    .intro p:last-child { margin-bottom: 0; }
+    .intro strong { color: var(--cherry); }
+
+    /* Section */
+    .section {
+      margin-bottom: 2.5rem;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px dashed var(--cherry-pink);
+    }
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      background: var(--cherry);
+      color: white;
+      border-radius: 6px;
+    }
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--cherry-deep);
+    }
+    .section-desc {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Card grid */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 1.3rem;
+      transition: all 0.18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: var(--cherry);
+      box-shadow: 0 6px 16px rgba(170, 17, 65, 0.10);
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--cherry);
+      opacity: 0.4;
+      transition: opacity 0.18s ease;
+    }
+    .card:hover::before { opacity: 1; }
+
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      margin-bottom: 0.5rem;
+    }
+    .card-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--cherry);
+    }
+    .card-title {
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0.8rem;
+    }
+    .card-tags {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.6rem;
+    }
+    .tag {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .tag.cherry { background: var(--cherry-glass); color: var(--cherry-deep); }
+    .tag.amber { background: #fef3c7; color: var(--amber); }
+    .tag.teal { background: #cffafe; color: var(--teal); }
+    .tag.green { background: #dcfce7; color: var(--green); }
+    .tag.violet { background: #ede9fe; color: var(--violet); }
+
+    /* Reading order suggestion */
+    .reading-paths {
+      margin-top: 3rem;
+      padding: 1.5rem 1.8rem;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+    }
+    .reading-paths h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--cherry-deep);
+      margin-bottom: 1rem;
+    }
+    .path {
+      margin-bottom: 0.9rem;
+      font-size: 0.9rem;
+    }
+    .path:last-child { margin-bottom: 0; }
+    .path-label {
+      display: inline-block;
+      font-weight: 600;
+      color: var(--cherry);
+      min-width: 130px;
+    }
+    .path-route {
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    /* Reference glossary */
+    .reference {
+      margin-top: 2rem;
+      padding: 1.6rem 1.8rem;
+      background: var(--bg-card);
+      border: 1px dashed var(--cherry-pink);
+      border-radius: 12px;
+    }
+    .reference h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--cherry-deep);
+      margin-bottom: 0.4rem;
+    }
+    .ref-intro {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.2rem;
+      font-style: italic;
+    }
+    .ref-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .ref-item {
+      padding: 0.95rem 1.1rem;
+      background: linear-gradient(to bottom, #fff5f7, #ffffff);
+      border-left: 3px solid var(--cherry-pink);
+      border-radius: 6px;
+    }
+    .ref-item h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--cherry-deep);
+      margin-bottom: 0.4rem;
+    }
+    .ref-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      background: var(--cherry-glass);
+      color: var(--cherry-deep);
+      border-radius: 4px;
+      margin-right: 0.4rem;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      vertical-align: middle;
+    }
+    .ref-item p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-bottom: 0;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .footer a { color: var(--cherry); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* Beginner CTA banner */
+    .beginner-cta {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      max-width: 900px;
+      margin: 0 auto 2.5rem;
+      padding: 1.2rem 1.5rem;
+      background: linear-gradient(135deg, #fff5f7 0%, #ffe8ee 100%);
+      border: 2px solid var(--cherry);
+      border-radius: 14px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(170, 17, 65, 0.08);
+    }
+    .beginner-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(170, 17, 65, 0.16);
+    }
+    .beginner-cta-icon {
+      font-size: 2.4rem;
+      flex-shrink: 0;
+    }
+    .beginner-cta-body { flex: 1; }
+    .beginner-cta-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--cherry-deep);
+      margin-bottom: 0.25rem;
+    }
+    .beginner-cta-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .beginner-cta-arrow {
+      font-size: 1.6rem;
+      color: var(--cherry);
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+    .beginner-cta:hover .beginner-cta-arrow {
+      transform: translateX(4px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+      <h1 class="hero-title">Signal Double Ratchet</h1>
+      <p class="hero-subtitle">深入浅出图谱 · 11 张架构图重新讲一遍棘轮加密</p>
+      <div class="hero-meta">
+        <span>面向团队工程师</span>
+        <span>含服务端视角</span>
+        <span>Phycat-Cherry Theme</span>
+        <span>独立图谱 · 与原 PDF 并行</span>
+      </div>
+    </div>
+
+    <!-- Beginner CTA -->
+    <a class="beginner-cta" href="../diagrams-beginner/">
+      <div class="beginner-cta-icon">🐣</div>
+      <div class="beginner-cta-body">
+        <div class="beginner-cta-title">第一次接触 Signal？从零基础渐进版开始</div>
+        <div class="beginner-cta-sub">
+          25 步交互式教程，每步只引入一个新概念，配键盘 ← / → 导航。完全不需要密码学背景。
+          老手可以直接看下方 11 张图谱。
+        </div>
+      </div>
+      <div class="beginner-cta-arrow">→</div>
+    </a>
+
+    <!-- Intro -->
+    <div class="intro">
+      <p>
+        本图谱是对 <strong>Signal Double Ratchet 协议</strong> 的图形化重构。原版 PPT/PDF 讲稿(2024-05) 在公式与文字层面已经完整, 但缺少几条关键的"心智模型链路":
+        全景视角、安全直觉、状态机、消息乱序、X3DH 与 Double Ratchet 衔接、服务端契约。
+      </p>
+      <p>
+        本图谱以<strong>独立 HTML 图集</strong>形式呈现 — 11 张图各自专注一个角度,
+        从全景到细节、从握手到运行、从客户端到服务端。
+        每张图都遵循"虚线说语境, 实线说实体"的视觉规范, 并配有 takeaway 一句话结论。
+      </p>
+      <p>
+        建议<strong>按编号顺序</strong>阅读 (#01 → #11), 也可参考下方"阅读路径"按需跳读。
+      </p>
+    </div>
+
+    <!-- Section A: Foundation -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">A</span>
+        <span class="section-title">Foundation · 全景与直觉</span>
+        <span class="section-desc">从最高视角建立心智模型</span>
+      </div>
+      <div class="card-grid">
+
+        <a class="card" href="01-godview.html">
+          <div class="card-header">
+            <span class="card-num">01</span>
+            <span class="card-title">全景总览 (God-View)</span>
+          </div>
+          <div class="card-desc">
+            黑盒级别的接口图: X3DH + DH Ratchet + Symmetric Ratchet × 2 三大组件如何协作、各自解决什么安全属性。
+            适合 30 秒建立全局印象。
+          </div>
+          <div class="card-tags">
+            <span class="tag cherry">全景</span>
+            <span class="tag amber">3 组件</span>
+            <span class="tag teal">安全属性</span>
+          </div>
+        </a>
+
+        <a class="card" href="02-fs-bs-intuition.html">
+          <div class="card-header">
+            <span class="card-num">02</span>
+            <span class="card-title">前向 / 后向安全 · 直觉图</span>
+          </div>
+          <div class="card-desc">
+            用攻击者视角的时间轴, 直观说明"密钥被盗时, 前/后消息为何依然安全"。
+            前向安全靠 KDF 单向, 后向安全靠 DH 注入新熵。
+          </div>
+          <div class="card-tags">
+            <span class="tag cherry">直觉</span>
+            <span class="tag amber">攻击者视角</span>
+            <span class="tag green">类比</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Section B: Mechanics -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">B</span>
+        <span class="section-title">Mechanics · 棘轮机制</span>
+        <span class="section-desc">单棘轮 + DH 翻转 + 双棘轮联动</span>
+      </div>
+      <div class="card-grid">
+
+        <a class="card" href="03-kdf-symmetric-ratchet.html">
+          <div class="card-header">
+            <span class="card-num">03</span>
+            <span class="card-title">KDF · Symmetric Ratchet 机制</span>
+          </div>
+          <div class="card-desc">
+            单条对称棘轮的派生链: ChainKey → KDF → (ChainKey', MessageKey)。
+            含 KDF 内部展开 + 为什么 CK / MK 必须分离的反例。
+          </div>
+          <div class="card-tags">
+            <span class="tag cherry">单链</span>
+            <span class="tag green">HMAC-SHA256</span>
+            <span class="tag amber">CK/MK 分离</span>
+          </div>
+        </a>
+
+        <a class="card" href="04-dh-pingpong.html">
+          <div class="card-header">
+            <span class="card-num">04</span>
+            <span class="card-title">DH Ratchet PingPong 时序</span>
+          </div>
+          <div class="card-desc">
+            Alice / Bob 三轮 ping-pong 时序图, 每条消息标注 ratchet_key 和 SK_n,
+            含 DH 对称性不变量 + Sec_n 接力图。
+          </div>
+          <div class="card-tags">
+            <span class="tag cherry">时序</span>
+            <span class="tag amber">DH 翻转</span>
+            <span class="tag teal">3 轮</span>
+          </div>
+        </a>
+
+        <a class="card" href="05-double-ratchet-fsm.html">
+          <div class="card-header">
+            <span class="card-num">05</span>
+            <span class="card-title">Double Ratchet 状态机</span>
+          </div>
+          <div class="card-desc">
+            Alice 视角 — 三层状态 (RootKey · SendChain · RecvChain) 在 4 类事件下如何切换、何时 reset。
+            含状态演进时间轴 + 事件影响表。
+          </div>
+          <div class="card-tags">
+            <span class="tag cherry">FSM</span>
+            <span class="tag amber">3 层状态</span>
+            <span class="tag teal">事件表</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Section C: Edge cases -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">C</span>
+        <span class="section-title">Edge Cases · 工程实战</span>
+        <span class="section-desc">乱序处理 — 实现复杂度的根源</span>
+      </div>
+      <div class="card-grid">
+
+        <a class="card" href="06-out-of-order.html">
+          <div class="card-header">
+            <span class="card-num">06</span>
+            <span class="card-title">消息乱序处理</span>
+          </div>
+          <div class="card-desc">
+            Bob 收到 M3 → M1 → M2 时如何解密。包含 ChainKey 快进 + skipped MK 缓存 + 跨棘轮乱序的旧链 MK 保留 + MAX_SKIPPED 上限。
+          </div>
+          <div class="card-tags">
+            <span class="tag teal">chain_index</span>
+            <span class="tag amber">缓存</span>
+            <span class="tag cherry">DoS 防护</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Section D: Bootstrap -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">D</span>
+        <span class="section-title">Bootstrap · X3DH 启动</span>
+        <span class="section-desc">离线协商 + 与 Double Ratchet 衔接 + OPK 防复用</span>
+      </div>
+      <div class="card-grid">
+
+        <a class="card" href="07-x3dh-roles.html">
+          <div class="card-header">
+            <span class="card-num">07</span>
+            <span class="card-title">X3DH 角色与消息流</span>
+          </div>
+          <div class="card-desc">
+            三泳道时序: Bob / Server / Alice。详解 IK / SPK / OTK / EK 各自角色,
+            含 EK 公私钥区分 + 4 个 DH 各混入了什么。
+          </div>
+          <div class="card-tags">
+            <span class="tag cherry">3 泳道</span>
+            <span class="tag amber">4 种密钥</span>
+            <span class="tag green">4 个 DH</span>
+          </div>
+        </a>
+
+        <a class="card" href="08-x3dh-to-doubleratchet.html">
+          <div class="card-header">
+            <span class="card-num">08</span>
+            <span class="card-title">X3DH → Double Ratchet 衔接</span>
+          </div>
+          <div class="card-desc">
+            SharedSec → RootKey₁ 的接力过程, 含 EK_A 在两阶段的"双重身份" + Alice 端零延迟首发的原因。
+          </div>
+          <div class="card-tags">
+            <span class="tag amber">桥接</span>
+            <span class="tag cherry">EK 复用</span>
+            <span class="tag green">零延迟</span>
+          </div>
+        </a>
+
+        <a class="card" href="09-opk-lifecycle.html">
+          <div class="card-header">
+            <span class="card-num">09</span>
+            <span class="card-title">OPK 防复用机制</span>
+          </div>
+          <div class="card-desc">
+            服务端 OPK 池生命周期: 上传 → 原子领取 → 删除。含池耗尽时的 3DH 降级 + 客户端补充策略。
+          </div>
+          <div class="card-tags">
+            <span class="tag violet">服务端契约</span>
+            <span class="tag amber">3DH Fallback</span>
+            <span class="tag teal">补充策略</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Section E: System view -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-num">E</span>
+        <span class="section-title">System View · 系统视角</span>
+        <span class="section-desc">完整链路 + 密钥总账</span>
+      </div>
+      <div class="card-grid">
+
+        <a class="card" href="10-three-party-timeline.html">
+          <div class="card-header">
+            <span class="card-num">10</span>
+            <span class="card-title">客户端-服务端三方时序</span>
+          </div>
+          <div class="card-desc">
+            Alice → Server → Bob 完整链路, 含数据可见性总表 (服务端能看到什么 / 看不到什么) + 消息体结构。
+          </div>
+          <div class="card-tags">
+            <span class="tag violet">3 泳道</span>
+            <span class="tag amber">可见性</span>
+            <span class="tag cherry">端到端</span>
+          </div>
+        </a>
+
+        <a class="card" href="11-key-cheatsheet.html">
+          <div class="card-header">
+            <span class="card-num">11</span>
+            <span class="card-title">密钥总账速查</span>
+          </div>
+          <div class="card-desc">
+            10 种密钥/中间值的对照表 (所有者 · 生命周期 · 公私 · 解决问题) + 派生关系图。
+            速查 + 体系化。
+          </div>
+          <div class="card-tags">
+            <span class="tag cherry">速查</span>
+            <span class="tag amber">10 种 Key</span>
+            <span class="tag teal">派生关系</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Reading paths -->
+    <div class="reading-paths">
+      <h2>📖 推荐阅读路径</h2>
+      <div class="path">
+        <span class="path-label">📊 完整精读</span>
+        <span class="path-route">01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11</span>
+      </div>
+      <div class="path">
+        <span class="path-label">⚡ 30 分钟分享</span>
+        <span class="path-route">01 → 02 → 05 → 08 (4 张, 抓骨架)</span>
+      </div>
+      <div class="path">
+        <span class="path-label">🔧 服务端 RD</span>
+        <span class="path-route">01 → 09 → 10 → 11 (协议外壳 + 服务端契约)</span>
+      </div>
+      <div class="path">
+        <span class="path-label">🔐 安全工程师</span>
+        <span class="path-route">02 → 03 → 04 → 06 → 11 (密码学机制深挖)</span>
+      </div>
+      <div class="path">
+        <span class="path-label">🆕 新人 Onboarding</span>
+        <span class="path-route">01 → 02 → 07 → 11 (建立全景 + 速查)</span>
+      </div>
+    </div>
+
+    <!-- Reference Glossary -->
+    <div class="reference">
+      <h2>📚 基础术语速查 · Glossary</h2>
+      <p class="ref-intro">本图谱涉及的核心术语. 详细底层概念在每张子图的"Reference"小节有补充。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">概念</span>端到端加密 (E2EE)</h4>
+          <p>加密发生在客户端, 中间任何节点 (含服务端) 都看不到明文. Signal Protocol 是 E2EE 的工业标准。</p>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">协议</span>Signal Protocol</h4>
+          <p>Open Whisper Systems 设计的 E2EE 协议家族. 由 X3DH 握手 + Double Ratchet 持续运转两部分组成。</p>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">机制</span>棘轮 (Ratchet)</h4>
+          <p>密码学中的"单向推进"机制. 每次推进生成新密钥, 旧密钥不可恢复. 是前向安全的核心实现手段。</p>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">安全</span>前向安全 / 后向安全</h4>
+          <p>FS (Forward Secrecy) 保护过去, PCS (Post-Compromise Security) 保护未来. Signal 同时提供两者。</p>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">概念</span>公钥 / 私钥</h4>
+          <p>私钥本地保密, 公钥可公开. 双方各自用私钥 + 对方公钥做 DH, 算出相同的共享密钥。</p>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">实现</span>vodozemac / libsignal / Olm</h4>
+          <p>Signal Protocol 的开源实现. vodozemac (Rust) = Matrix 用; libsignal = Signal 官方; Olm = Matrix 历史版本。</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>
+        Signal Double Ratchet · 深入浅出图谱 · 由 <a href="../Signal_Double_Ratchet.pdf">原版 PDF</a> 演进而来
+      </p>
+      <p>
+        Phycat-Cherry Theme · 11 张图 · 独立 HTML 图集 · 2026-05
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

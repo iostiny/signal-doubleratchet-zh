@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01 · Signal Protocol 全景总览</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page:        #fdfaf6;
+      --bg-card:        #ffffff;
+      --bg-soft-pink:   #fce4e4;
+      --text-primary:   #1f2937;
+      --text-secondary: #6b7280;
+      --text-muted:     #9ca3af;
+
+      --cherry:         #aa1141;
+      --cherry-deep:    #9a0036;
+      --cherry-soft:    #ffa6a6;
+      --cherry-pink:    #ea68b6;
+      --cherry-glass:   #fce4e4;
+
+      --teal:           #0e7490;
+      --teal-soft:      #cffafe;
+      --amber:          #b45309;
+      --amber-soft:     #fef3c7;
+      --violet:         #6d28d9;
+      --violet-soft:    #ede9fe;
+      --green:          #15803d;
+      --green-soft:     #dcfce7;
+      --slate:          #475569;
+      --slate-soft:     #f1f5f9;
+      --rule:           #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', 'JetBrains Mono', -apple-system, sans-serif;
+      background: var(--bg-page);
+      min-height: 100vh;
+      padding: 2rem;
+      color: var(--text-primary);
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    .header { margin-bottom: 1.5rem; }
+    .header-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--cherry);
+    }
+    .header-num {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      background: var(--cherry); color: white;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700; font-size: 0.9rem;
+    }
+    h1 {
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--cherry-deep);
+      letter-spacing: -0.01em;
+    }
+    .crumb {
+      margin-left: auto;
+      padding: 4px 12px;
+      background: var(--cherry-glass);
+      color: var(--cherry-deep);
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-top: 0.6rem;
+      margin-left: 44px;
+    }
+
+    .diagram-container {
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--rule);
+      box-shadow: 0 1px 3px rgba(170, 17, 65, 0.04);
+      padding: 1.5rem;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 1100px; display: block; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      padding: 1.1rem 1.2rem;
+      border-left-width: 4px;
+    }
+    .card.c-cherry { border-left-color: var(--cherry); }
+    .card.c-amber { border-left-color: var(--amber); }
+    .card.c-teal { border-left-color: var(--teal); }
+    .card-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+    .card-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700; font-size: 0.7rem;
+      padding: 2px 6px; border-radius: 4px;
+      background: var(--cherry-glass); color: var(--cherry-deep);
+    }
+    .card.c-amber .card-num { background: var(--amber-soft); color: var(--amber); }
+    .card.c-teal .card-num { background: var(--teal-soft); color: var(--teal); }
+    .card h3 {
+      font-size: 0.92rem; font-weight: 600;
+      color: var(--text-primary);
+    }
+    .card ul { list-style: none; color: var(--text-secondary); font-size: 0.8rem; }
+    .card li { margin-bottom: 0.4rem; line-height: 1.55; }
+
+    .takeaway {
+      padding: 1.1rem 1.4rem;
+      background: linear-gradient(to right, #fff5f7, #fce4e4, #fff5f7);
+      border-left: 4px solid var(--cherry);
+      border-radius: 8px;
+      color: var(--cherry-deep);
+      font-size: 0.92rem;
+      line-height: 1.65;
+    }
+    .takeaway strong { color: var(--cherry); }
+
+    .reference { margin-top: 1.5rem; padding: 1.4rem 1.6rem; background: var(--bg-card); border: 1px dashed var(--cherry-pink); border-radius: 12px; }
+    .reference h3 { font-size: 1rem; font-weight: 700; color: var(--cherry-deep); margin-bottom: 0.3rem; }
+    .ref-intro { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic; }
+    .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; }
+    .ref-item { padding: 0.85rem 1rem; background: linear-gradient(to bottom, #fff5f7, #ffffff); border-left: 3px solid var(--cherry-pink); border-radius: 6px; }
+    .ref-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--cherry-deep); margin-bottom: 0.4rem; }
+    .ref-tag { display: inline-block; font-size: 0.62rem; padding: 1px 6px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 4px; margin-right: 0.4rem; font-weight: 500; font-family: 'JetBrains Mono', monospace; vertical-align: middle; }
+    .ref-item p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.4rem; }
+    .ref-item code { display: block; font-size: 0.72rem; padding: 0.35rem 0.55rem; background: rgba(170, 17, 65, 0.06); color: var(--cherry-deep); border-radius: 4px; font-family: 'JetBrains Mono', monospace; word-break: break-all; }
+
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <span class="header-num">01</span>
+        <h1>Signal Protocol 全景总览</h1>
+        <span class="crumb">God-View · 黑盒接口</span>
+      </div>
+      <p class="subtitle">三大组件如何协作 — X3DH 启动 · DH Ratchet 翻转 · Symmetric Ratchet 派生消息密钥</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 540" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr-slate" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+          </marker>
+          <marker id="arr-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#b45309"/>
+          </marker>
+          <marker id="arr-cherry" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-violet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#6d28d9"/>
+          </marker>
+        </defs>
+
+        <!-- ╔═══════════════════════════════════════════════════════════════╗
+             ║ ROW 1 (Y=20-58): Phase chips — 虚线，独立一行                  ║
+             ╚═══════════════════════════════════════════════════════════════╝ -->
+        <g id="phase-chips">
+          <!-- Phase A chip -->
+          <rect x="220" y="22" width="200" height="32" rx="16"
+                fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <text x="320" y="42" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">
+            Phase A · Bootstrap (一次性)
+          </text>
+
+          <!-- Phase B chip -->
+          <rect x="490" y="22" width="180" height="32" rx="16"
+                fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <text x="580" y="42" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">
+            Phase B · 持续运转
+          </text>
+
+          <!-- Phase C chip -->
+          <rect x="730" y="22" width="220" height="32" rx="16"
+                fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <text x="840" y="42" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">
+            Phase C · 每条消息一个
+          </text>
+        </g>
+
+        <!-- ╔═══════════════════════════════════════════════════════════════╗
+             ║ ROW 2 (Y=78-96): 安全属性标注 — 与 chip 留 24px 间距            ║
+             ╚═══════════════════════════════════════════════════════════════╝ -->
+        <g id="safety-labels">
+          <text x="320" y="92" text-anchor="middle" fill="#b45309" font-size="11" font-weight="700">
+            ✦ 解决: 离线协商 · 身份认证
+          </text>
+          <text x="580" y="92" text-anchor="middle" fill="#b45309" font-size="11" font-weight="700">
+            ✦ 解决: 后向安全 (Post-Compromise)
+          </text>
+          <text x="840" y="92" text-anchor="middle" fill="#b45309" font-size="11" font-weight="700">
+            ✦ 解决: 前向安全 (Forward Secrecy)
+          </text>
+        </g>
+
+        <!-- ╔═══════════════════════════════════════════════════════════════╗
+             ║ ROW 3 (Y=120-340): 主组件行 — 与 safety labels 留 28px 间距    ║
+             ╚═══════════════════════════════════════════════════════════════╝ -->
+
+        <!-- ───── 输入: Alice 密钥 + Bob 预密钥 (左侧) ───── -->
+        <g id="inputs">
+          <!-- Alice's Keys -->
+          <rect x="40" y="155" width="140" height="60" rx="8"
+                fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="110" y="178" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">Alice's Keys</text>
+          <text x="110" y="195" text-anchor="middle" fill="#6b7280" font-size="9">IK_A · EK_A (临时)</text>
+          <text x="110" y="208" text-anchor="middle" fill="#9a0036" font-size="9" font-style="italic">发送方持有</text>
+
+          <!-- Bob's PreKeys (via Server) -->
+          <rect x="40" y="240" width="140" height="78" rx="8"
+                fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="110" y="262" text-anchor="middle" fill="#5b21b6" font-size="11" font-weight="600">Bob's PreKeys</text>
+          <text x="110" y="278" text-anchor="middle" fill="#6b7280" font-size="9">IK_B · SPK_B · OTK_B</text>
+          <text x="110" y="294" text-anchor="middle" fill="#6d28d9" font-size="9" font-style="italic">via Server</text>
+          <text x="110" y="308" text-anchor="middle" fill="#9ca3af" font-size="8">支持离线发送</text>
+
+          <!-- 输入箭头 → X3DH -->
+          <line x1="180" y1="185" x2="218" y2="200"
+                stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+          <line x1="180" y1="278" x2="218" y2="260"
+                stroke="#6d28d9" stroke-width="1.5" marker-end="url(#arr-violet)"/>
+        </g>
+
+        <!-- ───── ① X3DH 组件 (实线粗框) ───── -->
+        <g id="comp-x3dh">
+          <rect x="220" y="120" width="200" height="220" rx="10"
+                fill="#fef3c7" stroke="#b45309" stroke-width="2.5"/>
+          <text x="320" y="148" text-anchor="middle" fill="#b45309" font-size="14" font-weight="700">① X3DH</text>
+          <text x="320" y="166" text-anchor="middle" fill="#92400e" font-size="9.5">Initial Key Agreement</text>
+
+          <line x1="240" y1="180" x2="400" y2="180" stroke="#fbbf24" stroke-width="0.8"/>
+
+          <text x="320" y="204" text-anchor="middle" fill="#1f2937" font-size="10">输入: 双方密钥组合</text>
+          <text x="320" y="222" text-anchor="middle" fill="#1f2937" font-size="10">操作: 4× DH + KDF</text>
+          <text x="320" y="240" text-anchor="middle" fill="#1f2937" font-size="10">输出: SharedSec</text>
+
+          <line x1="240" y1="260" x2="400" y2="260" stroke="#fbbf24" stroke-width="0.8"/>
+
+          <text x="320" y="284" text-anchor="middle" fill="#aa1141" font-size="10" font-style="italic">⚡ 一次性 · 仅 bootstrap</text>
+          <text x="320" y="320" text-anchor="middle" fill="#9ca3af" font-size="9">↓ 详见 #07 / #08</text>
+        </g>
+
+        <!-- ───── ② DH Ratchet 组件 ───── -->
+        <g id="comp-dhratchet">
+          <rect x="490" y="120" width="180" height="220" rx="10"
+                fill="#fef3c7" stroke="#b45309" stroke-width="2.5"/>
+          <text x="580" y="148" text-anchor="middle" fill="#b45309" font-size="14" font-weight="700">② DH Ratchet</text>
+          <text x="580" y="166" text-anchor="middle" fill="#92400e" font-size="9.5">外层棘轮 · 主链</text>
+
+          <line x1="510" y1="180" x2="650" y2="180" stroke="#fbbf24" stroke-width="0.8"/>
+
+          <text x="580" y="204" text-anchor="middle" fill="#1f2937" font-size="10">状态: RootKey ↻</text>
+          <text x="580" y="222" text-anchor="middle" fill="#1f2937" font-size="10">触发: 收对方新公钥</text>
+          <text x="580" y="240" text-anchor="middle" fill="#1f2937" font-size="10">动作: DH+KDF 翻转</text>
+
+          <line x1="510" y1="260" x2="650" y2="260" stroke="#fbbf24" stroke-width="0.8"/>
+
+          <text x="580" y="284" text-anchor="middle" fill="#aa1141" font-size="10" font-style="italic">⚡ 注入新随机性</text>
+          <text x="580" y="320" text-anchor="middle" fill="#9ca3af" font-size="9">↓ 详见 #04 / #05</text>
+        </g>
+
+        <!-- ───── ③a Sending Symmetric Ratchet ───── -->
+        <g id="comp-sending">
+          <rect x="730" y="120" width="220" height="100" rx="10"
+                fill="#fce4e4" stroke="#aa1141" stroke-width="2.5"/>
+          <text x="840" y="146" text-anchor="middle" fill="#9a0036" font-size="13" font-weight="700">③a Sending Ratchet</text>
+          <text x="840" y="162" text-anchor="middle" fill="#9a0036" font-size="9.5">内层棘轮 · 加密用</text>
+          <line x1="750" y1="174" x2="930" y2="174" stroke="#ffa6a6" stroke-width="0.8"/>
+          <text x="840" y="192" text-anchor="middle" fill="#1f2937" font-size="10">每条消息一个 MK · 用完即丢</text>
+          <text x="840" y="210" text-anchor="middle" fill="#9ca3af" font-size="9">↓ 详见 #03</text>
+        </g>
+
+        <!-- ───── ③b Receiving Symmetric Ratchet ───── -->
+        <g id="comp-recving">
+          <rect x="730" y="240" width="220" height="100" rx="10"
+                fill="#cffafe" stroke="#0e7490" stroke-width="2.5"/>
+          <text x="840" y="266" text-anchor="middle" fill="#0e7490" font-size="13" font-weight="700">③b Receiving Ratchet</text>
+          <text x="840" y="282" text-anchor="middle" fill="#0e7490" font-size="9.5">内层棘轮 · 解密用</text>
+          <line x1="750" y1="294" x2="930" y2="294" stroke="#67e8f9" stroke-width="0.8"/>
+          <text x="840" y="312" text-anchor="middle" fill="#1f2937" font-size="10">对端 SendChain 的镜像 · 支持乱序</text>
+          <text x="840" y="330" text-anchor="middle" fill="#9ca3af" font-size="9">↓ 详见 #06</text>
+        </g>
+
+        <!-- ───── 输出: 密文消息 (右侧) ───── -->
+        <g id="outputs">
+          <!-- 出消息 -->
+          <line x1="950" y1="170" x2="1000" y2="170"
+                stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+          <text x="975" y="162" text-anchor="middle" fill="#aa1141" font-size="9">encrypt</text>
+          <rect x="1000" y="140" width="160" height="60" rx="8"
+                fill="#fff5f7" stroke="#aa1141" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <text x="1080" y="162" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">→ 密文 to Bob</text>
+          <text x="1080" y="178" text-anchor="middle" fill="#6b7280" font-size="9">ciphertext + MAC</text>
+          <text x="1080" y="192" text-anchor="middle" fill="#aa1141" font-size="9">+ ratchet_key</text>
+
+          <!-- 入消息 -->
+          <line x1="1000" y1="290" x2="950" y2="290"
+                stroke="#0e7490" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+          <text x="975" y="282" text-anchor="middle" fill="#0e7490" font-size="9">decrypt</text>
+          <rect x="1000" y="260" width="160" height="60" rx="8"
+                fill="#f0fdfa" stroke="#0e7490" stroke-width="1.2" stroke-dasharray="4,3"/>
+          <text x="1080" y="282" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="600">← 密文 from Bob</text>
+          <text x="1080" y="298" text-anchor="middle" fill="#6b7280" font-size="9">ciphertext + MAC</text>
+          <text x="1080" y="312" text-anchor="middle" fill="#0e7490" font-size="9">+ ratchet_key</text>
+        </g>
+
+        <!-- ───── 组件间连接: X3DH → DH Ratchet ───── -->
+        <line x1="420" y1="230" x2="488" y2="230"
+              stroke="#b45309" stroke-width="2.5" marker-end="url(#arr-amber)"/>
+        <text x="454" y="222" text-anchor="middle" fill="#b45309" font-size="10" font-weight="600">SharedSec</text>
+        <text x="454" y="248" text-anchor="middle" fill="#92400e" font-size="9">= 初始 RootKey</text>
+
+        <!-- ───── DH Ratchet → Sending / Receiving ───── -->
+        <path d="M 670 195 L 700 195 L 700 165 L 728 165"
+              fill="none" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry)"/>
+        <text x="710" y="138" text-anchor="middle" fill="#aa1141" font-size="9" font-weight="600">派生 Send Chain</text>
+
+        <path d="M 670 270 L 700 270 L 700 295 L 728 295"
+              fill="none" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal)"/>
+        <text x="710" y="328" text-anchor="middle" fill="#0e7490" font-size="9" font-weight="600">派生 Recv Chain</text>
+
+        <!-- ╔═══════════════════════════════════════════════════════════════╗
+             ║ ROW 4 (Y=380-460): 带走结论横幅 — 与 components 留 40px 间距    ║
+             ╚═══════════════════════════════════════════════════════════════╝ -->
+        <rect x="40" y="380" width="1120" height="80" rx="10"
+              fill="#fff5f7" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="600" y="410" text-anchor="middle" fill="#9a0036" font-size="13" font-weight="700">
+          💡 带走结论
+        </text>
+        <text x="600" y="436" text-anchor="middle" fill="#aa1141" font-size="11.5">
+          Signal Protocol = 一次 X3DH 启动  +  持续运转的双棘轮 (DH 跨轮翻转 + Symmetric 跨消息派生)
+        </text>
+
+        <!-- ───── Legend (右上角) ───── -->
+        <g id="legend" transform="translate(40, 480)">
+          <text x="0" y="12" fill="#1f2937" font-size="10" font-weight="600">视觉编码:</text>
+
+          <rect x="80" y="2" width="14" height="12" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="100" y="12" fill="#6b7280" font-size="9.5">RootKey / 边界</text>
+
+          <rect x="220" y="2" width="14" height="12" rx="3" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="240" y="12" fill="#6b7280" font-size="9.5">Sending (发送方向)</text>
+
+          <rect x="380" y="2" width="14" height="12" rx="3" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="400" y="12" fill="#6b7280" font-size="9.5">Receiving (接收方向)</text>
+
+          <rect x="540" y="2" width="14" height="12" rx="3" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="560" y="12" fill="#6b7280" font-size="9.5">Server / 第三方</text>
+
+          <rect x="680" y="2" width="14" height="12" rx="3" fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <text x="700" y="12" fill="#6b7280" font-size="9.5">虚线 = 边界标注 / 网络消息</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="cards">
+      <div class="card c-amber">
+        <div class="card-header">
+          <span class="card-num">①</span>
+          <h3>X3DH · 离线协商</h3>
+        </div>
+        <ul>
+          <li>• 输入：Alice 临时密钥 + Bob 预发布的 IK/SPK/OTK</li>
+          <li>• 用 4 次 DH 计算混合长期/中期/一次性密钥</li>
+          <li>• 输出：双方独立算出的 SharedSec（必相等）</li>
+          <li>• 一次性，仅会话首次启动</li>
+        </ul>
+      </div>
+
+      <div class="card c-amber">
+        <div class="card-header">
+          <span class="card-num">②</span>
+          <h3>DH Ratchet · 后向安全</h3>
+        </div>
+        <ul>
+          <li>• 状态：跨棘轮的 RootKey</li>
+          <li>• 触发：收到对方新 ratchet_key 时翻转一次</li>
+          <li>• 每次翻转都注入新随机性 (DH)</li>
+          <li>• 即使 RootKey 被攻破，未来消息仍安全</li>
+        </ul>
+      </div>
+
+      <div class="card c-cherry">
+        <div class="card-header">
+          <span class="card-num">③</span>
+          <h3>Symmetric Ratchets · 前向安全</h3>
+        </div>
+        <ul>
+          <li>• Alice 的 SendChain = Bob 的 RecvChain</li>
+          <li>• 每发/收一条消息推进一格 ChainKey</li>
+          <li>• MessageKey 用完即丢，KDF 单向不可逆</li>
+          <li>• 即使 MK_n 泄漏，前面消息仍安全</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <strong>💡 一句话理解：</strong>
+      X3DH 像点火器（启动一次），DH Ratchet 像变速箱（不断换挡注入新熵），
+      Symmetric Ratchet 像车轮（每转一圈派生一个用完即丢的消息密钥）。
+      三者协同 = 离线可达 + 后向安全 + 前向安全。
+    </div>
+
+    <div class="reference">
+      <h3>📚 基础知识速查 · Reference</h3>
+      <p class="ref-intro">不熟悉以下底层概念？这里是 30 秒回顾。点开图前后随时翻阅。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">算法</span>Diffie-Hellman 密钥交换</h4>
+          <p>双方各持私钥, 交换公钥后能算出相同的 shared secret, 但中间人只看到公钥算不出。</p>
+          <code>Sec = DH(Sa^priv, Pb^pub) = DH(Sb^priv, Pa^pub)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">算法</span>KDF (Key Derivation Function)</h4>
+          <p>把高熵的 key 加上公开的 context, 单向映射成新 key 的函数。Signal 用 HKDF / HMAC-SHA256。</p>
+          <code>output = KDF(secret, context)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">算法</span>HMAC-SHA256</h4>
+          <p>带密钥的哈希, 输出 32 字节固定值。密码学单向性 → 无法从输出反推输入。</p>
+          <code>mac = HMAC(key, data)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">概念</span>前向安全 (Forward Secrecy)</h4>
+          <p>即使长期密钥泄漏, 过去会话的密钥仍不可恢复。工程实现要点: 临时密钥用完即丢。</p>
+          <code>又称 PFS · Perfect Forward Secrecy</code>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footer">Signal Double Ratchet · Diagram 01/11 · God-View · Phycat-Cherry Theme</p>
+  </div>
+</body>
+</html>

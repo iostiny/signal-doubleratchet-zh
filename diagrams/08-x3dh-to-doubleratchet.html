@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>08 · X3DH → Double Ratchet 衔接</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #fdfaf6; --bg-card: #ffffff;
+      --text-primary: #1f2937; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --cherry: #aa1141; --cherry-deep: #9a0036; --cherry-pink: #ea68b6; --cherry-glass: #fce4e4;
+      --teal: #0e7490; --teal-soft: #cffafe;
+      --amber: #b45309; --amber-soft: #fef3c7;
+      --green: #15803d; --green-soft: #dcfce7;
+      --violet: #6d28d9; --violet-soft: #ede9fe;
+      --rule: #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC','JetBrains Mono',-apple-system,sans-serif; background: var(--bg-page); min-height: 100vh; padding: 2rem; color: var(--text-primary); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; }
+    .header-row { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--cherry); }
+    .header-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--cherry); color: white; border-radius: 8px; font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.9rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; color: var(--cherry-deep); letter-spacing: -0.01em; }
+    .crumb { margin-left: auto; padding: 4px 12px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 12px; font-size: 0.7rem; font-weight: 500; }
+    .subtitle { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.6rem; margin-left: 44px; }
+    .diagram-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 3px rgba(170,17,65,0.04); padding: 1.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1100px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .card { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--rule); padding: 1.1rem 1.2rem; border-left-width: 4px; }
+    .card.c-cherry { border-left-color: var(--cherry); }
+    .card.c-amber { border-left-color: var(--amber); }
+    .card.c-teal { border-left-color: var(--teal); }
+    .card.c-green { border-left-color: var(--green); }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .card-num { font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: var(--cherry-glass); color: var(--cherry-deep); }
+    .card.c-amber .card-num { background: var(--amber-soft); color: var(--amber); }
+    .card.c-teal .card-num { background: var(--teal-soft); color: var(--teal); }
+    .card.c-green .card-num { background: var(--green-soft); color: var(--green); }
+    .card h3 { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+    .card ul { list-style: none; color: var(--text-secondary); font-size: 0.8rem; }
+    .card li { margin-bottom: 0.4rem; line-height: 1.55; }
+    .takeaway { padding: 1.1rem 1.4rem; background: linear-gradient(to right,#fff5f7,#fce4e4,#fff5f7); border-left: 4px solid var(--cherry); border-radius: 8px; color: var(--cherry-deep); font-size: 0.92rem; line-height: 1.65; }
+    .takeaway strong { color: var(--cherry); }
+    .reference { margin-top: 1.5rem; padding: 1.4rem 1.6rem; background: var(--bg-card); border: 1px dashed var(--cherry-pink); border-radius: 12px; }
+    .reference h3 { font-size: 1rem; font-weight: 700; color: var(--cherry-deep); margin-bottom: 0.3rem; }
+    .ref-intro { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic; }
+    .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; }
+    .ref-item { padding: 0.85rem 1rem; background: linear-gradient(to bottom, #fff5f7, #ffffff); border-left: 3px solid var(--cherry-pink); border-radius: 6px; }
+    .ref-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--cherry-deep); margin-bottom: 0.4rem; }
+    .ref-tag { display: inline-block; font-size: 0.62rem; padding: 1px 6px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 4px; margin-right: 0.4rem; font-weight: 500; font-family: 'JetBrains Mono',monospace; vertical-align: middle; }
+    .ref-item p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.4rem; }
+    .ref-item code { display: block; font-size: 0.72rem; padding: 0.35rem 0.55rem; background: rgba(170, 17, 65, 0.06); color: var(--cherry-deep); border-radius: 4px; font-family: 'JetBrains Mono',monospace; word-break: break-all; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono',monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <span class="header-num">08</span>
+        <h1>X3DH → Double Ratchet 衔接</h1>
+        <span class="crumb">Bridge · 接力</span>
+      </div>
+      <p class="subtitle">SharedSec 如何成为 RootKey · EK_A 如何成为首条消息的 ratchet_key · 双方对称启动</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#b45309"/>
+          </marker>
+          <marker id="arr-cherry" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#15803d"/>
+          </marker>
+          <marker id="arr-bridge" markerWidth="14" markerHeight="10" refX="13" refY="5" orient="auto">
+            <polygon points="0 0, 14 5, 0 10" fill="#aa1141"/>
+          </marker>
+        </defs>
+
+        <!-- ROW 1 (Y=20-50): 场景 -->
+        <rect x="40" y="20" width="1120" height="34" rx="8"
+              fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+        <text x="600" y="42" text-anchor="middle" fill="#9a0036" font-size="11.5" font-weight="600">
+          🪢 接力机制 — X3DH 算出的 SharedSec 作为 Double Ratchet 的初始 RootKey · EK_A 作为首条 ratchet_key
+        </text>
+
+        <!-- ROW 2 (Y=70-340): 主接力图 - 左 X3DH 输出 / 中桥接 / 右 DR 输入 -->
+
+        <!-- ============ LEFT: X3DH OUTPUT ============ -->
+        <rect x="40" y="70" width="460" height="270" rx="10"
+              fill="#fef3c7" opacity="0.3"/>
+        <text x="270" y="90" text-anchor="middle" fill="#92400e" font-size="13" font-weight="700">
+          ① X3DH 终点 (产出 SharedSec)
+        </text>
+
+        <!-- 4 DH 列 -->
+        <rect x="60" y="105" width="180" height="36" rx="5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+        <text x="150" y="121" text-anchor="middle" fill="#92400e" font-size="10" font-weight="600">DH₁ = DH(IK_A, SPK_B)</text>
+        <text x="150" y="134" text-anchor="middle" fill="#6b7280" font-size="8">混身份+中期</text>
+
+        <rect x="60" y="148" width="180" height="36" rx="5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+        <text x="150" y="164" text-anchor="middle" fill="#92400e" font-size="10" font-weight="600">DH₂ = DH(EK_A, IK_B)</text>
+        <text x="150" y="177" text-anchor="middle" fill="#6b7280" font-size="8">混临时+长期</text>
+
+        <rect x="60" y="191" width="180" height="36" rx="5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+        <text x="150" y="207" text-anchor="middle" fill="#92400e" font-size="10" font-weight="600">DH₃ = DH(EK_A, SPK_B)</text>
+        <text x="150" y="220" text-anchor="middle" fill="#6b7280" font-size="8">前向安全</text>
+
+        <rect x="60" y="234" width="180" height="36" rx="5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+        <text x="150" y="250" text-anchor="middle" fill="#92400e" font-size="10" font-weight="600">DH₄ = DH(EK_A, OTK_B)</text>
+        <text x="150" y="263" text-anchor="middle" fill="#6b7280" font-size="8">单次隔离</text>
+
+        <!-- 合并箭头 → KDF -->
+        <line x1="240" y1="123" x2="293" y2="180" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <line x1="240" y1="166" x2="293" y2="186" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <line x1="240" y1="209" x2="293" y2="195" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <line x1="240" y1="252" x2="293" y2="200" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+
+        <!-- KDF box -->
+        <rect x="295" y="160" width="90" height="60" rx="0" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+        <text x="340" y="184" text-anchor="middle" fill="#166534" font-size="11" font-weight="700">KDF</text>
+        <text x="340" y="200" text-anchor="middle" fill="#166534" font-size="9">HKDF</text>
+        <text x="340" y="214" text-anchor="middle" fill="#166534" font-size="9">SHA-256</text>
+
+        <!-- 输出 SharedSec -->
+        <line x1="385" y1="190" x2="420" y2="190" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green)"/>
+
+        <rect x="420" y="170" width="70" height="40" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2.5"/>
+        <text x="455" y="187" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">Shared</text>
+        <text x="455" y="201" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">Sec</text>
+
+        <text x="270" y="298" text-anchor="middle" fill="#92400e" font-size="10" font-style="italic">详细参见 #07</text>
+        <text x="270" y="314" text-anchor="middle" fill="#374151" font-size="9.5">输出: 一段 32 字节高熵密钥</text>
+        <text x="270" y="328" text-anchor="middle" fill="#374151" font-size="9.5">Alice 与 Bob 各自独立算出, 必相等</text>
+
+        <!-- ============ BRIDGE: 中间桥接 ============ -->
+        <line x1="500" y1="190" x2="690" y2="190" stroke="#aa1141" stroke-width="3.5" marker-end="url(#arr-bridge)"/>
+        <rect x="510" y="155" width="170" height="32" rx="16"
+              fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="595" y="175" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">→ 接力 →</text>
+
+        <text x="595" y="210" text-anchor="middle" fill="#9a0036" font-size="9.5" font-weight="600">SharedSec ≜ RootKey₁</text>
+        <text x="595" y="225" text-anchor="middle" fill="#6b7280" font-size="9">无任何变换, 直接复用</text>
+
+        <!-- ============ RIGHT: DOUBLE RATCHET INPUT ============ -->
+        <rect x="700" y="70" width="460" height="270" rx="10"
+              fill="#fce4e4" opacity="0.3"/>
+        <text x="930" y="90" text-anchor="middle" fill="#9a0036" font-size="13" font-weight="700">
+          ② Double Ratchet 起点 (RootKey 注入)
+        </text>
+
+        <!-- RootKey input -->
+        <rect x="720" y="115" width="100" height="50" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="770" y="137" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RootKey₁</text>
+        <text x="770" y="153" text-anchor="middle" fill="#92400e" font-size="9" font-style="italic">(= SharedSec)</text>
+
+        <!-- + Alice's existing EK_A^priv (在 X3DH 中已生成) -->
+        <rect x="720" y="195" width="100" height="50" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+        <text x="770" y="217" text-anchor="middle" fill="#9a0036" font-size="10.5" font-weight="700">EK_A^priv</text>
+        <text x="770" y="232" text-anchor="middle" fill="#aa1141" font-size="9" font-style="italic">(X3DH 时已生成)</text>
+
+        <!-- Pb1 = Bob 的 SPK_B^pub (从 bundle 拿来) -->
+        <rect x="720" y="270" width="100" height="50" rx="8" fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
+        <text x="770" y="292" text-anchor="middle" fill="#0e7490" font-size="10.5" font-weight="700">SPK_B^pub</text>
+        <text x="770" y="307" text-anchor="middle" fill="#0e7490" font-size="9" font-style="italic">(从 Bob's bundle)</text>
+
+        <!-- 三者输入 → DR 初始化 KDF -->
+        <line x1="820" y1="140" x2="858" y2="180" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <line x1="820" y1="220" x2="858" y2="200" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+        <line x1="820" y1="295" x2="858" y2="220" stroke="#0e7490" stroke-width="1.5" marker-end="url(#arr-teal)"/>
+
+        <!-- DR 内部 KDF -->
+        <rect x="860" y="175" width="90" height="60" rx="0" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+        <text x="905" y="200" text-anchor="middle" fill="#166534" font-size="11" font-weight="700">KDF_RK</text>
+        <text x="905" y="216" text-anchor="middle" fill="#166534" font-size="9">DH+HMAC</text>
+        <text x="905" y="228" text-anchor="middle" fill="#166534" font-size="9">SHA-256</text>
+
+        <!-- 输出 RK_2 + ChainKey₀ -->
+        <line x1="950" y1="190" x2="985" y2="170" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+        <rect x="985" y="150" width="80" height="40" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="1025" y="167" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">RK₂</text>
+        <text x="1025" y="180" text-anchor="middle" fill="#92400e" font-size="9">下一轮</text>
+
+        <line x1="950" y1="220" x2="985" y2="240" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry)"/>
+        <rect x="985" y="225" width="80" height="40" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+        <text x="1025" y="242" text-anchor="middle" fill="#9a0036" font-size="10" font-weight="700">SendChain₁</text>
+        <text x="1025" y="256" text-anchor="middle" fill="#aa1141" font-size="9">CK₁</text>
+
+        <text x="1025" y="290" text-anchor="middle" fill="#9a0036" font-size="9.5" font-style="italic">→ Alice 已可发首条!</text>
+        <text x="1025" y="304" text-anchor="middle" fill="#9a0036" font-size="9.5" font-style="italic">不需等 Bob 回</text>
+        <text x="1025" y="320" text-anchor="middle" fill="#374151" font-size="8.5">SK₁ 派生自 CK₁</text>
+
+        <!-- ROW 3 (Y=370-560): 双方对称性 -->
+        <text x="40" y="386" fill="#9a0036" font-size="13" font-weight="700">🪞 双方对称启动 (Alice 与 Bob 都进入相同 RootKey₁ 状态)</text>
+
+        <!-- Alice 列 -->
+        <rect x="40" y="400" width="540" height="160" rx="10"
+              fill="#ffffff" stroke="#aa1141" stroke-width="2"/>
+        <rect x="40" y="400" width="540" height="32" rx="10" fill="#fce4e4"/>
+        <rect x="40" y="426" width="540" height="10" fill="#fce4e4"/>
+        <text x="60" y="422" fill="#9a0036" font-size="12" font-weight="700">Alice 视角</text>
+
+        <text x="60" y="450" fill="#374151" font-size="10">① X3DH 计算 → SharedSec (用自己 priv + Bob 的 pub)</text>
+        <text x="60" y="468" fill="#374151" font-size="10">② RootKey₁ ← SharedSec</text>
+        <text x="60" y="486" fill="#374151" font-size="10">③ 用 EK_A^priv + SPK_B^pub 做 DH → 得 Sec₁</text>
+        <text x="60" y="504" fill="#374151" font-size="10">④ KDF(RootKey₁, Sec₁) → (RootKey₂, ChainKey₁)</text>
+        <text x="60" y="522" fill="#374151" font-size="10">⑤ ChainKey₁ → SK₁ → encrypt(M₁)</text>
+        <text x="60" y="544" fill="#9a0036" font-size="10" font-weight="600">📤 发出: { ratchet_key=EK_A^pub, ciphertext, otk_id }</text>
+
+        <!-- Bob 列 -->
+        <rect x="620" y="400" width="540" height="160" rx="10"
+              fill="#ffffff" stroke="#0e7490" stroke-width="2"/>
+        <rect x="620" y="400" width="540" height="32" rx="10" fill="#cffafe"/>
+        <rect x="620" y="426" width="540" height="10" fill="#cffafe"/>
+        <text x="640" y="422" fill="#0e7490" font-size="12" font-weight="700">Bob 视角</text>
+
+        <text x="640" y="450" fill="#374151" font-size="10">① 收到 msg, 取出 EK_A^pub, IK_A^pub, otk_id</text>
+        <text x="640" y="468" fill="#374151" font-size="10">② X3DH 计算 → 同样的 SharedSec ✓</text>
+        <text x="640" y="486" fill="#374151" font-size="10">③ RootKey₁ ← SharedSec</text>
+        <text x="640" y="504" fill="#374151" font-size="10">④ 用 SPK_B^priv + EK_A^pub 做 DH → 得 Sec₁ ✓ (DH 对称)</text>
+        <text x="640" y="522" fill="#374151" font-size="10">⑤ KDF(RootKey₁, Sec₁) → 同 (RootKey₂, ChainKey₁)</text>
+        <text x="640" y="544" fill="#0e7490" font-size="10" font-weight="600">📥 用 ChainKey₁ 派生 SK₁ → decrypt(ciphertext) ✓</text>
+
+        <!-- ROW 4 (Y=590-680): 关键洞察 — ratchet_key 的特殊起点 -->
+        <rect x="40" y="590" width="1120" height="100" rx="10"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <rect x="40" y="590" width="1120" height="32" rx="10" fill="#fde68a"/>
+        <rect x="40" y="616" width="1120" height="10" fill="#fde68a"/>
+        <text x="60" y="612" fill="#92400e" font-size="13" font-weight="700">🔑 关键洞察 — 为什么首条消息的 ratchet_key 是 EK_A?</text>
+
+        <text x="60" y="644" fill="#1f2937" font-size="10.5" font-weight="600">复用而非新建:</text>
+        <text x="200" y="644" fill="#374151" font-size="10">EK_A 在 X3DH 中已生成且公钥已发出 — Alice 不需要再生成新的 ratchet 密钥对</text>
+
+        <text x="60" y="662" fill="#1f2937" font-size="10.5" font-weight="600">无缝衔接:</text>
+        <text x="200" y="662" fill="#374151" font-size="10">EK_A 既参与 X3DH 的最后 3 个 DH, 又作为 Double Ratchet 的初始 ratchet_key — 一个密钥两种用途</text>
+
+        <text x="60" y="680" fill="#1f2937" font-size="10.5" font-weight="600">发送端零延迟:</text>
+        <text x="200" y="680" fill="#374151" font-size="10">Alice 还没等 Bob 回复就能加密 — 因为她已经有 RootKey + EK_A^priv + SPK_B^pub 三件套</text>
+
+        <!-- ROW 5 (Y=710-750): Takeaway -->
+        <rect x="40" y="710" width="1120" height="40" rx="8"
+              fill="#fff5f7" stroke="#aa1141" stroke-width="1.2"/>
+        <text x="600" y="734" text-anchor="middle" fill="#9a0036" font-size="11.5" font-weight="700">
+          💡 X3DH 的产物 (SharedSec + EK_A) 即 Double Ratchet 的初始燃料 (RootKey + 首条 ratchet_key) — 接力, 不是重启
+        </text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card c-amber">
+        <div class="card-header">
+          <span class="card-num">桥接</span>
+          <h3>SharedSec → RootKey₁</h3>
+        </div>
+        <ul>
+          <li>• 无变换直接赋值（实现里也只是改个字段名）</li>
+          <li>• 双方各自算出, 数学保证相等</li>
+          <li>• 之后 RootKey 由 Double Ratchet 接管, X3DH 退出</li>
+          <li>• X3DH 的全部"复杂性"都浓缩进 SharedSec 这一段</li>
+        </ul>
+      </div>
+
+      <div class="card c-cherry">
+        <div class="card-header">
+          <span class="card-num">复用</span>
+          <h3>EK_A 的双重身份</h3>
+        </div>
+        <ul>
+          <li>• X3DH 阶段: 临时密钥, 参与 3/4 个 DH (DH₂, DH₃, DH₄)</li>
+          <li>• Double Ratchet 阶段: 第一条 ratchet_key</li>
+          <li>• 同一个密钥对, 两种用途, 节省一次密钥生成</li>
+          <li>• Bob 收到首条时一并完成 X3DH 验证 + DR 初始化</li>
+        </ul>
+      </div>
+
+      <div class="card c-green">
+        <div class="card-header">
+          <span class="card-num">先发</span>
+          <h3>Alice 零延迟启动</h3>
+        </div>
+        <ul>
+          <li>• Alice 端: 拉到 Bob bundle 后即可计算所有内容</li>
+          <li>• 不需等 Bob "握手响应"</li>
+          <li>• 离线消息可达 (Bob 上线后才解密)</li>
+          <li>• Bob 上线后处理: X3DH 还原 + DR 解密 — 一气呵成</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <strong>💡 一句话理解：</strong>
+      X3DH 是"点火 + 接力"的混合体——点火（4 个 DH 算出 SharedSec）和接力（SharedSec→RootKey₁、EK_A→ratchet_key）发生在同一时刻。
+      Alice 算完 X3DH 立刻就能发出第一条加密消息, 而 Bob 收到后处理 X3DH + Double Ratchet 也是同一动作。
+      这就是为什么 Signal 能做到"零握手延迟 + 完整安全属性"。
+    </div>
+
+    <div class="reference">
+      <h3>📚 基础知识速查 · Reference</h3>
+      <p class="ref-intro">不熟悉以下底层概念? 这里是 30 秒回顾。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">算法</span>HKDF (HMAC-based KDF)</h4>
+          <p>标准化 KDF (RFC 5869), 两步走: extract(salt, IKM) → PRK, expand(PRK, info, L) → OKM。</p>
+          <code>SharedSec = HKDF(DH₁‖DH₂‖DH₃‖DH₄)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">设计</span>Protocol Composition</h4>
+          <p>不同协议子模块通过明确的输入/输出契约组合在一起。X3DH 的产物无变换地传给 DR — 这是可证明安全性的关键。</p>
+          <code>X3DH.SharedSec → DR.RootKey₁</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">概念</span>零延迟启动 (0-RTT)</h4>
+          <p>发送方不需等接收方响应就能发出第一条加密消息。Signal 通过 X3DH 的"预共享密钥包"实现这一点。</p>
+          <code>vs TLS 1.3 1-RTT / 0-RTT</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">协议</span>密钥复用风险</h4>
+          <p>EK 同时参与 X3DH 和 DR 的 ratchet_key — 两阶段共用一个密钥需要协议设计层面证明无安全降级。</p>
+          <code>EK 在 X3DH 后被"重新解释"为 ratchet</code>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footer">Signal Double Ratchet · Diagram 08/11 · X3DH → DR Bridge</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10 · 客户端-服务端三方时序</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #fdfaf6; --bg-card: #ffffff;
+      --text-primary: #1f2937; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --cherry: #aa1141; --cherry-deep: #9a0036; --cherry-pink: #ea68b6; --cherry-glass: #fce4e4;
+      --teal: #0e7490; --teal-soft: #cffafe;
+      --amber: #b45309; --amber-soft: #fef3c7;
+      --green: #15803d; --green-soft: #dcfce7;
+      --violet: #6d28d9; --violet-soft: #ede9fe;
+      --rule: #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC','JetBrains Mono',-apple-system,sans-serif; background: var(--bg-page); min-height: 100vh; padding: 2rem; color: var(--text-primary); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; }
+    .header-row { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--cherry); }
+    .header-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--cherry); color: white; border-radius: 8px; font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.9rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; color: var(--cherry-deep); letter-spacing: -0.01em; }
+    .crumb { margin-left: auto; padding: 4px 12px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 12px; font-size: 0.7rem; font-weight: 500; }
+    .subtitle { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.6rem; margin-left: 44px; }
+    .diagram-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 3px rgba(170,17,65,0.04); padding: 1.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1100px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .card { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--rule); padding: 1.1rem 1.2rem; border-left-width: 4px; }
+    .card.c-cherry { border-left-color: var(--cherry); }
+    .card.c-amber { border-left-color: var(--amber); }
+    .card.c-teal { border-left-color: var(--teal); }
+    .card.c-green { border-left-color: var(--green); }
+    .card.c-violet { border-left-color: var(--violet); }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .card-num { font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: var(--cherry-glass); color: var(--cherry-deep); }
+    .card.c-amber .card-num { background: var(--amber-soft); color: var(--amber); }
+    .card.c-teal .card-num { background: var(--teal-soft); color: var(--teal); }
+    .card.c-green .card-num { background: var(--green-soft); color: var(--green); }
+    .card.c-violet .card-num { background: var(--violet-soft); color: var(--violet); }
+    .card h3 { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+    .card ul { list-style: none; color: var(--text-secondary); font-size: 0.8rem; }
+    .card li { margin-bottom: 0.4rem; line-height: 1.55; }
+    .takeaway { padding: 1.1rem 1.4rem; background: linear-gradient(to right,#fff5f7,#fce4e4,#fff5f7); border-left: 4px solid var(--cherry); border-radius: 8px; color: var(--cherry-deep); font-size: 0.92rem; line-height: 1.65; }
+    .takeaway strong { color: var(--cherry); }
+    .reference { margin-top: 1.5rem; padding: 1.4rem 1.6rem; background: var(--bg-card); border: 1px dashed var(--cherry-pink); border-radius: 12px; }
+    .reference h3 { font-size: 1rem; font-weight: 700; color: var(--cherry-deep); margin-bottom: 0.3rem; }
+    .ref-intro { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic; }
+    .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; }
+    .ref-item { padding: 0.85rem 1rem; background: linear-gradient(to bottom, #fff5f7, #ffffff); border-left: 3px solid var(--cherry-pink); border-radius: 6px; }
+    .ref-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--cherry-deep); margin-bottom: 0.4rem; }
+    .ref-tag { display: inline-block; font-size: 0.62rem; padding: 1px 6px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 4px; margin-right: 0.4rem; font-weight: 500; font-family: 'JetBrains Mono',monospace; vertical-align: middle; }
+    .ref-item p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.4rem; }
+    .ref-item code { display: block; font-size: 0.72rem; padding: 0.35rem 0.55rem; background: rgba(170, 17, 65, 0.06); color: var(--cherry-deep); border-radius: 4px; font-family: 'JetBrains Mono',monospace; word-break: break-all; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono',monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <span class="header-num">10</span>
+        <h1>客户端-服务端三方时序</h1>
+        <span class="crumb">End-to-End · 数据可见性</span>
+      </div>
+      <p class="subtitle">完整链路 + 服务端可见 vs 不可见数据 · 消息体结构构造与校验位置</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 980" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr-cherry" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-violet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#6d28d9"/>
+          </marker>
+        </defs>
+
+        <!-- ROW 1: 场景 + 可见性图例 -->
+        <rect x="40" y="20" width="1120" height="38" rx="8"
+              fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+        <text x="60" y="44" fill="#9a0036" font-size="11.5" font-weight="600">📡 端到端时序 · 数据可见性图例:</text>
+        <rect x="380" y="32" width="14" height="12" rx="2" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+        <text x="400" y="42" fill="#374151" font-size="10">服务端可见 (元数据 + 密文)</text>
+        <rect x="610" y="32" width="14" height="12" rx="2" fill="#fee2e2" stroke="#b91c1c" stroke-width="1"/>
+        <text x="630" y="42" fill="#374151" font-size="10">服务端不可见 (明文 + 密钥)</text>
+        <rect x="850" y="32" width="14" height="12" rx="2" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+        <text x="870" y="42" fill="#374151" font-size="10">服务端持久化 (收件箱)</text>
+
+        <!-- ROW 2: Lane Headers -->
+        <rect x="60" y="70" width="280" height="40" rx="20"
+              fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+        <text x="200" y="95" text-anchor="middle" fill="#9a0036" font-size="13" font-weight="700">ClientA (Alice 设备)</text>
+
+        <rect x="400" y="70" width="280" height="40" rx="20"
+              fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/>
+        <text x="540" y="95" text-anchor="middle" fill="#6d28d9" font-size="13" font-weight="700">Server (邮箱)</text>
+
+        <rect x="740" y="70" width="280" height="40" rx="20"
+              fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
+        <text x="880" y="95" text-anchor="middle" fill="#0e7490" font-size="13" font-weight="700">ClientB (Bob 设备)</text>
+
+        <!-- 生命线 -->
+        <line x1="200" y1="115" x2="200" y2="780" stroke="#aa1141" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.4"/>
+        <line x1="540" y1="115" x2="540" y2="780" stroke="#6d28d9" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.4"/>
+        <line x1="880" y1="115" x2="880" y2="780" stroke="#0e7490" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.4"/>
+
+        <!-- ROW 3 (Y=130-220): Phase 1 - Alice 本地加密 -->
+        <text x="40" y="146" fill="#9a0036" font-size="11" font-weight="700">▶ Phase 1: Alice 本地加密 (服务端 不可见)</text>
+
+        <rect x="60" y="155" width="280" height="80" rx="6"
+              fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="200" y="173" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="600">🔒 仅 Alice 设备可见</text>
+        <text x="200" y="189" text-anchor="middle" fill="#374151" font-size="9.5">① plaintext = "Hello Bob"</text>
+        <text x="200" y="203" text-anchor="middle" fill="#374151" font-size="9.5">② SK = ChainKey 派生 → MK_n</text>
+        <text x="200" y="217" text-anchor="middle" fill="#374151" font-size="9.5">③ ciphertext = AES-GCM(plain, MK_n)</text>
+        <text x="200" y="231" text-anchor="middle" fill="#374151" font-size="9.5">④ MAC = HMAC(MK_n, ciphertext)</text>
+
+        <!-- ROW 4 (Y=240-340): Phase 2 - Alice 上行 -->
+        <text x="40" y="256" fill="#9a0036" font-size="11" font-weight="700">▶ Phase 2: Alice 上行包装为消息体</text>
+
+        <line x1="340" y1="290" x2="398" y2="290" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry)"/>
+        <text x="370" y="285" text-anchor="middle" fill="#9a0036" font-size="9" font-weight="600">POST /msg</text>
+
+        <!-- 消息体内容 - 服务端可见包装 -->
+        <rect x="60" y="265" width="280" height="76" rx="6"
+              fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+        <text x="200" y="283" text-anchor="middle" fill="#166534" font-size="10" font-weight="600">📤 网络消息 (服务端可见):</text>
+        <text x="80" y="299" fill="#374151" font-size="9" font-family="JetBrains Mono">{</text>
+        <text x="90" y="312" fill="#374151" font-size="9" font-family="JetBrains Mono">  sender_id, receiver_id,</text>
+        <text x="90" y="324" fill="#374151" font-size="9" font-family="JetBrains Mono">  message: { ratchet_key,</text>
+        <text x="90" y="335" fill="#374151" font-size="9" font-family="JetBrains Mono">    chain_index, ciphertext, mac } }</text>
+
+        <!-- ROW 5 (Y=350-440): Phase 3 - Server 入队/路由 -->
+        <text x="40" y="356" fill="#6d28d9" font-size="11" font-weight="700">▶ Phase 3: Server 解析头部 + 入收件箱</text>
+
+        <rect x="400" y="365" width="280" height="76" rx="6"
+              fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+        <text x="540" y="383" text-anchor="middle" fill="#6d28d9" font-size="10" font-weight="600">服务端逻辑 (能看到的部分):</text>
+        <text x="420" y="400" fill="#374151" font-size="9.5">• 解析 receiver_id = "bob"</text>
+        <text x="420" y="414" fill="#374151" font-size="9.5">• 落 Bob 收件箱 (含 ciphertext)</text>
+        <text x="420" y="428" fill="#374151" font-size="9.5">• 等待 Bob 拉取或推送</text>
+
+        <text x="540" y="450" text-anchor="middle" fill="#b91c1c" font-size="9" font-weight="600">⚠ 服务端 看不到 plaintext / MK / 任何明文</text>
+
+        <!-- ROW 6 (Y=470-560): Phase 4 - Server 投递给 Bob -->
+        <text x="40" y="486" fill="#6d28d9" font-size="11" font-weight="700">▶ Phase 4: Server 投递 (Bob 在线时主动推 / 不在线时等拉)</text>
+
+        <line x1="680" y1="510" x2="738" y2="510" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet)"/>
+        <text x="710" y="505" text-anchor="middle" fill="#6d28d9" font-size="9" font-weight="600">deliver</text>
+
+        <rect x="740" y="495" width="280" height="50" rx="6"
+              fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+        <text x="880" y="513" text-anchor="middle" fill="#166534" font-size="10" font-weight="600">📥 Bob 收到原始消息体</text>
+        <text x="880" y="529" text-anchor="middle" fill="#374151" font-size="9">{ ratchet_key, chain_index, ciphertext, mac }</text>
+
+        <!-- ROW 7 (Y=580-680): Phase 5 - Bob 本地解密 -->
+        <text x="40" y="596" fill="#0e7490" font-size="11" font-weight="700">▶ Phase 5: Bob 本地解密 (服务端 不可见)</text>
+
+        <rect x="740" y="605" width="280" height="86" rx="6"
+              fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="880" y="623" text-anchor="middle" fill="#991b1b" font-size="10" font-weight="600">🔒 仅 Bob 设备可见</text>
+        <text x="880" y="639" text-anchor="middle" fill="#374151" font-size="9.5">① 检查 ratchet_key 是否变化 → DH flip?</text>
+        <text x="880" y="653" text-anchor="middle" fill="#374151" font-size="9.5">② 用 chain_index 推进 RecvChain → MK_n</text>
+        <text x="880" y="667" text-anchor="middle" fill="#374151" font-size="9.5">③ 校验 MAC = HMAC(MK_n, ciphertext)?</text>
+        <text x="880" y="681" text-anchor="middle" fill="#374151" font-size="9.5">④ plaintext = AES-GCM⁻¹(ciphertext, MK_n)</text>
+
+        <!-- ROW 8 (Y=700-770): Phase 6 - Delivered ACK 回流 -->
+        <text x="40" y="716" fill="#0e7490" font-size="11" font-weight="700">▶ Phase 6: Bob 发"已送达" ACK (服务端可见, Alice 收到通知)</text>
+
+        <line x1="738" y1="740" x2="682" y2="740" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal)"/>
+        <rect x="700" y="725" width="200" height="22" rx="4" fill="#dcfce7" stroke="#15803d" stroke-width="1.2"/>
+        <text x="800" y="740" text-anchor="middle" fill="#166534" font-size="9">{ msg_id, status: "delivered" }</text>
+
+        <line x1="398" y1="754" x2="342" y2="754" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet)"/>
+        <rect x="350" y="745" width="220" height="22" rx="4" fill="#dcfce7" stroke="#15803d" stroke-width="1.2"/>
+        <text x="460" y="760" text-anchor="middle" fill="#166534" font-size="9">推送 delivered 给 Alice</text>
+
+        <!-- ROW 9 (Y=790-870): 数据可见性总结表 -->
+        <rect x="40" y="790" width="1120" height="160" rx="10"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <rect x="40" y="790" width="1120" height="32" rx="10" fill="#fde68a"/>
+        <rect x="40" y="816" width="1120" height="10" fill="#fde68a"/>
+        <text x="60" y="812" fill="#92400e" font-size="13" font-weight="700">📊 数据可见性总表 (谁能看到什么)</text>
+
+        <!-- Headers -->
+        <text x="60" y="844" fill="#374151" font-size="10" font-weight="700">数据项</text>
+        <text x="280" y="844" fill="#aa1141" font-size="10" font-weight="700">Alice 设备</text>
+        <text x="500" y="844" fill="#6d28d9" font-size="10" font-weight="700">Server</text>
+        <text x="720" y="844" fill="#0e7490" font-size="10" font-weight="700">Bob 设备</text>
+        <text x="940" y="844" fill="#374151" font-size="10" font-weight="700">说明</text>
+
+        <line x1="60" y1="850" x2="1140" y2="850" stroke="#e5e7eb" stroke-width="1"/>
+
+        <!-- Row entries -->
+        <text x="60" y="868" fill="#1f2937" font-size="9.5">plaintext (明文)</text>
+        <text x="280" y="868" fill="#15803d" font-size="9.5">✓ 写入</text>
+        <text x="500" y="868" fill="#b91c1c" font-size="9.5">✗ 永不</text>
+        <text x="720" y="868" fill="#15803d" font-size="9.5">✓ 解出</text>
+        <text x="940" y="868" fill="#6b7280" font-size="9">端到端核心</text>
+
+        <text x="60" y="884" fill="#1f2937" font-size="9.5">MK / ChainKey / RootKey</text>
+        <text x="280" y="884" fill="#15803d" font-size="9.5">✓ 内存</text>
+        <text x="500" y="884" fill="#b91c1c" font-size="9.5">✗ 永不</text>
+        <text x="720" y="884" fill="#15803d" font-size="9.5">✓ 内存</text>
+        <text x="940" y="884" fill="#6b7280" font-size="9">仅客户端推导</text>
+
+        <text x="60" y="900" fill="#1f2937" font-size="9.5">ciphertext + MAC</text>
+        <text x="280" y="900" fill="#15803d" font-size="9.5">✓ 生成</text>
+        <text x="500" y="900" fill="#15803d" font-size="9.5">✓ 转发/落库</text>
+        <text x="720" y="900" fill="#15803d" font-size="9.5">✓ 校验+解</text>
+        <text x="940" y="900" fill="#6b7280" font-size="9">业务消息载荷</text>
+
+        <text x="60" y="916" fill="#1f2937" font-size="9.5">ratchet_key (公钥)</text>
+        <text x="280" y="916" fill="#15803d" font-size="9.5">✓ 嵌入</text>
+        <text x="500" y="916" fill="#15803d" font-size="9.5">✓ 中继</text>
+        <text x="720" y="916" fill="#15803d" font-size="9.5">✓ 提取</text>
+        <text x="940" y="916" fill="#6b7280" font-size="9">公开 (X25519 公钥)</text>
+
+        <text x="60" y="932" fill="#1f2937" font-size="9.5">sender_id / receiver_id</text>
+        <text x="280" y="932" fill="#15803d" font-size="9.5">✓ 已知</text>
+        <text x="500" y="932" fill="#15803d" font-size="9.5">✓ 路由依据</text>
+        <text x="720" y="932" fill="#15803d" font-size="9.5">✓ 已知</text>
+        <text x="940" y="932" fill="#6b7280" font-size="9">服务端无法不感知</text>
+
+        <!-- ROW 10: Takeaway -->
+        <rect x="40" y="970" width="1120" height="0" rx="8"
+              fill="transparent"/>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card c-cherry">
+        <div class="card-header">
+          <span class="card-num">客户端</span>
+          <h3>消息体构造</h3>
+        </div>
+        <ul>
+          <li>• 明文加密 → ciphertext</li>
+          <li>• 计算 MAC = HMAC(MK_n, ciphertext)</li>
+          <li>• 包装 { ratchet_key, chain_index, ciphertext, mac }</li>
+          <li>• 添加 sender_id / receiver_id 后上传</li>
+        </ul>
+      </div>
+
+      <div class="card c-violet">
+        <div class="card-header">
+          <span class="card-num">服务端</span>
+          <h3>不可信邮箱角色</h3>
+        </div>
+        <ul>
+          <li>• 路由 + 存储 + 投递 ACK</li>
+          <li>• 解析 sender_id / receiver_id (元数据可见)</li>
+          <li>• 不解析 / 不修改 ciphertext + mac</li>
+          <li>• 离线则落收件箱, 上线时推送</li>
+        </ul>
+      </div>
+
+      <div class="card c-teal">
+        <div class="card-header">
+          <span class="card-num">客户端</span>
+          <h3>消息体校验</h3>
+        </div>
+        <ul>
+          <li>• 用 chain_index 找/推 MK_n</li>
+          <li>• 优先校验 MAC, 防 MIMT</li>
+          <li>• MAC 通过才执行 AES 解密</li>
+          <li>• 失败时丢弃, 不暴露错误细节</li>
+        </ul>
+      </div>
+
+      <div class="card c-amber">
+        <div class="card-header">
+          <span class="card-num">vodozemac</span>
+          <h3>实际 Message 结构</h3>
+        </div>
+        <ul>
+          <li>• <code>version: u8</code> — 协议版本</li>
+          <li>• <code>ratchet_key: Curve25519PublicKey</code></li>
+          <li>• <code>chain_index: u64</code></li>
+          <li>• <code>ciphertext: Vec&lt;u8&gt;</code> + <code>mac: MessageMac</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <strong>💡 一句话理解：</strong>
+      端到端加密的"端"指的是 <strong>密钥与明文都不离开客户端</strong>——
+      服务端的角色是"忠实的不可信邮差", 它必须知道收发方 ID 才能路由, 但永远看不到内容。
+      这就是为什么即使 Signal 服务器被攻陷或被传唤, 攻击者也只能拿到密文堆和元数据 — 解不开任何一条消息。
+    </div>
+
+    <div class="reference">
+      <h3>📚 基础知识速查 · Reference</h3>
+      <p class="ref-intro">不熟悉以下底层概念? 这里是 30 秒回顾。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">算法</span>AES-256-GCM</h4>
+          <p>当前最常用的 AEAD 算法。MK 派生出 enc_key + auth_key + iv 三件套, 给 GCM 同时做加密和认证。</p>
+          <code>(ct, tag) = AES-GCM-Enc(key, iv, pt, AD)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">数据</span>MessageMac</h4>
+          <p>vodozemac 中的 MAC 类型, 通常是 HMAC-SHA256 截断到 8 / 16 字节, 在带宽和安全性之间权衡。</p>
+          <code>pub struct MessageMac([u8; 8]);</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">概念</span>端到端加密 (E2EE)</h4>
+          <p>加密发生在端点 (客户端), 中间任何节点 (含服务端) 都看不到明文。E2EE 的"端"指的是密钥不离开设备。</p>
+          <code>vs TLS (传输层加密) — 服务端能解</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">概念</span>元数据 (Metadata)</h4>
+          <p>sender_id / receiver_id / timestamp 等。E2EE 通常不保护元数据, 这是协议的局限 (Sealed Sender 等扩展是缓解方案)。</p>
+          <code>受保护: 内容 ✓ · 不保护: 关系图 ✗</code>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footer">Signal Double Ratchet · Diagram 10/11 · Three-Party End-to-End Timeline</p>
+  </div>
+</body>
+</html>

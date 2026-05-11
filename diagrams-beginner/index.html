@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Double Ratchet · 零基础渐进教程</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Phycat-Cherry 渐进教程主题
+   ============================================================ */
+:root {
+  --bg-page:        #fdfaf6;
+  --bg-card:        #ffffff;
+  --bg-soft-pink:   #fce4e4;
+
+  --text-primary:   #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted:     #9ca3af;
+
+  --cherry:         #aa1141;
+  --cherry-deep:    #9a0036;
+  --cherry-soft:    #ffa6a6;
+  --cherry-pink:    #ea68b6;
+  --cherry-glass:   #fce4e4;
+
+  --teal:           #0e7490;
+  --teal-soft:      #cffafe;
+  --amber:          #b45309;
+  --amber-soft:     #fef3c7;
+  --green:          #15803d;
+  --green-soft:     #dcfce7;
+  --violet:         #6d28d9;
+  --violet-soft:    #ede9fe;
+  --slate:          #475569;
+  --slate-soft:     #f1f5f9;
+  --red-deep:       #b91c1c;
+  --red-soft:       #fee2e2;
+
+  --rule:           #e5e7eb;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans SC', 'JetBrains Mono', -apple-system, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ============== App layout ============== */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* ============== Sidebar / stepper ============== */
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--rule);
+  padding: 1.6rem 1.2rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  align-self: start;
+}
+.brand {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 1.6rem;
+}
+.chap {
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.chap-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.45rem;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.chap-name .num {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--cherry);
+  font-size: 0.7rem;
+}
+.dots { display: flex; gap: 6px; }
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--rule);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dot:hover { transform: scale(1.25); }
+.dot.read { background: var(--cherry-soft); }
+.dot.active {
+  background: var(--cherry);
+  box-shadow: 0 0 0 3px var(--cherry-glass);
+}
+
+/* ============== Stage ============== */
+.stage {
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 2rem 2rem;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+}
+.header-ch {
+  padding: 3px 10px;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.header-counter {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* SVG stage */
+.svg-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(170,17,65,0.04);
+  padding: 1rem 1.2rem;
+  position: relative;
+}
+.chapter-svg {
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  display: none;
+}
+.chapter-svg.active { display: block; }
+
+/* SVG element visibility — controlled by data-step */
+[data-step] {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 320ms ease, transform 320ms ease;
+  pointer-events: none;
+}
+[data-step].visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Caption card */
+.caption {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--cherry);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  min-height: 78px;
+}
+.caption-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.25rem;
+}
+.caption-body {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+.caption-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.caption-body em {
+  font-style: normal;
+  color: var(--text-muted);
+  font-size: 0.78em;
+  margin-left: 0.3em;
+}
+
+/* Deep-dive: references + rust code */
+.extras {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.extras:empty { display: none; }
+.extras.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+}
+@media (max-width: 1100px) {
+  .extras.two-col { grid-template-columns: 1fr; }
+}
+.extras-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  font-size: 0.82rem;
+}
+.extras-card.refs { border-left: 3px solid var(--violet); }
+.extras-card.code { border-left: 3px solid var(--green); padding: 0; overflow: hidden; }
+.extras-card h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.extras-card.refs h4 { color: var(--violet); }
+.extras-card.code h4 {
+  color: var(--green);
+  padding: 0.7rem 1rem 0.4rem;
+  margin-bottom: 0;
+}
+.extras-card.refs ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.extras-card.refs li {
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.extras-card.refs a {
+  color: var(--cherry-deep);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--cherry-pink);
+}
+.extras-card.refs a:hover {
+  color: var(--cherry);
+  border-bottom-style: solid;
+}
+.extras-card.refs .ref-note {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin-left: 0.4em;
+}
+.extras-card.code pre {
+  margin: 0;
+  padding: 0.4rem 1rem 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: pre;
+  background: linear-gradient(to bottom, #ffffff, #fafff7);
+}
+.extras-card.code .kw { color: var(--violet); font-weight: 600; }
+.extras-card.code .ty { color: var(--teal); }
+.extras-card.code .fn { color: var(--cherry); }
+.extras-card.code .cm { color: var(--text-muted); font-style: italic; }
+.extras-card.code .str { color: var(--amber); }
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.controls button {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.controls button:hover:not(:disabled) {
+  border-color: var(--cherry);
+  color: var(--cherry-deep);
+  background: var(--cherry-glass);
+}
+.controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.controls button.primary {
+  background: var(--cherry);
+  color: white;
+  border-color: var(--cherry);
+}
+.controls button.primary:hover:not(:disabled) {
+  background: var(--cherry-deep);
+  color: white;
+}
+.controls button.ghost {
+  border: none;
+  color: var(--text-muted);
+}
+.controls .hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: 0.8rem;
+}
+
+/* ============== Common SVG styles ============== */
+.svg-text { font-family: 'Noto Sans SC', sans-serif; }
+.svg-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Reusable SVG classes */
+.actor-cherry { fill: var(--cherry-glass); stroke: var(--cherry); }
+.actor-teal   { fill: var(--teal-soft); stroke: var(--teal); }
+.actor-red    { fill: var(--red-soft); stroke: var(--red-deep); }
+.actor-violet { fill: var(--violet-soft); stroke: var(--violet); }
+.actor-amber  { fill: var(--amber-soft); stroke: var(--amber); }
+.actor-green  { fill: var(--green-soft); stroke: var(--green); }
+
+.label-cherry { fill: var(--cherry-deep); }
+.label-teal   { fill: var(--teal); }
+.label-red    { fill: var(--red-deep); }
+.label-violet { fill: var(--violet); }
+.label-amber  { fill: var(--amber); }
+.label-green  { fill: var(--green); }
+.label-slate  { fill: var(--slate); }
+.label-muted  { fill: var(--text-muted); }
+
+/* Sub-step animations: pulse for emphasis */
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 6px var(--cherry-soft)); }
+}
+.pulse { animation: pulse-glow 2.4s ease infinite; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .sidebar { display: none; }
+  .stage { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============== Sidebar ============== -->
+  <aside class="sidebar">
+    <div class="brand">🐣 Double Ratchet</div>
+    <div class="brand-sub">零基础渐进教程 · 25 步</div>
+
+    <div class="chap" data-ch="1">
+      <div class="chap-name"><span class="num">CH1</span> 为什么要加密</div>
+      <div class="dots" data-ch-dots="1"></div>
+    </div>
+    <div class="chap" data-ch="2">
+      <div class="chap-name"><span class="num">CH2</span> 单条消息</div>
+      <div class="dots" data-ch-dots="2"></div>
+    </div>
+    <div class="chap" data-ch="3">
+      <div class="chap-name"><span class="num">CH3</span> 多条消息：KDF 链</div>
+      <div class="dots" data-ch-dots="3"></div>
+    </div>
+    <div class="chap" data-ch="4">
+      <div class="chap-name"><span class="num">CH4</span> 双向对话：DH ratchet</div>
+      <div class="dots" data-ch-dots="4"></div>
+    </div>
+    <div class="chap" data-ch="5">
+      <div class="chap-name"><span class="num">CH5</span> 首次握手：X3DH</div>
+      <div class="dots" data-ch-dots="5"></div>
+    </div>
+    <div class="chap" data-ch="6">
+      <div class="chap-name"><span class="num">CH6</span> 全景回顾</div>
+      <div class="dots" data-ch-dots="6"></div>
+    </div>
+  </aside>
+
+  <!-- ============== Stage ============== -->
+  <main class="stage">
+    <header class="header">
+      <span class="header-ch" id="header-ch">CH1</span>
+      <h1 class="header-title" id="header-title">为什么要加密</h1>
+      <span class="header-counter" id="header-counter">Step 1 / 25</span>
+    </header>
+
+    <section class="svg-wrap">
+
+      <!-- ============================================================
+           Ch1 — 为什么要加密
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="1" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+          </marker>
+        </defs>
+
+        <!-- Alice -->
+        <g data-step="1">
+          <circle cx="140" cy="240" r="44" class="actor-cherry" stroke-width="2"/>
+          <text x="140" y="246" text-anchor="middle" font-size="22" font-weight="700" class="label-cherry">A</text>
+          <text x="140" y="305" text-anchor="middle" font-size="14" font-weight="600" class="label-cherry">Alice</text>
+        </g>
+
+        <!-- Bob -->
+        <g data-step="1">
+          <circle cx="960" cy="240" r="44" class="actor-teal" stroke-width="2"/>
+          <text x="960" y="246" text-anchor="middle" font-size="22" font-weight="700" class="label-teal">B</text>
+          <text x="960" y="305" text-anchor="middle" font-size="14" font-weight="600" class="label-teal">Bob</text>
+        </g>
+
+        <!-- Arrow Alice -> Bob -->
+        <g data-step="1">
+          <line x1="190" y1="240" x2="910" y2="240" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate)"/>
+        </g>
+
+        <!-- Plaintext bubble (step 1 only) -->
+        <g data-step="1" data-step-end="1">
+          <rect x="430" y="200" width="240" height="44" rx="8" fill="#fff" stroke="#475569" stroke-width="1.5"/>
+          <text x="550" y="227" text-anchor="middle" font-size="14" class="label-slate" font-weight="500">"Hi Bob! 转账 1000"</text>
+        </g>
+
+        <!-- Eve always shown from step 1 -->
+        <g data-step="1">
+          <circle cx="550" cy="430" r="36" class="actor-red" stroke-width="2"/>
+          <text x="550" y="436" text-anchor="middle" font-size="18" font-weight="700" class="label-red">E</text>
+          <text x="550" y="488" text-anchor="middle" font-size="13" font-weight="600" class="label-red">Eve · 偷听者</text>
+          <line x1="550" y1="244" x2="550" y2="394" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="4 4"/>
+        </g>
+
+        <!-- Eve's plaintext bubble (step 1 only) -->
+        <g data-step="1" data-step-end="1">
+          <rect x="620" y="408" width="200" height="34" rx="6" fill="#fff" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="720" y="430" text-anchor="middle" font-size="12" class="label-red" font-weight="500">"Hi Bob! 转账 1000" 👀</text>
+        </g>
+
+        <!-- Step 2: shared key K on both sides -->
+        <g data-step="2">
+          <!-- Alice's key -->
+          <rect x="100" y="320" width="80" height="28" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="140" y="339" text-anchor="middle" font-size="13" font-weight="600" class="label-amber">🔑 K</text>
+          <!-- Bob's key -->
+          <rect x="920" y="320" width="80" height="28" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="960" y="339" text-anchor="middle" font-size="13" font-weight="600" class="label-amber">🔑 K</text>
+        </g>
+
+        <!-- Step 2: ciphertext bubble -->
+        <g data-step="2">
+          <rect x="430" y="200" width="240" height="44" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="550" y="220" text-anchor="middle" font-size="11" class="label-muted" font-weight="500">密文（用 K 加密）</text>
+          <text x="550" y="237" text-anchor="middle" font-size="13" class="svg-mono label-cherry" font-weight="600">x9F2cA7e1b3...</text>
+        </g>
+
+        <!-- Step 2: Eve sees garbage -->
+        <g data-step="2">
+          <rect x="620" y="408" width="200" height="34" rx="6" fill="#fff" stroke="#9ca3af" stroke-width="1.5"/>
+          <text x="720" y="430" text-anchor="middle" font-size="12" class="label-muted svg-mono">???? 看不懂</text>
+        </g>
+
+        <!-- Hint text top -->
+        <g data-step="1" data-step-end="1">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">网络上传的内容，谁都能监听</text>
+        </g>
+        <g data-step="2" data-step-end="2">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">双方共享一把密钥 K，加密后 Eve 看到的是乱码</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch2 — 单条消息怎么加密
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="2" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-slate2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+        </defs>
+
+        <!-- Alice & Bob (always shown from step 3) -->
+        <g data-step="3">
+          <circle cx="120" cy="180" r="40" class="actor-cherry" stroke-width="2"/>
+          <text x="120" y="186" text-anchor="middle" font-size="20" font-weight="700" class="label-cherry">A</text>
+          <text x="120" y="240" text-anchor="middle" font-size="13" font-weight="600" class="label-cherry">Alice</text>
+
+          <circle cx="980" cy="180" r="40" class="actor-teal" stroke-width="2"/>
+          <text x="980" y="186" text-anchor="middle" font-size="20" font-weight="700" class="label-teal">B</text>
+          <text x="980" y="240" text-anchor="middle" font-size="13" font-weight="600" class="label-teal">Bob</text>
+        </g>
+
+        <!-- Step 3: K with question mark -->
+        <g data-step="3" data-step-end="3">
+          <rect x="80" y="270" width="80" height="28" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="120" y="289" text-anchor="middle" font-size="13" font-weight="600" class="label-amber">🔑 K</text>
+          <path d="M 170 284 Q 540 200, 940 284" stroke="#b91c1c" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arr-red)"/>
+          <text x="540" y="190" text-anchor="middle" font-size="14" class="label-red" font-weight="600">❓ 怎么把 K 传给 Bob？</text>
+          <text x="540" y="212" text-anchor="middle" font-size="11" class="label-muted">直接发，Eve 也会截到</text>
+        </g>
+
+        <!-- Step 4: public/private keypair -->
+        <g data-step="4">
+          <!-- Alice's keypair -->
+          <rect x="30" y="278" width="200" height="92" rx="8" fill="#fff" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="130" y="298" text-anchor="middle" font-size="11" class="label-cherry" font-weight="600">Alice 的密钥对</text>
+          <text x="130" y="322" text-anchor="middle" font-size="12" class="svg-mono label-cherry">🔒 私钥 a　<tspan font-size="9" class="label-muted">(本地)</tspan></text>
+          <text x="130" y="350" text-anchor="middle" font-size="12" class="svg-mono label-cherry">📢 公钥 A = g^a　<tspan font-size="9" class="label-muted">(可公开)</tspan></text>
+
+          <!-- Bob's keypair -->
+          <rect x="870" y="278" width="200" height="92" rx="8" fill="#fff" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="970" y="298" text-anchor="middle" font-size="11" class="label-teal" font-weight="600">Bob 的密钥对</text>
+          <text x="970" y="322" text-anchor="middle" font-size="12" class="svg-mono label-teal">🔒 私钥 b　<tspan font-size="9" class="label-muted">(本地)</tspan></text>
+          <text x="970" y="350" text-anchor="middle" font-size="12" class="svg-mono label-teal">📢 公钥 B = g^b　<tspan font-size="9" class="label-muted">(可公开)</tspan></text>
+        </g>
+
+        <!-- Step 5: ECDH cross-multiply (only step 5) -->
+        <g data-step="5" data-step-end="5">
+          <!-- Alice computes a×B -->
+          <line x1="870" y1="350" x2="240" y2="350" stroke="#aa1141" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr-red)"/>
+          <text x="555" y="343" text-anchor="middle" font-size="11" class="label-cherry">Alice 收到 B</text>
+          <!-- Bob computes b×A -->
+          <line x1="230" y1="320" x2="860" y2="320" stroke="#0e7490" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr-slate2)"/>
+          <text x="555" y="313" text-anchor="middle" font-size="11" class="label-teal">Bob 收到 A</text>
+
+          <!-- Central equation -->
+          <rect x="370" y="92" width="360" height="140" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="550" y="116" text-anchor="middle" font-size="12" class="label-green" font-weight="700">ECDH · 椭圆曲线 Diffie-Hellman</text>
+          <text x="550" y="148" text-anchor="middle" font-size="15" class="svg-mono label-green" font-weight="700">Alice: a × B = ab</text>
+          <text x="550" y="175" text-anchor="middle" font-size="15" class="svg-mono label-green" font-weight="700">Bob:　 b × A = ab</text>
+          <text x="550" y="202" text-anchor="middle" font-size="11" class="label-muted">双方算出同一个 ab ✓ Eve 只看到 A 和 B，算不出</text>
+          <text x="550" y="220" text-anchor="middle" font-size="10" class="label-muted">（在椭圆曲线上 × 是标量乘法，但你可以先当成普通乘法理解）</text>
+        </g>
+
+        <!-- Step 6: shared ab → K → encrypt (clean layout, no overlap) -->
+        <g data-step="6">
+          <!-- Step 6 own ab chip (top) -->
+          <rect x="430" y="100" width="240" height="44" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="550" y="120" text-anchor="middle" font-size="11" class="label-green" font-weight="600">来自 ECDH 的共享秘密</text>
+          <text x="550" y="138" text-anchor="middle" font-size="14" class="svg-mono label-green" font-weight="700">ab</text>
+
+          <path d="M 550 154 L 550 188" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green)"/>
+          <text x="565" y="174" font-size="10" class="label-muted">KDF</text>
+
+          <rect x="450" y="194" width="200" height="46" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="550" y="214" text-anchor="middle" font-size="13" font-weight="600" class="label-amber">🔑 对称密钥 K</text>
+          <text x="550" y="232" text-anchor="middle" font-size="10" class="label-muted">用于 AES-GCM / ChaCha20-Poly1305</text>
+
+          <path d="M 550 248 L 550 282" stroke="#b45309" stroke-width="2" marker-end="url(#arr-green)"/>
+
+          <rect x="420" y="290" width="260" height="56" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+          <text x="550" y="310" text-anchor="middle" font-size="12" class="label-cherry">用 K 加密第 1 条消息 M₁</text>
+          <text x="550" y="330" text-anchor="middle" font-size="13" class="svg-mono label-cherry" font-weight="600">Enc(K, M₁) = c₁</text>
+
+          <!-- Risk callout -->
+          <rect x="220" y="390" width="660" height="86" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="550" y="412" text-anchor="middle" font-size="12" class="label-red" font-weight="700">⚠️ 但还有问题</text>
+          <text x="550" y="434" text-anchor="middle" font-size="11" class="label-slate">如果 Alice 和 Bob 每次都用同一对 (a, A) (b, B)，那 ab 永远不变</text>
+          <text x="550" y="452" text-anchor="middle" font-size="11" class="label-slate">私钥某天泄漏 → 攻击者算出 ab → 历史所有密文一夜沦陷</text>
+          <text x="550" y="468" text-anchor="middle" font-size="10" class="label-muted">下一章引入 KDF 链解决"每条消息都用不同密钥"的问题</text>
+        </g>
+
+        <!-- Step header texts -->
+        <g data-step="3" data-step-end="3"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">问题：钥匙怎么传给对方？</text></g>
+        <g data-step="4" data-step-end="4"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">现代密码学：每人一对密钥，公钥发出去，私钥永不出门</text></g>
+        <g data-step="5" data-step-end="5"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">双方在网络上只交换公钥，却算出同一个秘密</text></g>
+        <g data-step="6" data-step-end="6"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">用 ECDH 出来的秘密当密钥加密 —— 但还有问题</text></g>
+      </svg>
+
+      <!-- ============================================================
+           Ch3 — KDF 链（多条消息）
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="3" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-cherry3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-green3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+          <marker id="arr-muted3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#9ca3af"/>
+          </marker>
+        </defs>
+
+        <!-- Step 7: single K → M1/M2/M3 with bomb -->
+        <g data-step="7" data-step-end="7">
+          <rect x="100" y="220" width="120" height="60" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="160" y="247" text-anchor="middle" font-size="14" font-weight="700" class="label-amber">🔑 K</text>
+          <text x="160" y="267" text-anchor="middle" font-size="11" class="label-amber">同一把</text>
+
+          <text x="280" y="180" font-size="40">💣</text>
+
+          <!-- 3 arrows out -->
+          <line x1="220" y1="240" x2="380" y2="170" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry3)"/>
+          <line x1="220" y1="250" x2="380" y2="250" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry3)"/>
+          <line x1="220" y1="260" x2="380" y2="330" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry3)"/>
+
+          <rect x="390" y="150" width="120" height="40" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="450" y="175" text-anchor="middle" font-size="13" font-weight="600" class="label-cherry">M₁ 密文 c₁</text>
+          <rect x="390" y="230" width="120" height="40" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="450" y="255" text-anchor="middle" font-size="13" font-weight="600" class="label-cherry">M₂ 密文 c₂</text>
+          <rect x="390" y="310" width="120" height="40" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="450" y="335" text-anchor="middle" font-size="13" font-weight="600" class="label-cherry">M₃ 密文 c₃</text>
+
+          <text x="700" y="240" font-size="34">💀</text>
+          <text x="780" y="240" font-size="13" class="label-red" font-weight="600">K 一泄漏</text>
+          <text x="780" y="260" font-size="12" class="label-red">→ M₁ M₂ M₃ 全暴露</text>
+
+          <text x="550" y="430" text-anchor="middle" font-size="13" class="label-muted">想要：每条消息一把不同的密钥；并且即使现在的密钥泄漏，过去的消息仍安全。</text>
+        </g>
+
+        <!-- Step 8: KDF black box -->
+        <g data-step="8" data-step-end="8">
+          <!-- Input -->
+          <rect x="180" y="220" width="100" height="50" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="230" y="250" text-anchor="middle" font-size="14" font-weight="600" class="label-amber">输入 CK</text>
+
+          <line x1="280" y1="245" x2="380" y2="245" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green3)"/>
+
+          <!-- KDF box -->
+          <rect x="380" y="180" width="200" height="130" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="480" y="210" text-anchor="middle" font-size="14" font-weight="700" class="label-green">KDF</text>
+          <text x="480" y="230" text-anchor="middle" font-size="11" class="label-green">密钥派生函数</text>
+          <text x="480" y="260" text-anchor="middle" font-size="11" class="label-muted">通常是 HMAC-SHA256</text>
+          <text x="480" y="285" text-anchor="middle" font-size="11" class="label-green" font-weight="600">单向 · 不可逆</text>
+          <text x="480" y="300" text-anchor="middle" font-size="10" class="label-muted">输出无法反推输入</text>
+
+          <!-- Two outputs -->
+          <line x1="580" y1="220" x2="680" y2="200" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green3)"/>
+          <line x1="580" y1="270" x2="680" y2="290" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green3)"/>
+
+          <rect x="680" y="180" width="180" height="40" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="770" y="205" text-anchor="middle" font-size="13" font-weight="600" class="label-amber">新 CK · 给下一轮用</text>
+          <rect x="680" y="270" width="180" height="40" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="770" y="295" text-anchor="middle" font-size="13" font-weight="600" class="label-cherry">MK · 这条消息的密钥</text>
+
+          <text x="550" y="400" text-anchor="middle" font-size="13" class="label-muted">把『链密钥 CK』喂进 KDF，吐出『下一个 CK』和『这条消息的 MK』。</text>
+          <text x="550" y="420" text-anchor="middle" font-size="13" class="label-muted">CK 用于继续往下推；MK 用一次就丢。</text>
+        </g>
+
+        <!-- Step 9: KDF chain visualization -->
+        <g data-step="9">
+          <!-- Chain nodes -->
+          <g font-size="12" font-weight="600">
+            <rect x="60"  y="180" width="80" height="40" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+            <text x="100" y="205" text-anchor="middle" class="label-amber">CK₁</text>
+
+            <rect x="280" y="180" width="80" height="40" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+            <text x="320" y="205" text-anchor="middle" class="label-amber">CK₂</text>
+
+            <rect x="500" y="180" width="80" height="40" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+            <text x="540" y="205" text-anchor="middle" class="label-amber">CK₃</text>
+
+            <rect x="720" y="180" width="80" height="40" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+            <text x="760" y="205" text-anchor="middle" class="label-amber">CK₄</text>
+
+            <text x="900" y="205" font-size="14" class="label-muted">…</text>
+          </g>
+
+          <!-- KDF labels between nodes -->
+          <g font-size="10" font-weight="600">
+            <text x="210" y="175" text-anchor="middle" class="label-green">KDF</text>
+            <text x="430" y="175" text-anchor="middle" class="label-green">KDF</text>
+            <text x="650" y="175" text-anchor="middle" class="label-green">KDF</text>
+            <text x="870" y="175" text-anchor="middle" class="label-green">KDF</text>
+          </g>
+
+          <!-- Chain arrows -->
+          <g stroke="#15803d" stroke-width="2" fill="none">
+            <line x1="140" y1="200" x2="280" y2="200" marker-end="url(#arr-green3)"/>
+            <line x1="360" y1="200" x2="500" y2="200" marker-end="url(#arr-green3)"/>
+            <line x1="580" y1="200" x2="720" y2="200" marker-end="url(#arr-green3)"/>
+            <line x1="800" y1="200" x2="890" y2="200" marker-end="url(#arr-green3)"/>
+          </g>
+
+          <!-- Message keys MK -->
+          <g font-size="12" font-weight="600">
+            <line x1="210" y1="225" x2="210" y2="290" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry3)"/>
+            <rect x="170" y="290" width="80" height="40" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="210" y="315" text-anchor="middle" class="label-cherry">MK₁</text>
+            <text x="210" y="355" text-anchor="middle" font-size="10" class="label-muted">加密 M₁</text>
+
+            <line x1="430" y1="225" x2="430" y2="290" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry3)"/>
+            <rect x="390" y="290" width="80" height="40" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="430" y="315" text-anchor="middle" class="label-cherry">MK₂</text>
+            <text x="430" y="355" text-anchor="middle" font-size="10" class="label-muted">加密 M₂</text>
+
+            <line x1="650" y1="225" x2="650" y2="290" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry3)"/>
+            <rect x="610" y="290" width="80" height="40" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="650" y="315" text-anchor="middle" class="label-cherry">MK₃</text>
+            <text x="650" y="355" text-anchor="middle" font-size="10" class="label-muted">加密 M₃</text>
+
+            <line x1="870" y1="225" x2="870" y2="290" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry3)"/>
+            <rect x="830" y="290" width="80" height="40" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="870" y="315" text-anchor="middle" class="label-cherry">MK₄</text>
+            <text x="870" y="355" text-anchor="middle" font-size="10" class="label-muted">加密 M₄</text>
+          </g>
+
+        </g>
+
+        <!-- Step 9 titles/footnote (only on step 9 — must hide on step 10 to avoid overlap with attack label) -->
+        <g data-step="9" data-step-end="9">
+          <text x="550" y="100" text-anchor="middle" font-size="14" class="label-amber" font-weight="700">Symmetric Ratchet · 对称棘轮</text>
+          <text x="550" y="120" text-anchor="middle" font-size="11" class="label-muted">每发一条消息推进一格，每条消息用全新的 MK</text>
+          <text x="550" y="420" text-anchor="middle" font-size="12" class="label-muted">CK 一直往下推（绿色）；每格岔出一个一次性的 MK（粉色）用完即丢</text>
+        </g>
+
+        <!-- Step 10: FS — attack at CK3, past MK1/MK2 still safe -->
+        <g data-step="10">
+          <!-- Attack badge at CK3 (label above, emoji below — 18px clear gap) -->
+          <text x="540" y="124" font-size="11" text-anchor="middle" class="label-red" font-weight="700">攻击者在此偷到 CK₃</text>
+          <text x="540" y="158" font-size="26" text-anchor="middle">💀</text>
+
+          <!-- Highlight CK3 as compromised -->
+          <rect x="498" y="178" width="84" height="44" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="2.5"/>
+          <text x="540" y="205" text-anchor="middle" font-size="12" font-weight="700" class="label-red">CK₃ ⚠️</text>
+
+          <!-- Past MK still safe (green check) -->
+          <rect x="166" y="286" width="88" height="48" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+          <text x="210" y="312" text-anchor="middle" font-size="12" font-weight="700" class="label-green">MK₁ ✓</text>
+          <text x="210" y="328" text-anchor="middle" font-size="9" class="label-green">安全</text>
+
+          <rect x="386" y="286" width="88" height="48" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+          <text x="430" y="312" text-anchor="middle" font-size="12" font-weight="700" class="label-green">MK₂ ✓</text>
+          <text x="430" y="328" text-anchor="middle" font-size="9" class="label-green">安全</text>
+
+          <text x="550" y="430" text-anchor="middle" font-size="13" class="label-green" font-weight="700">✅ 前向保密 (Forward Secrecy)</text>
+          <text x="550" y="448" text-anchor="middle" font-size="11" class="label-muted">由于 KDF 不可逆，攻击者无法从 CK₃ 倒推回 CK₁、CK₂，自然也算不出 MK₁、MK₂</text>
+          <text x="550" y="464" text-anchor="middle" font-size="11" class="label-muted">"现在被入侵，过去仍安全" —— FS 是 Signal 的核心安全保证之一</text>
+        </g>
+
+        <!-- Step headers -->
+        <g data-step="7" data-step-end="7"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">用同一把 K 加密 N 条消息：一旦泄漏，全部暴露</text></g>
+        <g data-step="8" data-step-end="8"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">KDF 是一个『单向搅拌机』：能往前推，不能往回算</text></g>
+        <g data-step="9" data-step-end="9"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">把 KDF 串成链，每条消息有专属的 MK</text></g>
+        <g data-step="10" data-step-end="10"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">即使现在的 CK 被偷，过去的 MK 仍安全 —— 这就是『前向保密 FS』</text></g>
+      </svg>
+
+      <!-- ============================================================
+           Ch4 — Double Ratchet（DH ratchet）
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="4" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-amber4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+          <marker id="arr-cherry4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-green4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+        </defs>
+
+        <!-- Step 11: KDF chain — future is determined → no PCS -->
+        <g data-step="11" data-step-end="11">
+          <text x="540" y="124" font-size="11" text-anchor="middle" class="label-red" font-weight="700">攻击者偷到 CK₃</text>
+          <text x="540" y="158" font-size="26" text-anchor="middle">💀</text>
+
+          <!-- Past safe (green) -->
+          <rect x="60" y="180" width="80" height="40" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="100" y="205" text-anchor="middle" font-size="13" font-weight="600" class="label-green">CK₁ ✓</text>
+          <rect x="280" y="180" width="80" height="40" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="320" y="205" text-anchor="middle" font-size="13" font-weight="600" class="label-green">CK₂ ✓</text>
+
+          <!-- Compromised -->
+          <rect x="500" y="178" width="84" height="44" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="2.5"/>
+          <text x="540" y="205" text-anchor="middle" font-size="13" font-weight="700" class="label-red">CK₃ ⚠️</text>
+
+          <!-- Future ALSO compromised (red) — this is the problem -->
+          <rect x="720" y="180" width="80" height="40" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="760" y="205" text-anchor="middle" font-size="13" font-weight="600" class="label-red">CK₄ ✗</text>
+          <rect x="900" y="180" width="80" height="40" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="940" y="205" text-anchor="middle" font-size="13" font-weight="600" class="label-red">CK₅ ✗</text>
+
+          <!-- Chain arrows -->
+          <g stroke="#9ca3af" stroke-width="2" fill="none">
+            <line x1="140" y1="200" x2="280" y2="200" marker-end="url(#arr-muted3)"/>
+            <line x1="360" y1="200" x2="500" y2="200" marker-end="url(#arr-muted3)"/>
+            <line x1="584" y1="200" x2="720" y2="200" stroke="#b91c1c" marker-end="url(#arr-red)"/>
+            <line x1="800" y1="200" x2="900" y2="200" stroke="#b91c1c" marker-end="url(#arr-red)"/>
+          </g>
+
+          <text x="550" y="350" text-anchor="middle" font-size="13" class="label-red" font-weight="700">❌ 缺少『后向恢复 PCS』</text>
+          <text x="550" y="370" text-anchor="middle" font-size="12" class="label-muted">KDF 链是确定的：偷到 CK₃ 后，用 KDF 一直算下去就能得到所有未来的 CK</text>
+          <text x="550" y="390" text-anchor="middle" font-size="12" class="label-muted">攻击者一次入侵后，未来所有消息也持续被破。需要新办法。</text>
+        </g>
+
+        <!-- Step 12: inject new DH -->
+        <g data-step="12" data-step-end="12">
+          <!-- Old chain (faded) -->
+          <rect x="60"  y="220" width="80" height="40" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5" opacity="0.5"/>
+          <text x="100" y="245" text-anchor="middle" font-size="13" font-weight="600" class="label-amber" opacity="0.6">CK_old</text>
+
+          <line x1="140" y1="240" x2="280" y2="240" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arr-muted3)"/>
+
+          <!-- DH injection from above -->
+          <rect x="380" y="80" width="240" height="60" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="500" y="105" text-anchor="middle" font-size="13" class="label-green" font-weight="700">🎲 新的 DH</text>
+          <text x="500" y="125" text-anchor="middle" font-size="11" class="label-green">引入新的随机性</text>
+
+          <line x1="500" y1="140" x2="500" y2="215" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green4)"/>
+
+          <!-- Root injection point -->
+          <rect x="440" y="220" width="120" height="50" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="500" y="240" text-anchor="middle" font-size="12" font-weight="700" class="label-amber">root key 更新</text>
+          <text x="500" y="258" text-anchor="middle" font-size="10" class="label-muted">RK = KDF(RK, DH)</text>
+
+          <line x1="560" y1="245" x2="690" y2="245" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber4)"/>
+
+          <!-- New CK (fresh) -->
+          <rect x="700" y="220" width="100" height="50" rx="10" fill="#fce4e4" stroke="#aa1141" stroke-width="2.5"/>
+          <text x="750" y="240" text-anchor="middle" font-size="13" font-weight="700" class="label-cherry">新 CK ✨</text>
+          <text x="750" y="258" text-anchor="middle" font-size="10" class="label-cherry">全新出发</text>
+
+          <text x="550" y="360" text-anchor="middle" font-size="13" class="label-muted">每隔一段时间做一次新 DH，注入新的随机性，让 root key 重新派生</text>
+          <text x="550" y="380" text-anchor="middle" font-size="13" class="label-muted">攻击者即使偷到旧 CK，也无法预测注入的新 DH 输出</text>
+          <text x="550" y="400" text-anchor="middle" font-size="13" class="label-green" font-weight="700">✅ 几次新 DH 后，攻击者再也跟不上 —— 这就是 PCS</text>
+        </g>
+
+        <!-- Step 13: ping-pong 3 rounds -->
+        <g data-step="13" data-step-end="13">
+          <!-- Alice column -->
+          <text x="160" y="80" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">Alice</text>
+          <line x1="160" y1="100" x2="160" y2="460" stroke="#aa1141" stroke-width="1" stroke-dasharray="4 4"/>
+
+          <!-- Bob column -->
+          <text x="940" y="80" text-anchor="middle" font-size="14" font-weight="700" class="label-teal">Bob</text>
+          <line x1="940" y1="100" x2="940" y2="460" stroke="#0e7490" stroke-width="1" stroke-dasharray="4 4"/>
+
+          <!-- Round 1: Alice -> Bob with new pub -->
+          <line x1="160" y1="140" x2="940" y2="140" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry4)"/>
+          <rect x="380" y="120" width="340" height="36" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="550" y="143" text-anchor="middle" font-size="12" class="label-cherry" font-weight="600">M₁ + Alice 新公钥 A₁</text>
+
+          <!-- Round 2: Bob -> Alice -->
+          <line x1="940" y1="220" x2="160" y2="220" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal4)"/>
+          <rect x="380" y="200" width="340" height="36" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="550" y="223" text-anchor="middle" font-size="12" class="label-teal" font-weight="600">M₂ + Bob 新公钥 B₁（基于 A₁ 派生 RK）</text>
+
+          <!-- Round 3: Alice -> Bob -->
+          <line x1="160" y1="300" x2="940" y2="300" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry4)"/>
+          <rect x="380" y="280" width="340" height="36" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="550" y="303" text-anchor="middle" font-size="12" class="label-cherry" font-weight="600">M₃ + Alice 新公钥 A₂（基于 B₁ 派生 RK）</text>
+
+          <!-- continue -->
+          <text x="550" y="350" text-anchor="middle" font-size="12" class="label-muted">…如此交替进行（ping-pong）</text>
+
+          <text x="550" y="420" text-anchor="middle" font-size="13" class="label-muted">每次发消息时附上自己的新公钥；收到对方新公钥后再派生新 RK 和新 CK。</text>
+          <text x="550" y="440" text-anchor="middle" font-size="13" class="label-muted">不断重新协商，是『DH ratchet · 棘轮』里『棘』的来源 —— 单向不可回滚。</text>
+        </g>
+
+        <!-- Step 14: DH + RK → KDF → new RK + new CK -->
+        <g data-step="14" data-step-end="14">
+          <rect x="60" y="200" width="180" height="60" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="150" y="225" text-anchor="middle" font-size="13" class="label-green" font-weight="700">DH 输出</text>
+          <text x="150" y="245" text-anchor="middle" font-size="11" class="label-green">新一轮交换的结果</text>
+
+          <rect x="60" y="290" width="180" height="60" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="150" y="315" text-anchor="middle" font-size="13" class="label-amber" font-weight="700">当前 RK</text>
+          <text x="150" y="335" text-anchor="middle" font-size="11" class="label-amber">root key（主时间线）</text>
+
+          <line x1="240" y1="230" x2="380" y2="260" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate2)"/>
+          <line x1="240" y1="320" x2="380" y2="290" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate2)"/>
+
+          <rect x="380" y="230" width="180" height="90" rx="12" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="470" y="265" text-anchor="middle" font-size="14" class="label-green" font-weight="700">KDF</text>
+          <text x="470" y="295" text-anchor="middle" font-size="11" class="label-muted">把新 DH 和旧 RK 搅在一起</text>
+
+          <line x1="560" y1="260" x2="700" y2="220" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber4)"/>
+          <line x1="560" y1="295" x2="700" y2="330" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry4)"/>
+
+          <rect x="700" y="200" width="200" height="50" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="800" y="220" text-anchor="middle" font-size="13" class="label-amber" font-weight="700">新 RK</text>
+          <text x="800" y="240" text-anchor="middle" font-size="10" class="label-muted">下次 DH 时再喂进去</text>
+
+          <rect x="700" y="310" width="200" height="50" rx="10" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+          <text x="800" y="330" text-anchor="middle" font-size="13" class="label-cherry" font-weight="700">新 CK</text>
+          <text x="800" y="350" text-anchor="middle" font-size="10" class="label-muted">送进 KDF 链开始派生 MK（回到 Ch3）</text>
+
+          <text x="550" y="430" text-anchor="middle" font-size="12" class="label-muted">RK 是主时间线，永远只往前走。每次新 DH 派生出新 RK 和一条全新的 CK 链。</text>
+        </g>
+
+        <!-- Step 15: three chains overview -->
+        <g data-step="15">
+          <!-- Root chain (amber, top) -->
+          <text x="100" y="100" text-anchor="middle" font-size="12" class="label-amber" font-weight="700">root chain</text>
+          <line x1="180" y1="100" x2="980" y2="100" stroke="#b45309" stroke-width="2.5"/>
+          <g fill="#fef3c7" stroke="#b45309" stroke-width="1.5">
+            <circle cx="240" cy="100" r="10"/>
+            <circle cx="380" cy="100" r="10"/>
+            <circle cx="520" cy="100" r="10"/>
+            <circle cx="660" cy="100" r="10"/>
+            <circle cx="800" cy="100" r="10"/>
+            <circle cx="940" cy="100" r="10"/>
+          </g>
+          <g font-size="10" class="label-amber" text-anchor="middle">
+            <text x="240" y="80">RK₁</text><text x="380" y="80">RK₂</text><text x="520" y="80">RK₃</text>
+            <text x="660" y="80">RK₄</text><text x="800" y="80">RK₅</text><text x="940" y="80">RK₆</text>
+          </g>
+
+          <!-- Sending chain (cherry, middle) -->
+          <text x="100" y="240" text-anchor="middle" font-size="12" class="label-cherry" font-weight="700">sending chain</text>
+          <text x="100" y="256" text-anchor="middle" font-size="9" class="label-muted">(Alice 发消息时推进)</text>
+          <line x1="180" y1="240" x2="980" y2="240" stroke="#aa1141" stroke-width="2.5"/>
+          <g fill="#fce4e4" stroke="#aa1141" stroke-width="1.5">
+            <circle cx="260" cy="240" r="8"/>
+            <circle cx="320" cy="240" r="8"/>
+            <circle cx="380" cy="240" r="8"/>
+            <circle cx="540" cy="240" r="8"/>
+            <circle cx="600" cy="240" r="8"/>
+            <circle cx="780" cy="240" r="8"/>
+            <circle cx="840" cy="240" r="8"/>
+            <circle cx="900" cy="240" r="8"/>
+          </g>
+
+          <!-- Receiving chain (teal, bottom) -->
+          <text x="100" y="380" text-anchor="middle" font-size="12" class="label-teal" font-weight="700">receiving chain</text>
+          <text x="100" y="396" text-anchor="middle" font-size="9" class="label-muted">(收到对方消息时推进)</text>
+          <line x1="180" y1="380" x2="980" y2="380" stroke="#0e7490" stroke-width="2.5"/>
+          <g fill="#cffafe" stroke="#0e7490" stroke-width="1.5">
+            <circle cx="440" cy="380" r="8"/>
+            <circle cx="500" cy="380" r="8"/>
+            <circle cx="700" cy="380" r="8"/>
+            <circle cx="760" cy="380" r="8"/>
+            <circle cx="880" cy="380" r="8"/>
+            <circle cx="940" cy="380" r="8"/>
+          </g>
+
+          <!-- DH injection markers from root to send/recv -->
+          <g stroke="#b45309" stroke-width="1" stroke-dasharray="3 3">
+            <line x1="240" y1="110" x2="240" y2="232"/>
+            <line x1="380" y1="110" x2="380" y2="232"/>
+            <line x1="520" y1="110" x2="440" y2="372"/>
+            <line x1="660" y1="110" x2="700" y2="372"/>
+            <line x1="800" y1="110" x2="780" y2="232"/>
+          </g>
+
+          <text x="550" y="450" text-anchor="middle" font-size="12" class="label-muted">三条链同时进行：RK 主线每次 DH 推进一格，并派生出一条新的 sending 或 receiving 链；</text>
+          <text x="550" y="468" text-anchor="middle" font-size="12" class="label-muted">每条 CK 链上每发/收一条消息推进一格（symmetric ratchet）。这就是『Double Ratchet · 双棘轮』。</text>
+        </g>
+
+        <!-- Step headers -->
+        <g data-step="11" data-step-end="11"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">KDF 链是确定的：偷到一格，未来全暴露</text></g>
+        <g data-step="12" data-step-end="12"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">解法：每隔一段注入一次新 DH，让 root key 重新派生</text></g>
+        <g data-step="13" data-step-end="13"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">每条消息都带新公钥，双方交替更新（ping-pong）</text></g>
+        <g data-step="14" data-step-end="14"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">DH 输出 + 当前 RK → KDF → 新 RK + 新 CK</text></g>
+        <g data-step="15" data-step-end="15"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">完整 Double Ratchet：root + sending + receiving 三条链同时演化</text></g>
+      </svg>
+
+      <!-- ============================================================
+           Ch5 — X3DH 首次握手
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="5" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-slate5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-green5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+          <marker id="arr-amber5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+        </defs>
+
+        <!-- Three lanes: Bob | Server | Alice — used from step 17 onwards -->
+        <g data-step="17">
+          <!-- Bob lane (left) -->
+          <rect x="40" y="80" width="200" height="380" rx="10" fill="#cffafe" opacity="0.2"/>
+          <text x="140" y="105" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">Bob (离线)</text>
+          <circle cx="140" cy="135" r="20" class="actor-teal" stroke-width="2" opacity="0.5"/>
+          <text x="140" y="141" text-anchor="middle" font-size="14" font-weight="700" class="label-teal" opacity="0.5">B</text>
+
+          <!-- Server lane (center) -->
+          <rect x="450" y="80" width="200" height="380" rx="10" fill="#ede9fe" opacity="0.35"/>
+          <text x="550" y="105" text-anchor="middle" font-size="13" font-weight="700" class="label-violet">Server</text>
+          <rect x="510" y="120" width="80" height="32" rx="6" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="550" y="141" text-anchor="middle" font-size="11" font-weight="600" class="label-violet">📦 公钥仓库</text>
+
+          <!-- Alice lane (right) -->
+          <rect x="860" y="80" width="200" height="380" rx="10" fill="#fce4e4" opacity="0.2"/>
+          <text x="960" y="105" text-anchor="middle" font-size="13" font-weight="700" class="label-cherry">Alice</text>
+          <circle cx="960" cy="135" r="20" class="actor-cherry" stroke-width="2"/>
+          <text x="960" y="141" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">A</text>
+        </g>
+
+        <!-- Step 16: just Alice + Bob offline (no server yet visible) -->
+        <g data-step="16" data-step-end="16">
+          <circle cx="200" cy="240" r="50" class="actor-teal" stroke-width="2" opacity="0.45"/>
+          <text x="200" y="248" text-anchor="middle" font-size="22" font-weight="700" class="label-teal" opacity="0.5">B</text>
+          <text x="200" y="310" text-anchor="middle" font-size="14" font-weight="700" class="label-teal">Bob</text>
+          <text x="200" y="328" text-anchor="middle" font-size="11" class="label-muted">📴 离线（睡觉中）</text>
+
+          <circle cx="900" cy="240" r="50" class="actor-cherry" stroke-width="2"/>
+          <text x="900" y="248" text-anchor="middle" font-size="22" font-weight="700" class="label-cherry">A</text>
+          <text x="900" y="310" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">Alice</text>
+          <text x="900" y="328" text-anchor="middle" font-size="11" class="label-muted">想现在发消息</text>
+
+          <path d="M 850 240 Q 550 200, 250 240" stroke="#aa1141" stroke-width="2" stroke-dasharray="6 4" fill="none"/>
+          <text x="550" y="200" text-anchor="middle" font-size="13" class="label-cherry" font-weight="600">❓ Bob 不在线，怎么做 DH？</text>
+
+          <text x="550" y="400" text-anchor="middle" font-size="13" class="label-muted">之前所有 DH 都假设双方同时在线交换公钥。</text>
+          <text x="550" y="420" text-anchor="middle" font-size="13" class="label-muted">现实里 Bob 可能离线几天 —— Alice 不能等。</text>
+        </g>
+
+        <!-- Step 17: Bob uploads IK + SPK -->
+        <g data-step="17" data-step-end="17">
+          <!-- Bob's keys -->
+          <rect x="60" y="200" width="160" height="34" rx="6" fill="#fff" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="140" y="222" text-anchor="middle" font-size="12" class="label-teal" font-weight="600">IK_B · 身份密钥（长期）</text>
+          <rect x="60" y="244" width="160" height="34" rx="6" fill="#fff" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="140" y="266" text-anchor="middle" font-size="12" class="label-teal" font-weight="600">SPK_B · 签名预共享（中期）</text>
+
+          <!-- Upload arrows -->
+          <line x1="220" y1="220" x2="450" y2="200" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal4)"/>
+          <line x1="220" y1="262" x2="450" y2="220" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal4)"/>
+          <text x="335" y="195" font-size="10" class="label-muted">上传（提前）</text>
+
+          <!-- Server holds them -->
+          <rect x="465" y="180" width="170" height="34" rx="6" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="550" y="201" text-anchor="middle" font-size="11" class="label-violet" font-weight="600">📦 IK_B</text>
+          <rect x="465" y="220" width="170" height="34" rx="6" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="550" y="241" text-anchor="middle" font-size="11" class="label-violet" font-weight="600">📦 SPK_B（带 Bob 签名）</text>
+
+          <text x="550" y="400" text-anchor="middle" font-size="13" class="label-muted">Bob 提前把『身份密钥 IK』和『签名预共享密钥 SPK』传到服务器。</text>
+          <text x="550" y="420" text-anchor="middle" font-size="13" class="label-muted">IK 几乎永久不变（代表身份）；SPK 定期轮换（一般一周/月）并由 IK 签名。</text>
+        </g>
+
+        <!-- Step 18: + OPK pool -->
+        <g data-step="18" data-step-end="18">
+          <!-- Bob still has IK/SPK + new OPK pool -->
+          <rect x="60" y="170" width="160" height="28" rx="6" fill="#fff" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="140" y="189" text-anchor="middle" font-size="11" class="label-teal" font-weight="600">IK_B</text>
+          <rect x="60" y="204" width="160" height="28" rx="6" fill="#fff" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="140" y="223" text-anchor="middle" font-size="11" class="label-teal" font-weight="600">SPK_B</text>
+
+          <text x="140" y="252" text-anchor="middle" font-size="11" class="label-teal" font-weight="600">OPK 池（一次性）</text>
+          <g font-size="10" class="label-teal" font-weight="600">
+            <rect x="60" y="260" width="42" height="22" rx="4" fill="#fff" stroke="#0e7490" stroke-width="1"/>
+            <text x="81" y="276" text-anchor="middle">OPK₁</text>
+            <rect x="106" y="260" width="42" height="22" rx="4" fill="#fff" stroke="#0e7490" stroke-width="1"/>
+            <text x="127" y="276" text-anchor="middle">OPK₂</text>
+            <rect x="152" y="260" width="42" height="22" rx="4" fill="#fff" stroke="#0e7490" stroke-width="1"/>
+            <text x="173" y="276" text-anchor="middle">OPK₃</text>
+            <rect x="60" y="288" width="42" height="22" rx="4" fill="#fff" stroke="#0e7490" stroke-width="1"/>
+            <text x="81" y="304" text-anchor="middle">OPK₄</text>
+            <rect x="106" y="288" width="42" height="22" rx="4" fill="#fff" stroke="#0e7490" stroke-width="1"/>
+            <text x="127" y="304" text-anchor="middle">OPK₅</text>
+            <text x="173" y="304" text-anchor="middle">…</text>
+          </g>
+
+          <!-- Server side mirror -->
+          <line x1="200" y1="270" x2="450" y2="270" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal4)"/>
+          <text x="325" y="262" font-size="10" class="label-muted">批量上传</text>
+
+          <rect x="465" y="170" width="170" height="24" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+          <text x="550" y="187" text-anchor="middle" font-size="10" class="label-violet" font-weight="600">📦 IK_B</text>
+          <rect x="465" y="200" width="170" height="24" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+          <text x="550" y="217" text-anchor="middle" font-size="10" class="label-violet" font-weight="600">📦 SPK_B</text>
+          <rect x="465" y="230" width="170" height="80" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+          <text x="550" y="246" text-anchor="middle" font-size="10" class="label-violet" font-weight="600">📦 OPK 池</text>
+          <g font-size="9" class="label-violet" text-anchor="middle">
+            <text x="490" y="264">OPK₁</text><text x="550" y="264">OPK₂</text><text x="610" y="264">OPK₃</text>
+            <text x="490" y="282">OPK₄</text><text x="550" y="282">OPK₅</text><text x="610" y="282">…</text>
+          </g>
+
+          <text x="550" y="400" text-anchor="middle" font-size="13" class="label-muted">Bob 还会预生成一池『一次性密钥 OPK』批量上传。</text>
+          <text x="550" y="420" text-anchor="middle" font-size="13" class="label-muted">每个 OPK 只用一次，用完即弃。池子快空了 Bob 再补充。</text>
+        </g>
+
+        <!-- Step 19: Alice fetches the bundle -->
+        <g data-step="19" data-step-end="19">
+          <!-- Server bundle -->
+          <rect x="465" y="170" width="170" height="24" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+          <text x="550" y="187" text-anchor="middle" font-size="10" class="label-violet" font-weight="600">📦 IK_B</text>
+          <rect x="465" y="200" width="170" height="24" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+          <text x="550" y="217" text-anchor="middle" font-size="10" class="label-violet" font-weight="600">📦 SPK_B</text>
+          <rect x="465" y="230" width="170" height="24" rx="4" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="550" y="247" text-anchor="middle" font-size="10" class="label-red" font-weight="600">📦 OPK₂（即将原子领走）</text>
+          <rect x="465" y="262" width="170" height="48" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+          <text x="550" y="285" text-anchor="middle" font-size="10" class="label-violet">OPK₁ OPK₃ OPK₄ …</text>
+
+          <!-- Alice requests -->
+          <line x1="855" y1="200" x2="650" y2="200" stroke="#aa1141" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arr-cherry4)"/>
+          <text x="755" y="190" text-anchor="middle" font-size="11" class="label-cherry">"取 Bob 的密钥包"</text>
+
+          <line x1="640" y1="220" x2="855" y2="265" stroke="#6d28d9" stroke-width="2.5" marker-end="url(#arr-violet5)"/>
+          <text x="755" y="240" text-anchor="middle" font-size="11" class="label-violet" font-weight="600">返回 (IK_B, SPK_B, OPK₂)</text>
+
+          <!-- Alice receives bundle -->
+          <rect x="870" y="200" width="180" height="100" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="960" y="220" text-anchor="middle" font-size="11" class="label-cherry" font-weight="700">Alice 收到 Bob 的</text>
+          <text x="960" y="240" text-anchor="middle" font-size="10" class="label-cherry">IK_B</text>
+          <text x="960" y="258" text-anchor="middle" font-size="10" class="label-cherry">SPK_B（验证签名）</text>
+          <text x="960" y="276" text-anchor="middle" font-size="10" class="label-cherry">OPK₂（只此一份）</text>
+          <text x="960" y="294" text-anchor="middle" font-size="10" class="label-muted">＋自己有 IK_A、EK_A</text>
+
+          <text x="550" y="400" text-anchor="middle" font-size="13" class="label-muted">Alice 一次性取走 Bob 的『三件套』。服务器原子地把 OPK₂ 从池里删掉，</text>
+          <text x="550" y="420" text-anchor="middle" font-size="13" class="label-muted">下次别人来要 Bob 的包，会拿到 OPK₁ 或 OPK₃，永远不会重复。</text>
+        </g>
+
+        <!-- Step 20: 4 DH computations on Alice side -->
+        <g data-step="20" data-step-end="20">
+          <!-- Alice side keys -->
+          <rect x="820" y="120" width="220" height="100" rx="8" fill="#fff" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="930" y="140" text-anchor="middle" font-size="11" class="label-cherry" font-weight="700">Alice 拥有</text>
+          <text x="930" y="160" text-anchor="middle" font-size="11" class="label-cherry">自己: IK_A, EK_A (一次性短暂)</text>
+          <text x="930" y="180" text-anchor="middle" font-size="11" class="label-cherry">Bob: IK_B, SPK_B, OPK_B</text>
+          <text x="930" y="200" text-anchor="middle" font-size="10" class="label-muted">→ 共 5 把公钥参与运算</text>
+
+          <!-- Four DH boxes -->
+          <g font-size="11" font-weight="600">
+            <rect x="60" y="160" width="220" height="44" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="170" y="180" text-anchor="middle" class="label-green">DH₁ = IK_A × SPK_B</text>
+            <text x="170" y="196" text-anchor="middle" font-size="9" class="label-muted">绑定 Alice 身份 ↔ Bob 中期密钥</text>
+
+            <rect x="290" y="160" width="220" height="44" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="400" y="180" text-anchor="middle" class="label-green">DH₂ = EK_A × IK_B</text>
+            <text x="400" y="196" text-anchor="middle" font-size="9" class="label-muted">绑定 Alice 临时密钥 ↔ Bob 身份</text>
+
+            <rect x="60" y="220" width="220" height="44" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="170" y="240" text-anchor="middle" class="label-green">DH₃ = EK_A × SPK_B</text>
+            <text x="170" y="256" text-anchor="middle" font-size="9" class="label-muted">提供新鲜性（每次新 EK）</text>
+
+            <rect x="290" y="220" width="220" height="44" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="400" y="240" text-anchor="middle" class="label-green">DH₄ = EK_A × OPK_B</text>
+            <text x="400" y="256" text-anchor="middle" font-size="9" class="label-muted">提供后向恢复（一次性 OPK）</text>
+          </g>
+
+          <text x="550" y="380" text-anchor="middle" font-size="12" class="label-muted">为什么要 4 个 DH？让攻击者必须同时拿到 Alice 的 IK 和 EK，以及 Bob 的 IK/SPK/OPK 才能破。</text>
+          <text x="550" y="400" text-anchor="middle" font-size="12" class="label-muted">任何一个密钥泄漏都不足以打破整个 X3DH —— 这叫"密钥分摊安全"。</text>
+        </g>
+
+        <!-- Step 21: 4 DH → KDF → SharedSecret → root -->
+        <g data-step="21">
+          <!-- 4 DH compressed -->
+          <g font-size="10" font-weight="600">
+            <rect x="80" y="160" width="120" height="34" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="140" y="181" text-anchor="middle" class="label-green">DH₁</text>
+            <rect x="80" y="200" width="120" height="34" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="140" y="221" text-anchor="middle" class="label-green">DH₂</text>
+            <rect x="80" y="240" width="120" height="34" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="140" y="261" text-anchor="middle" class="label-green">DH₃</text>
+            <rect x="80" y="280" width="120" height="34" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="140" y="301" text-anchor="middle" class="label-green">DH₄</text>
+          </g>
+
+          <!-- Concat -->
+          <line x1="200" y1="237" x2="290" y2="237" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green5)"/>
+          <text x="245" y="225" text-anchor="middle" font-size="10" class="label-muted">‖ 拼接</text>
+
+          <!-- KDF -->
+          <rect x="290" y="200" width="140" height="80" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="360" y="232" text-anchor="middle" font-size="14" font-weight="700" class="label-green">KDF</text>
+          <text x="360" y="252" text-anchor="middle" font-size="10" class="label-muted">HMAC-based</text>
+
+          <!-- SharedSec -->
+          <line x1="430" y1="240" x2="520" y2="240" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green5)"/>
+          <rect x="520" y="210" width="160" height="60" rx="10" fill="#fff" stroke="#15803d" stroke-width="2"/>
+          <text x="600" y="232" text-anchor="middle" font-size="12" font-weight="700" class="label-green">SharedSecret</text>
+          <text x="600" y="250" text-anchor="middle" font-size="10" class="label-muted">X3DH 的产出</text>
+          <text x="600" y="264" text-anchor="middle" font-size="10" class="label-muted">32 bytes 随机数</text>
+
+          <!-- → root key -->
+          <line x1="680" y1="240" x2="780" y2="240" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber5)"/>
+          <rect x="780" y="210" width="200" height="60" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2.5"/>
+          <text x="880" y="232" text-anchor="middle" font-size="13" font-weight="700" class="label-amber">Double Ratchet</text>
+          <text x="880" y="252" text-anchor="middle" font-size="12" font-weight="700" class="label-amber">RK₀ · 初始 root key</text>
+          <text x="880" y="264" text-anchor="middle" font-size="9" class="label-muted">交给 Ch4 接着跑</text>
+
+          <text x="550" y="400" text-anchor="middle" font-size="13" class="label-muted">4 个 DH 拼接喂进 KDF，得到 SharedSecret —— 这就是 Double Ratchet 的初始 root key。</text>
+          <text x="550" y="420" text-anchor="middle" font-size="13" class="label-muted">从这一刻起，Alice 和 Bob 进入 Ch4 描述的 ping-pong，每条消息都有专属 MK。</text>
+        </g>
+
+        <!-- Step headers -->
+        <g data-step="16" data-step-end="16"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">挑战：Bob 离线，Alice 想现在就发，怎么协商密钥？</text></g>
+        <g data-step="17" data-step-end="17"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Bob 提前把 IK + SPK 上传到 Server</text></g>
+        <g data-step="18" data-step-end="18"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">再批量上传一池 OPK（一次性，用完即弃）</text></g>
+        <g data-step="19" data-step-end="19"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Alice 一次性取走『三件套』，Server 原子删除 OPK</text></g>
+        <g data-step="20" data-step-end="20"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Alice 用自己的 (IK_A, EK_A) 和 Bob 的三件套做 4 个 DH</text></g>
+        <g data-step="21" data-step-end="21"><text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">4 个 DH 输出 → KDF → SharedSecret → 接进 Double Ratchet 当 RK₀</text></g>
+      </svg>
+
+      <!-- ============================================================
+           Ch6 — 全景回顾
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="6" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-slate6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-cherry6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-violet6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+        </defs>
+
+        <!-- Step 22: full timeline -->
+        <g data-step="22" data-step-end="22">
+          <!-- Three swimlanes -->
+          <text x="80" y="100" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">Bob</text>
+          <line x1="80" y1="120" x2="80" y2="460" stroke="#0e7490" stroke-width="1" stroke-dasharray="4 4"/>
+
+          <text x="550" y="100" text-anchor="middle" font-size="13" font-weight="700" class="label-violet">Server</text>
+          <line x1="550" y1="120" x2="550" y2="460" stroke="#6d28d9" stroke-width="1" stroke-dasharray="4 4"/>
+
+          <text x="1020" y="100" text-anchor="middle" font-size="13" font-weight="700" class="label-cherry">Alice</text>
+          <line x1="1020" y1="120" x2="1020" y2="460" stroke="#aa1141" stroke-width="1" stroke-dasharray="4 4"/>
+
+          <!-- T1: Bob registers -->
+          <line x1="80" y1="150" x2="550" y2="150" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal6)"/>
+          <text x="315" y="143" text-anchor="middle" font-size="11" class="label-teal">① 上传 IK + SPK + OPK 池</text>
+
+          <!-- T2: Alice asks server -->
+          <line x1="1020" y1="195" x2="550" y2="195" stroke="#aa1141" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arr-cherry6)"/>
+          <text x="785" y="188" text-anchor="middle" font-size="11" class="label-cherry">② 请求 Bob 的密钥包</text>
+
+          <!-- T3: Server returns -->
+          <line x1="550" y1="225" x2="1020" y2="225" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet6)"/>
+          <text x="785" y="218" text-anchor="middle" font-size="11" class="label-violet">③ 返回 (IK_B, SPK_B, OPK_B) · OPK 出队</text>
+
+          <!-- T4: Alice computes X3DH -->
+          <rect x="900" y="245" width="240" height="36" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="1020" y="267" text-anchor="middle" font-size="11" class="label-cherry" font-weight="600">④ X3DH → SharedSec → RK₀</text>
+
+          <!-- T5: First message Alice -> server -> Bob -->
+          <line x1="1020" y1="305" x2="550" y2="305" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry6)"/>
+          <text x="785" y="298" text-anchor="middle" font-size="11" class="label-cherry">⑤ 第 1 条消息 + Alice 公钥（密文）</text>
+
+          <line x1="550" y1="335" x2="80" y2="335" stroke="#6d28d9" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#arr-violet6)"/>
+          <text x="315" y="328" text-anchor="middle" font-size="11" class="label-violet">⑥ 暂存，等 Bob 上线后转发</text>
+
+          <!-- Bob comes online and replies -->
+          <text x="80" y="370" text-anchor="middle" font-size="11" class="label-teal" font-weight="600">📱 Bob 上线 · 解密第 1 条</text>
+
+          <line x1="80" y1="395" x2="1020" y2="395" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal6)"/>
+          <text x="550" y="388" text-anchor="middle" font-size="11" class="label-teal">⑦ 回复 + Bob 新公钥（Double Ratchet ping-pong 开始）</text>
+
+          <text x="550" y="442" text-anchor="middle" font-size="11" class="label-muted">…此后每条消息都附带新公钥，root chain 持续推进，每条消息有专属 MK</text>
+        </g>
+
+        <!-- Step 23: data visibility table -->
+        <g data-step="23" data-step-end="23">
+          <!-- Headers -->
+          <text x="100" y="120" font-size="13" font-weight="700" class="label-slate">数据 / 密钥</text>
+          <text x="450" y="120" text-anchor="middle" font-size="13" font-weight="700" class="label-cherry">Alice 看到</text>
+          <text x="700" y="120" text-anchor="middle" font-size="13" font-weight="700" class="label-violet">Server 看到</text>
+          <text x="950" y="120" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">Bob 看到</text>
+
+          <line x1="60" y1="130" x2="1040" y2="130" stroke="#aa1141" stroke-width="1.5"/>
+
+          <!-- Rows -->
+          <g font-size="12">
+            <text x="80" y="160" class="label-slate">IK / SPK / OPK 公钥</text>
+            <text x="450" y="160" text-anchor="middle" class="label-green">✓</text>
+            <text x="700" y="160" text-anchor="middle" class="label-green">✓</text>
+            <text x="950" y="160" text-anchor="middle" class="label-green">✓ (自有)</text>
+
+            <line x1="60" y1="172" x2="1040" y2="172" stroke="#e5e7eb"/>
+
+            <text x="80" y="195" class="label-slate">私钥 IK_A / EK_A / IK_B…</text>
+            <text x="450" y="195" text-anchor="middle" class="label-cherry">部分 (自己的)</text>
+            <text x="700" y="195" text-anchor="middle" class="label-red" font-weight="700">✗</text>
+            <text x="950" y="195" text-anchor="middle" class="label-teal">部分 (自己的)</text>
+
+            <line x1="60" y1="207" x2="1040" y2="207" stroke="#e5e7eb"/>
+
+            <text x="80" y="230" class="label-slate">SharedSecret · 4 DH 输出</text>
+            <text x="450" y="230" text-anchor="middle" class="label-green">✓</text>
+            <text x="700" y="230" text-anchor="middle" class="label-red" font-weight="700">✗</text>
+            <text x="950" y="230" text-anchor="middle" class="label-green">✓</text>
+
+            <line x1="60" y1="242" x2="1040" y2="242" stroke="#e5e7eb"/>
+
+            <text x="80" y="265" class="label-slate">RK / CK / MK</text>
+            <text x="450" y="265" text-anchor="middle" class="label-green">✓</text>
+            <text x="700" y="265" text-anchor="middle" class="label-red" font-weight="700">✗</text>
+            <text x="950" y="265" text-anchor="middle" class="label-green">✓</text>
+
+            <line x1="60" y1="277" x2="1040" y2="277" stroke="#e5e7eb"/>
+
+            <text x="80" y="300" class="label-slate">每条消息的明文</text>
+            <text x="450" y="300" text-anchor="middle" class="label-green">✓</text>
+            <text x="700" y="300" text-anchor="middle" class="label-red" font-weight="700">✗</text>
+            <text x="950" y="300" text-anchor="middle" class="label-green">✓</text>
+
+            <line x1="60" y1="312" x2="1040" y2="312" stroke="#e5e7eb"/>
+
+            <text x="80" y="335" class="label-slate">每条消息的密文</text>
+            <text x="450" y="335" text-anchor="middle" class="label-green">✓</text>
+            <text x="700" y="335" text-anchor="middle" class="label-green">✓ (中转)</text>
+            <text x="950" y="335" text-anchor="middle" class="label-green">✓</text>
+
+            <line x1="60" y1="347" x2="1040" y2="347" stroke="#e5e7eb"/>
+
+            <text x="80" y="370" class="label-slate">谁在跟谁通信（元数据）</text>
+            <text x="450" y="370" text-anchor="middle" class="label-green">✓</text>
+            <text x="700" y="370" text-anchor="middle" class="label-amber">✓ (能看到)</text>
+            <text x="950" y="370" text-anchor="middle" class="label-green">✓</text>
+          </g>
+
+          <text x="550" y="430" text-anchor="middle" font-size="12" class="label-muted">Server 能转发密文、保存公钥包、看到通信元数据；但永远看不到明文和任何会话密钥。</text>
+          <text x="550" y="448" text-anchor="middle" font-size="12" class="label-muted">这是 E2E (端到端加密) 的边界。元数据隐藏需要其他协议（如 Sealed Sender）解决。</text>
+        </g>
+
+        <!-- Step 24: FS vs PCS time regions -->
+        <g data-step="24" data-step-end="24">
+          <!-- Time axis -->
+          <line x1="80" y1="280" x2="1020" y2="280" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate6)"/>
+          <text x="60" y="285" font-size="12" class="label-slate">时间</text>
+          <text x="1030" y="276" font-size="11" class="label-muted">→</text>
+
+          <!-- Attack point -->
+          <line x1="550" y1="220" x2="550" y2="320" stroke="#b91c1c" stroke-width="2.5" stroke-dasharray="4 4"/>
+          <text x="550" y="210" text-anchor="middle" font-size="13" class="label-red" font-weight="700">💀 攻击者偷到密钥</text>
+
+          <!-- FS region (left) -->
+          <rect x="80" y="240" width="450" height="40" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="305" y="265" text-anchor="middle" font-size="13" class="label-green" font-weight="700">FS 区域 · 过去仍安全</text>
+
+          <!-- Vulnerable region (small, around attack) -->
+          <rect x="550" y="240" width="120" height="40" rx="6" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
+          <text x="610" y="265" text-anchor="middle" font-size="11" class="label-red" font-weight="700">短暂受损</text>
+
+          <!-- PCS recovery region (right) -->
+          <rect x="670" y="240" width="350" height="40" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="845" y="265" text-anchor="middle" font-size="13" class="label-green" font-weight="700">PCS 区域 · 几次新 DH 后重新安全</text>
+
+          <!-- Labels below -->
+          <text x="305" y="320" text-anchor="middle" font-size="11" class="label-muted">KDF 单向性保证：偷到现在算不回过去</text>
+          <text x="610" y="320" text-anchor="middle" font-size="11" class="label-muted">未做新 DH 之前</text>
+          <text x="845" y="320" text-anchor="middle" font-size="11" class="label-muted">每次新 DH 注入新随机性，把攻击者甩开</text>
+
+          <!-- Bottom summary -->
+          <g font-size="13">
+            <rect x="80" y="370" width="440" height="80" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="300" y="395" text-anchor="middle" class="label-green" font-weight="700">前向保密 Forward Secrecy</text>
+            <text x="300" y="418" text-anchor="middle" font-size="11" class="label-slate">"现在被入侵，过去仍安全"</text>
+            <text x="300" y="436" text-anchor="middle" font-size="10" class="label-muted">由 KDF 单向链保证（Ch3 step 10）</text>
+
+            <rect x="560" y="370" width="440" height="80" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="780" y="395" text-anchor="middle" class="label-green" font-weight="700">后向恢复 Post-Compromise Security</text>
+            <text x="780" y="418" text-anchor="middle" font-size="11" class="label-slate">"现在被入侵，未来还能恢复安全"</text>
+            <text x="780" y="436" text-anchor="middle" font-size="10" class="label-muted">由 DH ratchet 注入新随机性保证（Ch4 step 12）</text>
+          </g>
+        </g>
+
+        <!-- Step 25: key cheatsheet -->
+        <g data-step="25">
+          <text x="550" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="#9a0036">🎉 关键密钥速查</text>
+
+          <!-- 4x2 grid of key cards -->
+          <g font-size="11">
+            <!-- Row 1 -->
+            <rect x="60" y="130" width="220" height="80" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="170" y="152" text-anchor="middle" class="label-cherry" font-weight="700">IK · 身份密钥</text>
+            <text x="170" y="172" text-anchor="middle" class="label-slate">长期 · 几乎不变</text>
+            <text x="170" y="190" text-anchor="middle" font-size="10" class="label-muted">代表你这个人；用于 X3DH 绑定身份</text>
+
+            <rect x="290" y="130" width="220" height="80" rx="8" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="400" y="152" text-anchor="middle" class="label-teal" font-weight="700">SPK · 签名预共享</text>
+            <text x="400" y="172" text-anchor="middle" class="label-slate">中期 · 周/月轮换</text>
+            <text x="400" y="190" text-anchor="middle" font-size="10" class="label-muted">由 IK 签名；防止被攻击者替换</text>
+
+            <rect x="520" y="130" width="220" height="80" rx="8" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+            <text x="630" y="152" text-anchor="middle" class="label-violet" font-weight="700">OPK · 一次性密钥</text>
+            <text x="630" y="172" text-anchor="middle" class="label-slate">短期 · 用一次</text>
+            <text x="630" y="190" text-anchor="middle" font-size="10" class="label-muted">提供 X3DH 的后向恢复保证</text>
+
+            <rect x="750" y="130" width="220" height="80" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+            <text x="860" y="152" text-anchor="middle" class="label-amber" font-weight="700">EK · 短暂密钥</text>
+            <text x="860" y="172" text-anchor="middle" class="label-slate">一次性 · Alice 发起方</text>
+            <text x="860" y="190" text-anchor="middle" font-size="10" class="label-muted">每次开新会话时新生成；提供新鲜性</text>
+
+            <!-- Row 2 -->
+            <rect x="60" y="220" width="220" height="80" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+            <text x="170" y="242" text-anchor="middle" class="label-amber" font-weight="700">RK · root key</text>
+            <text x="170" y="262" text-anchor="middle" class="label-slate">每次 DH 推进一格</text>
+            <text x="170" y="280" text-anchor="middle" font-size="10" class="label-muted">主时间线；从 X3DH 的 SharedSec 启动</text>
+
+            <rect x="290" y="220" width="220" height="80" rx="8" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="400" y="242" text-anchor="middle" class="label-cherry" font-weight="700">CK · chain key</text>
+            <text x="400" y="262" text-anchor="middle" class="label-slate">每条消息推进一格</text>
+            <text x="400" y="280" text-anchor="middle" font-size="10" class="label-muted">sending / receiving 各一条</text>
+
+            <rect x="520" y="220" width="220" height="80" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+            <text x="630" y="242" text-anchor="middle" class="label-green" font-weight="700">MK · message key</text>
+            <text x="630" y="262" text-anchor="middle" class="label-slate">每条消息一把</text>
+            <text x="630" y="280" text-anchor="middle" font-size="9" class="label-muted">真正用来 AEAD（认证加密）这条消息</text>
+
+            <rect x="750" y="220" width="220" height="80" rx="8" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="860" y="242" text-anchor="middle" class="label-teal" font-weight="700">DH-EK · 棘轮短暂密钥</text>
+            <text x="860" y="262" text-anchor="middle" class="label-slate">每条/每几条消息换</text>
+            <text x="860" y="280" text-anchor="middle" font-size="10" class="label-muted">附在消息头里；驱动 DH ratchet ping-pong</text>
+          </g>
+
+          <!-- Final cheer -->
+          <rect x="200" y="330" width="700" height="100" rx="14" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+          <text x="550" y="362" text-anchor="middle" font-size="16" font-weight="700" fill="#9a0036">🎉 恭喜走完 25 步！</text>
+          <text x="550" y="385" text-anchor="middle" font-size="12" class="label-slate">你已经理解了 Signal 协议的全部核心：对称加密 · ECDH · KDF · Symmetric ratchet · DH ratchet · X3DH</text>
+          <text x="550" y="405" text-anchor="middle" font-size="11" class="label-muted">想要回顾任何一步？点左侧章节的圆点直接跳转。</text>
+          <text x="550" y="420" text-anchor="middle" font-size="11" class="label-muted">想看更深入的细节图谱？回到 ../diagrams/index.html 探索老手版 12 张图。</text>
+        </g>
+
+        <!-- Step headers -->
+        <g data-step="22" data-step-end="22"><text x="550" y="80" text-anchor="middle" font-size="13" class="label-muted">把所有步骤串起来：注册 → 取走 → X3DH → 首消息 → ping-pong</text></g>
+        <g data-step="23" data-step-end="23"><text x="550" y="90" text-anchor="middle" font-size="13" class="label-muted">谁能看到什么：E2E 加密的边界一目了然</text></g>
+        <g data-step="24" data-step-end="24"><text x="550" y="160" text-anchor="middle" font-size="13" class="label-muted">两个安全方向：FS (左侧绿区) + PCS (右侧绿区)</text></g>
+      </svg>
+
+    </section>
+
+    <!-- Caption -->
+    <section class="caption">
+      <div class="caption-title" id="caption-title"></div>
+      <div class="caption-body" id="caption-body"></div>
+    </section>
+
+    <!-- Deep-dive: references + rust code -->
+    <section class="extras" id="extras"></section>
+
+    <!-- Controls -->
+    <nav class="controls">
+      <button id="btn-prev">◀ 上一步</button>
+      <button id="btn-next" class="primary">下一步 ▶</button>
+      <button id="btn-replay" class="ghost">↻ 重头来</button>
+      <span class="hint">键盘 ← / → 也能切；URL 自动保存当前步</span>
+    </nav>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Step controller
+   ============================================================ */
+const STEPS = [
+  // Ch1
+  { ch: 1, title: '明文裸奔', body: 'Alice 想悄悄给 Bob 发条消息，但他们之间隔着一整个互联网 —— 路由器、ISP、咖啡馆 WiFi …… 任何一个环节都能把内容看个清楚。<br>左下角的 Eve 就是这类"偷听者"的代表。问题是：网络上怎么传，才能让只有 Bob 能看懂？' },
+  { ch: 1, title: '引入对称密钥 K', body: '最朴素的想法：双方共享一把『密钥 K』，用 K 把明文搅成乱码再发出去，Bob 用同样的 K 还原。<br>这套机制叫 <code>对称加密</code>（AES、ChaCha20 都属此类）。Eve 即使截到 <code>x9F2cA7...</code>，没 K 也读不懂。<br>但下一个问题立刻冒出来：<strong>这把 K，从哪来？怎么传给 Bob？</strong>' },
+  // Ch2
+  { ch: 2, title: '密钥分发难题', body: '如果 Alice 直接把 K 通过网络发给 Bob，Eve 顺手就截下了 —— 接下来 Eve 就能解密一切。<br>"安全地传递密钥本身"竟然比"加密消息"更难。这就是经典的 <code>密钥分发难题</code>（key distribution problem）。<br>密码学家苦思了几十年。直到 1976 年，Diffie 和 Hellman 给出了一个反直觉的答案 ▶' },
+  { ch: 2, title: '公私钥对', body: '革命性的想法：每个人有 <strong>一对</strong> 密钥。<br>• <code>私钥</code>（小写 a / b）：保存在本地，永远不离开设备。<br>• <code>公钥</code>（大写 A / B）：可以公开发布，贴在哪儿都行。<br>两把钥匙数学上相关，但从公钥反推私钥需要破解离散对数问题 —— 实际上算不出来。' },
+  { ch: 2, title: 'ECDH · 算出同一个秘密', body: '<code>DH (Diffie-Hellman) · 密钥协商协议</code> 的魔法 —— 1976 年发明，让两人在公开信道上协商出一个只有他们俩知道的秘密：<br>• Alice 用『自己的私钥 a × Bob 的公钥 B』算出 <code>aB = ab</code>。<br>• Bob 用『自己的私钥 b × Alice 的公钥 A』算出 <code>bA = ab</code>。<br>双方得到同一个 <code>ab</code> ✓ —— 而 Eve 只看到 A 和 B 在网络上飞，没有任何一方的私钥，算不出 <code>ab</code>。<br><em>ECDH = Elliptic-Curve DH，椭圆曲线版本的 DH，更快更安全，Signal 用的就是它（曲线 Curve25519）</em>' },
+  { ch: 2, title: '用 ab 当密钥', body: '完美：<code>ab</code> 派生出对称密钥 K，K 加密第 1 条消息。Alice 和 Bob 都能算出 K，Eve 算不出。<br><br>但 …… 还有隐患：如果 Alice 和 Bob 每次会话都用同一对 (a, A) (b, B)，那 <code>ab</code> 永远是同一个值。一旦私钥某天被偷，攻击者拿出过去截到的所有密文，全部解开。<br>下一章解决：怎么让每条消息都用不同的密钥？' },
+  // Ch3
+  { ch: 3, title: '复用 K 的风险', body: 'Alice 用同一把 K 加密 M₁、M₂、M₃ …… 100 条消息。<br>看起来没问题 —— 直到某天 K 泄漏。攻击者过去保存的所有密文一夜之间全部沦陷。<br>这就是"密钥复用"的诅咒。我们需要：<strong>每条消息用一把全新的密钥，过去的密钥即使泄漏也不影响未来。</strong>' },
+  { ch: 3, title: 'KDF · 单向搅拌机', body: '解决方案的核心工具是 <code>KDF (Key Derivation Function) · 密钥派生函数</code>。在 Signal 里实际由 <code>HMAC-SHA256</code> 实现 —— <code>HMAC = Hash-based Message Authentication Code · 基于哈希的消息认证码</code>，本质是一个带密钥的哈希函数。<br>KDF 有两个关键属性：<br>① 喂进一个输入，吐出两个独立的输出（甚至更多）。<br>② 严格 <strong>单向</strong>：从输出无论如何也算不回输入。<br>这把"不可逆"是接下来一切安全保证的基石。' },
+  { ch: 3, title: '把 KDF 串成链', body: '现在把 KDF 串起来。引入两个新的术语：<br>• <code>CK = Chain Key · 链密钥</code>：用来"驱动这条链"往前走的密钥，本身从不直接加密消息。<br>• <code>MK = Message Key · 消息密钥</code>：派生出来加密<strong>具体某一条消息</strong>的密钥，用完即弃。<br>链的工作方式：<br>• 初始有一个 <code>CK₁</code>。<br>• <code>CK₁ → KDF → (CK₂, MK₁)</code>：吐出"下一个链密钥 CK₂"和"这条消息的密钥 MK₁"。<br>• 用 <code>MK₁</code> 加密 M₁；扔掉 MK₁ 永不复用。<br>• 接着 <code>CK₂ → KDF → (CK₃, MK₂)</code>，加密 M₂ ……<br>这条链叫 <code>Symmetric Ratchet · 对称棘轮</code>。每条消息都有专属的一次性密钥。' },
+  { ch: 3, title: '✅ Forward Secrecy', body: '设想攻击者在第 3 步抓到 <code>CK₃</code>。能做什么？<br>• 往后：用 KDF 算出 CK₄、CK₅、CK₆ …… 解密未来消息。<br>• 往回：试图算 CK₂、CK₁。<strong>算不出来 —— KDF 是单向的</strong>。<br>所以 M₁、M₂ 仍然安全。这个性质叫 <code>前向保密 Forward Secrecy (FS)</code>：<br><em>"被入侵的那一刻，过去的消息仍是安全的。"</em>' },
+  // Ch4
+  { ch: 4, title: '⚠️ 但缺少 PCS', body: 'FS 解决了"过去"，但"未来"呢？<br>攻击者偷到 CK₃ 后，用 KDF 一直往前算 → CK₄ → CK₅ → CK₆ …… 全都能算出来。<strong>未来所有消息持续被破</strong>。<br>这意味着：一次入侵 = 永久监控。我们需要另一种保证：<br><code>Post-Compromise Security (PCS) · 后向恢复</code>：即使现在被入侵，过几次轮换后还能重新安全。' },
+  { ch: 4, title: '注入新 DH · 重启', body: '思路：每隔一段时间，双方做一次<strong>新的 DH 公钥交换</strong>，把新出来的随机性注入到 <code>root key</code>（简称 <code>RK = Root Key · 根密钥</code>，是整个会话的主时间线，所有 CK 都从它派生出来）。<br>新的 DH 输出对攻击者来说完全不可预测 —— 即使他偷了旧 CK，也无法跟上新 DH 后派生出的新 CK 链。<br>几次新 DH 之后，攻击者就被甩开了。这就是 PCS 的来源。<br><em>"棘轮 (ratchet)" 一词来自机械：只能往前推，不能倒回。</em>' },
+  { ch: 4, title: 'Ping-pong 公钥交换', body: '具体怎么"做新 DH"？<br>• Alice 发消息时附带<strong>她的新公钥 A₁</strong>。<br>• Bob 收到，用自己的私钥 b₀ 和 A₁ 算 DH，更新自己的 root key；回复时也附上<strong>Bob 的新公钥 B₁</strong>。<br>• Alice 收到 B₁，再做一次 DH，又更新 root key …… 如此交替。<br>每次"往返"都重新注入新鲜性。这种交替模式就是 <code>ping-pong</code>。' },
+  { ch: 4, title: 'DH × RK → 新 RK + 新 CK', body: '具体派生公式：<br><code>(new RK, new CK) = KDF(DH_output, current RK)</code><br>• <strong>新 RK</strong>：等下一次 DH 时再喂进去。这条链叫 <code>root chain</code>，是整个会话的主时间线。<br>• <strong>新 CK</strong>：扔回 Ch3 那条 KDF 链，继续派生出 MK 加密消息。<br>每次 DH ratchet 推进，都会"换上一条全新的 CK 链"。' },
+  { ch: 4, title: 'Double Ratchet 全景', body: '完整图景：<br>① <strong>root chain</strong>（amber）：每次新 DH 推进一格，是主线。<br>② <strong>sending chain</strong>（cherry）：Alice 每发一条消息推进一格，派生 MK 加密。<br>③ <strong>receiving chain</strong>（teal）：Alice 每收到 Bob 一条消息推进一格，派生 MK 解密。<br>双方的 sending 和 receiving 是对称镜像的。<br>"双棘轮" = 一条 DH 棘轮（垂直） + 两条对称棘轮（水平）。' },
+  // Ch5
+  { ch: 5, title: '挑战：Bob 离线', body: '前面所有 DH 都假设双方能<strong>同时在线交换公钥</strong>。<br>但现实里 Bob 可能在睡觉、在地铁、关机、被全村断网 …… Alice 总不能等他回来才发吧？<br>需要一个机制让 Alice 单方面就能完成首次密钥协商。<br>这就是 <code>X3DH · Extended Triple Diffie-Hellman</code> 要解决的问题。' },
+  { ch: 5, title: 'Bob 提前上传 IK + SPK', body: 'Bob 在<strong>注册时</strong>（不需要在线）就把两类公钥上传到 Server：<br>• <code>IK_B</code>（Identity Key 身份密钥）：长期不变，代表"我是 Bob"。<br>• <code>SPK_B</code>（Signed Pre-Key 签名预共享密钥）：定期轮换（一般几周到几个月），并由 IK_B 签名 —— 防止 Server 偷偷换成别的公钥。<br>这两个公钥就长期挂在服务器上，等任何人来要。' },
+  { ch: 5, title: '+ OPK 一次性密钥池', body: 'Bob 还会预先生成<strong>一池子</strong>『一次性密钥 OPK』（One-Time Pre-Key），比如 100 个，全部批量上传。<br>每个 OPK 只用一次：谁来要走一个，Server 就从池里删掉一个。<br>OPK 池快空了，Bob 下次上线时再补充上传。<br>OPK 是 X3DH 提供"后向恢复"的关键来源 —— 每次会话都有一个新鲜的、不可预测的密钥参与。' },
+  { ch: 5, title: 'Alice 取走三件套', body: 'Alice 想第一次给 Bob 发消息时：<br>① 向 Server 请求 Bob 的密钥包。<br>② Server 返回 <code>(IK_B, SPK_B, OPK_B)</code> 三件套，并<strong>原子地</strong>把这个 OPK 从池里删掉。<br>③ 下次别人来要 Bob 的密钥包，会拿到不同的 OPK，<strong>永远不会重复</strong>。<br>Alice 同时验证 SPK_B 上的 Bob 签名，确认没被 Server 调包。' },
+  { ch: 5, title: 'Alice 做 4 个 DH', body: 'Alice 自己有：长期身份 <code>IK_A</code> + 一次性短暂密钥 <code>EK_A</code>（Ephemeral Key，本次会话专用）。<br>结合 Bob 的三件套，Alice 做 <strong>4 次 ECDH</strong>：<br>• DH₁ = IK_A × SPK_B → 绑定身份<br>• DH₂ = EK_A × IK_B → 绑定 Bob 身份<br>• DH₃ = EK_A × SPK_B → 提供新鲜性<br>• DH₄ = EK_A × OPK_B → 提供后向恢复<br>4 个 DH 拼接 —— 任何一个密钥泄漏都不足以破整个握手。' },
+  { ch: 5, title: '→ SharedSecret → RK₀', body: '4 个 DH 输出拼接 <code>DH₁‖DH₂‖DH₃‖DH₄</code>，喂进 KDF，得到 <code>SharedSecret</code>。<br>SharedSecret 就是 Double Ratchet 的初始 <code>RK₀</code>。<br>从此刻起，Alice 和 Bob 共享一个 root key —— 接着进入 Ch4 描述的 ping-pong：每条消息都附带新公钥，root chain 不断推进。<br><strong>X3DH 是"起跑发令枪"，Double Ratchet 是"长跑本身"。</strong>' },
+  // Ch6
+  { ch: 6, title: '全景时序', body: '把整个故事压缩成一张时序图：<br>① Bob 注册时上传 IK + SPK + OPK 池<br>② Alice 想发消息 → 向 Server 请求 Bob 的密钥包<br>③ Server 返回三件套（OPK 出队）<br>④ Alice 在本地做 X3DH → 得到 SharedSecret = RK₀<br>⑤ Alice 用 RK₀ 派生 CK 加密第 1 条，连同自己的公钥一起发<br>⑥ Server 暂存，等 Bob 上线后转发<br>⑦ Bob 上线后做镜像 X3DH 推出同一个 RK₀，解密；回复时 Double Ratchet ping-pong 启动' },
+  { ch: 6, title: '数据可见性边界', body: 'Server 在整个流程中能看到什么？<br>• ✓ 公钥（IK、SPK、OPK 都是设计上公开的）<br>• ✓ 密文（要转发啊）<br>• ✓ 元数据：谁在跟谁聊、什么时候<br>• ✗ 任何私钥<br>• ✗ SharedSecret / RK / CK / MK<br>• ✗ 任何明文<br>这就是端到端加密的边界。元数据隐私是另一个问题，需要 <code>Sealed Sender</code> 等额外机制。' },
+  { ch: 6, title: 'FS 和 PCS', body: 'Signal 提供的两个核心安全保证：<br>① <strong>Forward Secrecy (前向保密)</strong>：现在被入侵，<strong>过去</strong>的消息仍安全。来自 KDF 链的单向性（Ch3）。<br>② <strong>Post-Compromise Security (后向恢复)</strong>：现在被入侵，<strong>未来</strong>过几次 DH 后重新安全。来自 DH ratchet 注入的新鲜性（Ch4）。<br>这两个性质是 Signal 区别于一般加密通信的关键 —— 即使长期密钥泄漏，损失也是有边界的。' },
+  { ch: 6, title: '🎉 关键密钥速查 · 完成', body: '8 个关键密钥的语义和生命周期。<br>看到这一步，你已经掌握了 Signal Double Ratchet 的全部核心思想。<br>想深入到具体的乱序消息处理、CK/MK 内部细节、Server 的原子性实现？<br>👉 回到 <code>../diagrams/index.html</code> 探索老手版 12 张深度图。<br>想分享某一步给朋友？直接复制当前 URL，对方打开就停在同一步。' },
+];
+
+const TOTAL = STEPS.length; // 25
+
+/* ============================================================
+   STEP_EXTRAS: 每步对应的『延伸阅读 + Rust 骨架』
+   refs: 权威外站索引 (Signal spec / RFC / Wikipedia)
+   code: Rust 实现骨架 (使用 dalek-cryptography / RustCrypto 生态)
+   注意: 代码字符串中 < > 必须写成 &lt; &gt; (innerHTML 注入)
+   ============================================================ */
+const STEP_EXTRAS = {
+  1: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/End-to-end_encryption', title: '端到端加密 (E2EE) · Wikipedia', note: '为什么需要在客户端加密' },
+      { url: 'https://signal.org/docs/', title: 'Signal Protocol 文档总入口', note: '本教程参考的规范源头' },
+    ]
+  },
+  2: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Symmetric-key_algorithm', title: '对称加密 · Wikipedia' },
+      { url: 'https://en.wikipedia.org/wiki/Galois/Counter_Mode', title: 'AES-GCM · Wikipedia', note: 'Signal 推荐的 AEAD' },
+      { url: 'https://datatracker.ietf.org/doc/html/rfc8439', title: 'RFC 8439 · ChaCha20-Poly1305', note: '移动端友好的替代' },
+    ],
+    code: `<span class="cm">// Cargo.toml:  aes-gcm = "0.10"</span>
+<span class="kw">use</span> aes_gcm::{Aes256Gcm, Key, Nonce, KeyInit, aead::Aead};
+
+<span class="kw">fn</span> <span class="fn">encrypt</span>(k: &amp;[<span class="ty">u8</span>; 32], nonce: &amp;[<span class="ty">u8</span>; 12], pt: &amp;[<span class="ty">u8</span>]) -&gt; <span class="ty">Vec</span>&lt;<span class="ty">u8</span>&gt; {
+    <span class="kw">let</span> cipher = Aes256Gcm::new(Key::&lt;Aes256Gcm&gt;::from_slice(k));
+    cipher.encrypt(Nonce::from_slice(nonce), pt).unwrap()
+}
+<span class="cm">// ⚠️ nonce 同 k 配对，永远不能重复（一次性 counter 或随机）</span>`
+  },
+  3: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Key_distribution', title: '密钥分发问题 · Wikipedia' },
+      { url: 'https://ee.stanford.edu/~hellman/publications/24.pdf', title: 'Diffie & Hellman 1976 原始论文', note: 'New Directions in Cryptography' },
+    ]
+  },
+  4: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Public-key_cryptography', title: '公钥密码学 · Wikipedia' },
+      { url: 'https://en.wikipedia.org/wiki/Trapdoor_function', title: '陷门函数', note: '"公钥推不出私钥"的数学基础' },
+    ]
+  },
+  5: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange', title: 'Diffie-Hellman 密钥交换 · Wikipedia' },
+      { url: 'https://en.wikipedia.org/wiki/Curve25519', title: 'Curve25519 椭圆曲线 · Wikipedia', note: 'Signal 实际使用的曲线' },
+      { url: 'https://datatracker.ietf.org/doc/html/rfc7748', title: 'RFC 7748 · X25519 / X448', note: 'ECDH on Curve25519 的规范' },
+      { url: 'https://docs.rs/x25519-dalek/', title: 'x25519-dalek crate 文档' },
+    ],
+    code: `<span class="cm">// Cargo.toml:  x25519-dalek = "2"</span>
+<span class="kw">use</span> x25519_dalek::{StaticSecret, PublicKey};
+<span class="kw">use</span> rand_core::OsRng;
+
+<span class="cm">// 双方各自生成私钥 (栈上 32 字节)</span>
+<span class="kw">let</span> a = StaticSecret::random_from_rng(<span class="ty">OsRng</span>);
+<span class="kw">let</span> big_a = PublicKey::from(&amp;a);
+<span class="kw">let</span> b = StaticSecret::random_from_rng(<span class="ty">OsRng</span>);
+<span class="kw">let</span> big_b = PublicKey::from(&amp;b);
+
+<span class="cm">// 在网络上交换公钥 big_a / big_b 后:</span>
+<span class="kw">let</span> ab_on_alice = a.diffie_hellman(&amp;big_b);  <span class="cm">// SharedSecret</span>
+<span class="kw">let</span> ab_on_bob   = b.diffie_hellman(&amp;big_a);
+<span class="kw">assert_eq</span>!(ab_on_alice.as_bytes(), ab_on_bob.as_bytes());`
+  },
+  6: {
+    refs: [
+      { url: 'https://datatracker.ietf.org/doc/html/rfc5869', title: 'RFC 5869 · HKDF', note: '从 DH 输出派生对称密钥的标准方法' },
+      { url: 'https://en.wikipedia.org/wiki/Key_derivation_function', title: 'KDF · Wikipedia' },
+    ],
+    code: `<span class="cm">// Cargo.toml:  hkdf = "0.12"  sha2 = "0.10"</span>
+<span class="kw">use</span> hkdf::Hkdf;
+<span class="kw">use</span> sha2::Sha256;
+
+<span class="cm">// 直接拿 ab 当对称密钥太"原始" —— 用 HKDF 派生</span>
+<span class="kw">let</span> hk = Hkdf::&lt;Sha256&gt;::new(<span class="kw">None</span>, ab_on_alice.as_bytes());
+<span class="kw">let</span> <span class="kw">mut</span> k = [0<span class="ty">u8</span>; 32];
+hk.expand(<span class="str">b"single-session-key"</span>, &amp;<span class="kw">mut</span> k).unwrap();
+<span class="cm">// k 现在是 256-bit 对称密钥，可直接喂 AES-GCM</span>`
+  },
+  7: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Key_reuse', title: '密钥复用攻击' },
+      { url: 'https://eprint.iacr.org/2016/475.pdf', title: 'Nonce-Misuse Resistance', note: '为什么"一次一密"很关键' },
+    ]
+  },
+  8: {
+    refs: [
+      { url: 'https://datatracker.ietf.org/doc/html/rfc2104', title: 'RFC 2104 · HMAC' },
+      { url: 'https://en.wikipedia.org/wiki/HMAC', title: 'HMAC · Wikipedia', note: '为什么 HMAC 是"带密钥的单向哈希"' },
+      { url: 'https://signal.org/docs/specifications/doubleratchet/#kdf-chains', title: 'Signal Double Ratchet §2.2 KDF Chains' },
+    ],
+    code: `<span class="cm">// Cargo.toml:  hmac = "0.12"  sha2 = "0.10"</span>
+<span class="kw">use</span> hmac::{Hmac, Mac};
+<span class="kw">use</span> sha2::Sha256;
+<span class="kw">type</span> <span class="ty">HmacSha256</span> = Hmac&lt;Sha256&gt;;
+
+<span class="cm">// Signal 里的"KDF"本质就是 HMAC-SHA256(key, info)</span>
+<span class="kw">fn</span> <span class="fn">kdf</span>(key: &amp;[<span class="ty">u8</span>], info: &amp;[<span class="ty">u8</span>]) -&gt; [<span class="ty">u8</span>; 32] {
+    <span class="kw">let</span> <span class="kw">mut</span> mac = HmacSha256::new_from_slice(key).unwrap();
+    mac.update(info);
+    mac.finalize().into_bytes().into()
+}`
+  },
+  9: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/doubleratchet/#symmetric-key-ratchet', title: 'Signal Double Ratchet §2.3 Symmetric-key Ratchet' },
+      { url: 'https://signal.org/docs/specifications/doubleratchet/#external-functions', title: '§5 External Functions · KDF_CK', note: '官方推荐的 KDF_CK 实现细节' },
+    ],
+    code: `<span class="cm">// Symmetric Ratchet · 用不同常量分离 CK 和 MK</span>
+<span class="kw">fn</span> <span class="fn">kdf_ck</span>(ck: &amp;[<span class="ty">u8</span>; 32]) -&gt; ([<span class="ty">u8</span>; 32], [<span class="ty">u8</span>; 32]) {
+    <span class="kw">let</span> next_ck = kdf(ck, &amp;[0x02]);  <span class="cm">// 下一个链密钥</span>
+    <span class="kw">let</span> mk      = kdf(ck, &amp;[0x01]);  <span class="cm">// 这条消息的密钥</span>
+    (next_ck, mk)
+}
+
+<span class="cm">// 发一条消息：</span>
+<span class="kw">let</span> (new_ck, mk) = kdf_ck(&amp;state.send_ck);
+state.send_ck = new_ck;
+<span class="kw">let</span> ct = encrypt(&amp;mk, &amp;nonce, plaintext);
+<span class="cm">// mk 用完即弃 (drop 后内存清零，可用 zeroize crate)</span>`
+  },
+  10: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Forward_secrecy', title: '前向保密 · Wikipedia' },
+      { url: 'https://signal.org/blog/advanced-ratcheting/', title: 'Signal Blog · Advanced cryptographic ratcheting', note: '直觉介绍 (Moxie 亲笔)' },
+    ]
+  },
+  11: {
+    refs: [
+      { url: 'https://eprint.iacr.org/2016/221.pdf', title: 'On Post-Compromise Security · 论文', note: 'Cohn-Gordon 等, 2016' },
+      { url: 'https://en.wikipedia.org/wiki/Forward_secrecy#Post-compromise_security', title: 'PCS · Wikipedia' },
+    ]
+  },
+  12: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/doubleratchet/#diffie-hellman-ratchet', title: 'Signal Double Ratchet §2.4 DH Ratchet' },
+    ]
+  },
+  13: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/doubleratchet/#dh-ratchet', title: 'Signal §3.4 · 工作流程图' },
+    ]
+  },
+  14: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/doubleratchet/#external-functions', title: 'Signal §5 · KDF_RK 函数定义' },
+    ],
+    code: `<span class="cm">// DH Ratchet · 用 HKDF 把新 DH 输出注入 root key</span>
+<span class="kw">fn</span> <span class="fn">kdf_rk</span>(rk: &amp;[<span class="ty">u8</span>; 32], dh_out: &amp;[<span class="ty">u8</span>; 32])
+    -&gt; ([<span class="ty">u8</span>; 32], [<span class="ty">u8</span>; 32])
+{
+    <span class="kw">let</span> hk = Hkdf::&lt;Sha256&gt;::new(<span class="kw">Some</span>(rk), dh_out);
+    <span class="kw">let</span> <span class="kw">mut</span> okm = [0<span class="ty">u8</span>; 64];
+    hk.expand(<span class="str">b"DR-RootChain"</span>, &amp;<span class="kw">mut</span> okm).unwrap();
+    <span class="kw">let</span> new_rk: [<span class="ty">u8</span>; 32] = okm[..32].try_into().unwrap();
+    <span class="kw">let</span> new_ck: [<span class="ty">u8</span>; 32] = okm[32..].try_into().unwrap();
+    (new_rk, new_ck)
+}`
+  },
+  15: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/doubleratchet/#state', title: 'Signal §3.1 · 完整 State 字段' },
+    ],
+    code: `<span class="cm">// 完整 Double Ratchet 状态机</span>
+<span class="kw">use</span> std::collections::HashMap;
+
+<span class="kw">pub struct</span> <span class="ty">RatchetState</span> {
+    <span class="kw">pub</span> root_key:    [<span class="ty">u8</span>; 32],     <span class="cm">// RK · root chain 主线</span>
+    <span class="kw">pub</span> send_ck:     <span class="ty">Option</span>&lt;[<span class="ty">u8</span>; 32]&gt;, <span class="cm">// sending chain 当前 CK</span>
+    <span class="kw">pub</span> recv_ck:     <span class="ty">Option</span>&lt;[<span class="ty">u8</span>; 32]&gt;, <span class="cm">// receiving chain 当前 CK</span>
+    <span class="kw">pub</span> send_kp:     <span class="ty">StaticSecret</span>,    <span class="cm">// 自己当前 DH 私钥</span>
+    <span class="kw">pub</span> recv_pub:    <span class="ty">Option</span>&lt;<span class="ty">PublicKey</span>&gt;, <span class="cm">// 对方最新 DH 公钥</span>
+    <span class="kw">pub</span> send_n:      <span class="ty">u32</span>,            <span class="cm">// 当前 sending 消息序号</span>
+    <span class="kw">pub</span> recv_n:      <span class="ty">u32</span>,            <span class="cm">// 当前 receiving 消息序号</span>
+    <span class="kw">pub</span> prev_send_n: <span class="ty">u32</span>,            <span class="cm">// 上次 ratchet 前发了几条</span>
+    <span class="kw">pub</span> skipped:     <span class="ty">HashMap</span>&lt;(<span class="ty">PublicKey</span>, <span class="ty">u32</span>), [<span class="ty">u8</span>; 32]&gt;,
+}`
+  },
+  16: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/x3dh/#introduction', title: 'X3DH spec §1 · 异步通信场景' },
+    ]
+  },
+  17: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/x3dh/#keys', title: 'X3DH §2 · Key 定义' },
+      { url: 'https://signal.org/docs/specifications/xeddsa/', title: 'XEdDSA · 用 X25519 密钥签名', note: 'SPK 怎么由 IK 签的' },
+    ]
+  },
+  18: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/x3dh/#sending-the-initial-message', title: 'X3DH §3.3 · One-Time Prekeys', note: 'OPK 的安全语义' },
+    ]
+  },
+  19: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/x3dh/#publishing-keys', title: 'X3DH §3.2 · 服务器责任' },
+    ]
+  },
+  20: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/x3dh/#sending-the-initial-message', title: 'X3DH §3.3 · 四个 DH 的安全分摊' },
+    ],
+    code: `<span class="cm">// Alice 侧 · 4 个 DH</span>
+<span class="kw">let</span> dh1 = ik_a.diffie_hellman(&amp;spk_b);  <span class="cm">// IK_A × SPK_B  绑定身份</span>
+<span class="kw">let</span> dh2 = ek_a.diffie_hellman(&amp;ik_b);   <span class="cm">// EK_A × IK_B   绑定 Bob</span>
+<span class="kw">let</span> dh3 = ek_a.diffie_hellman(&amp;spk_b);  <span class="cm">// EK_A × SPK_B  新鲜性</span>
+<span class="kw">let</span> dh4 = ek_a.diffie_hellman(&amp;opk_b);  <span class="cm">// EK_A × OPK_B  PCS (如有 OPK)</span>
+
+<span class="cm">// Bob 侧 (镜像，对调身份/临时):</span>
+<span class="cm">// dh1 = spk_b × IK_A,  dh2 = ik_b × EK_A,  dh3 = spk_b × EK_A,  dh4 = opk_b × EK_A</span>
+<span class="cm">// → 同一个 dh1/2/3/4 值</span>`
+  },
+  21: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/x3dh/#sending-the-initial-message', title: 'X3DH §3.3 · DH outputs → SK' },
+    ],
+    code: `<span class="cm">// 4 DH 输出拼接 → HKDF → SharedSecret (= 初始 RK)</span>
+<span class="kw">let</span> <span class="kw">mut</span> km = <span class="ty">Vec</span>::&lt;<span class="ty">u8</span>&gt;::with_capacity(32 * 5);
+km.extend_from_slice(&amp;[0xFFu8; 32]);    <span class="cm">// X25519 域分离前缀</span>
+km.extend_from_slice(dh1.as_bytes());
+km.extend_from_slice(dh2.as_bytes());
+km.extend_from_slice(dh3.as_bytes());
+km.extend_from_slice(dh4.as_bytes());
+
+<span class="kw">let</span> hk = Hkdf::&lt;Sha256&gt;::new(<span class="kw">Some</span>(&amp;[0<span class="ty">u8</span>; 32]), &amp;km);
+<span class="kw">let</span> <span class="kw">mut</span> sk = [0<span class="ty">u8</span>; 32];
+hk.expand(<span class="str">b"X3DH"</span>, &amp;<span class="kw">mut</span> sk).unwrap();
+<span class="cm">// sk 就是 Double Ratchet 的初始 root key RK₀</span>`
+  },
+  22: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/x3dh/#the-x3dh-protocol', title: 'X3DH §3 · 完整协议时序' },
+    ]
+  },
+  23: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/End-to-end_encryption', title: 'E2EE 的可见性边界' },
+      { url: 'https://signal.org/blog/sealed-sender/', title: 'Signal · Sealed Sender', note: '元数据隐藏的下一步' },
+    ]
+  },
+  24: {
+    refs: [
+      { url: 'https://eprint.iacr.org/2016/1013.pdf', title: 'A Formal Security Analysis of the Signal Messaging Protocol', note: 'Cohn-Gordon 等, 完整 FS/PCS 证明' },
+    ]
+  },
+  25: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/doubleratchet/', title: 'Signal · Double Ratchet 完整规范' },
+      { url: 'https://signal.org/docs/specifications/x3dh/', title: 'Signal · X3DH 完整规范' },
+      { url: 'https://github.com/signalapp/libsignal', title: 'libsignal · 官方 Rust + 跨平台实现', note: '生产级参考代码' },
+      { url: 'https://github.com/rozbb/double-ratchet', title: 'rozbb/double-ratchet · 纯 Rust 教学实现' },
+    ],
+    code: `<span class="cm"># Cargo.toml · 完整 Signal 实现推荐依赖</span>
+[dependencies]
+x25519-dalek     = <span class="str">"2"</span>      <span class="cm"># ECDH on Curve25519</span>
+curve25519-dalek = <span class="str">"4"</span>      <span class="cm"># 底层曲线运算</span>
+ed25519-dalek    = <span class="str">"2"</span>      <span class="cm"># SPK 签名 (XEdDSA 思路)</span>
+hkdf             = <span class="str">"0.12"</span>   <span class="cm"># 派生 RK / CK / SK</span>
+hmac             = <span class="str">"0.12"</span>   <span class="cm"># KDF_CK 的底层</span>
+sha2             = <span class="str">"0.10"</span>   <span class="cm"># SHA-256 哈希</span>
+aes-gcm          = <span class="str">"0.10"</span>   <span class="cm"># AEAD 消息加密</span>
+zeroize          = <span class="str">"1"</span>      <span class="cm"># 用完即清零 MK / 私钥</span>
+rand_core        = { version = <span class="str">"0.6"</span>, features = [<span class="str">"std"</span>] }`
+  },
+};
+
+function renderExtras(step) {
+  const el = document.getElementById('extras');
+  const extra = STEP_EXTRAS[step] || {};
+  let html = '';
+
+  if (extra.refs && extra.refs.length) {
+    html += '<div class="extras-card refs"><h4>📚 延伸阅读 · 原理出处</h4><ul>';
+    for (const r of extra.refs) {
+      const note = r.note ? `<span class="ref-note">— ${r.note}</span>` : '';
+      html += `<li><a href="${r.url}" target="_blank" rel="noopener">${r.title}</a>${note}</li>`;
+    }
+    html += '</ul></div>';
+  }
+
+  if (extra.code) {
+    html += `<div class="extras-card code"><h4>🦀 Rust 骨架</h4><pre>${extra.code}</pre></div>`;
+  }
+
+  // Single-card → stretch full width; both cards → keep 2-col grid
+  el.classList.toggle('two-col', !!(extra.refs && extra.refs.length && extra.code));
+  el.innerHTML = html;
+}
+
+// Build dots in sidebar
+function buildDots() {
+  const groups = {};
+  STEPS.forEach((s, i) => {
+    (groups[s.ch] ||= []).push(i + 1);
+  });
+  Object.entries(groups).forEach(([ch, steps]) => {
+    const wrap = document.querySelector(`.dots[data-ch-dots="${ch}"]`);
+    if (!wrap) return;
+    steps.forEach(n => {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.dataset.step = n;
+      d.title = `Step ${n}`;
+      d.addEventListener('click', () => goTo(n));
+      wrap.appendChild(d);
+    });
+  });
+}
+
+let currentStep = 1;
+
+function goTo(step) {
+  step = Math.max(1, Math.min(TOTAL, step));
+  currentStep = step;
+  const cur = STEPS[step - 1];
+
+  // Activate the right chapter SVG
+  document.querySelectorAll('.chapter-svg').forEach(svg => {
+    svg.classList.toggle('active', +svg.dataset.ch === cur.ch);
+  });
+
+  // Apply visibility to all data-step elements
+  document.querySelectorAll('[data-step]').forEach(el => {
+    const start = +el.dataset.step;
+    const end = el.dataset.stepEnd ? +el.dataset.stepEnd : 999;
+    const visible = step >= start && step <= end;
+    // Defer to next frame so transition triggers
+    requestAnimationFrame(() => el.classList.toggle('visible', visible));
+  });
+
+  // Update header
+  document.getElementById('header-ch').textContent = 'CH' + cur.ch;
+  document.getElementById('header-title').textContent = cur.title;
+  document.getElementById('header-counter').textContent = `Step ${step} / ${TOTAL}`;
+
+  // Update caption
+  document.getElementById('caption-title').textContent = cur.title;
+  document.getElementById('caption-body').innerHTML = cur.body;
+
+  // Render references + rust code
+  renderExtras(step);
+
+  // Update dots (active / read)
+  document.querySelectorAll('.dot').forEach(d => {
+    const n = +d.dataset.step;
+    d.classList.toggle('active', n === step);
+    d.classList.toggle('read', n < step);
+  });
+
+  // Update controls
+  document.getElementById('btn-prev').disabled = step === 1;
+  document.getElementById('btn-next').disabled = step === TOTAL;
+
+  // Sync URL
+  if (history.replaceState) {
+    history.replaceState(null, '', '#step-' + step);
+  } else {
+    location.hash = 'step-' + step;
+  }
+}
+
+function initFromHash() {
+  const m = location.hash.match(/step-(\d+)/);
+  return m ? +m[1] : 1;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildDots();
+  goTo(initFromHash());
+
+  document.getElementById('btn-prev').addEventListener('click', () => goTo(currentStep - 1));
+  document.getElementById('btn-next').addEventListener('click', () => goTo(currentStep + 1));
+  document.getElementById('btn-replay').addEventListener('click', () => goTo(1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(currentStep - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(currentStep + 1); }
+    if (e.key === 'Home')       { e.preventDefault(); goTo(1); }
+    if (e.key === 'End')        { e.preventDefault(); goTo(TOTAL); }
+  });
+
+  window.addEventListener('hashchange', () => {
+    const n = initFromHash();
+    if (n !== currentStep) goTo(n);
+  });
+});
+</script>
+</body>
+</html>

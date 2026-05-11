@@ -1,0 +1,6 @@
+.DS_Store
+.handoffs/
+tasks/
+*.swp
+*.swo
+node_modules/

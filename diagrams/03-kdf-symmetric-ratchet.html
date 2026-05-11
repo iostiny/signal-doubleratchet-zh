@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>03 · KDF · Symmetric Ratchet 机制</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #fdfaf6; --bg-card: #ffffff;
+      --text-primary: #1f2937; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --cherry: #aa1141; --cherry-deep: #9a0036; --cherry-pink: #ea68b6; --cherry-glass: #fce4e4;
+      --teal: #0e7490; --teal-soft: #cffafe;
+      --amber: #b45309; --amber-soft: #fef3c7;
+      --green: #15803d; --green-soft: #dcfce7;
+      --rule: #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC','JetBrains Mono',-apple-system,sans-serif; background: var(--bg-page); min-height: 100vh; padding: 2rem; color: var(--text-primary); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; }
+    .header-row { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--cherry); }
+    .header-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--cherry); color: white; border-radius: 8px; font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.9rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; color: var(--cherry-deep); letter-spacing: -0.01em; }
+    .crumb { margin-left: auto; padding: 4px 12px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 12px; font-size: 0.7rem; font-weight: 500; }
+    .subtitle { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.6rem; margin-left: 44px; }
+    .diagram-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 3px rgba(170,17,65,0.04); padding: 1.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1100px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .card { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--rule); padding: 1.1rem 1.2rem; border-left-width: 4px; }
+    .card.c-cherry { border-left-color: var(--cherry); }
+    .card.c-amber { border-left-color: var(--amber); }
+    .card.c-teal { border-left-color: var(--teal); }
+    .card.c-green { border-left-color: var(--green); }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .card-num { font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: var(--cherry-glass); color: var(--cherry-deep); }
+    .card.c-amber .card-num { background: var(--amber-soft); color: var(--amber); }
+    .card.c-teal .card-num { background: var(--teal-soft); color: var(--teal); }
+    .card.c-green .card-num { background: var(--green-soft); color: var(--green); }
+    .card h3 { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+    .card ul { list-style: none; color: var(--text-secondary); font-size: 0.8rem; }
+    .card li { margin-bottom: 0.4rem; line-height: 1.55; }
+    .takeaway { padding: 1.1rem 1.4rem; background: linear-gradient(to right,#fff5f7,#fce4e4,#fff5f7); border-left: 4px solid var(--cherry); border-radius: 8px; color: var(--cherry-deep); font-size: 0.92rem; line-height: 1.65; }
+    .takeaway strong { color: var(--cherry); }
+    .reference { margin-top: 1.5rem; padding: 1.4rem 1.6rem; background: var(--bg-card); border: 1px dashed var(--cherry-pink); border-radius: 12px; }
+    .reference h3 { font-size: 1rem; font-weight: 700; color: var(--cherry-deep); margin-bottom: 0.3rem; }
+    .ref-intro { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic; }
+    .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; }
+    .ref-item { padding: 0.85rem 1rem; background: linear-gradient(to bottom, #fff5f7, #ffffff); border-left: 3px solid var(--cherry-pink); border-radius: 6px; }
+    .ref-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--cherry-deep); margin-bottom: 0.4rem; }
+    .ref-tag { display: inline-block; font-size: 0.62rem; padding: 1px 6px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 4px; margin-right: 0.4rem; font-weight: 500; font-family: 'JetBrains Mono',monospace; vertical-align: middle; }
+    .ref-item p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.4rem; }
+    .ref-item code { display: block; font-size: 0.72rem; padding: 0.35rem 0.55rem; background: rgba(170, 17, 65, 0.06); color: var(--cherry-deep); border-radius: 4px; font-family: 'JetBrains Mono',monospace; word-break: break-all; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono',monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <span class="header-num">03</span>
+        <h1>KDF · Symmetric Ratchet 机制</h1>
+        <span class="crumb">单链派生 · HMAC-SHA256</span>
+      </div>
+      <p class="subtitle">ChainKey 不断推进，每步派生一个用完即丢的 MessageKey · CK / MK 分离原因</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#b45309"/>
+          </marker>
+          <marker id="arr-cherry" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#15803d"/>
+          </marker>
+          <marker id="arr-slate" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+          </marker>
+        </defs>
+
+        <!-- ROW 1 (Y=20-50): 场景说明 -->
+        <rect x="40" y="20" width="1120" height="40" rx="8"
+              fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+        <text x="600" y="46" text-anchor="middle" fill="#9a0036" font-size="12" font-weight="600">
+          🔁 单条 Symmetric Ratchet — 输入: CK_n · 输出: (CK_{n+1}, MK_n) — 每发一条消息推进一格
+        </text>
+
+        <!-- ROW 2 (Y=80-110): 公开常量 C 标注栏 -->
+        <rect x="60" y="78" width="1080" height="32" rx="6"
+              fill="#dcfce7" stroke="#15803d" stroke-width="1.2"/>
+        <text x="80" y="98" fill="#166534" font-size="11" font-weight="600">📌 常量 C</text>
+        <text x="600" y="98" text-anchor="middle" fill="#166534" font-size="10">
+          公开常数（实现中常用 0x01 派生 MK / 0x02 派生下一个 CK）— 双方约定相同
+        </text>
+
+        <!-- 常量 C 向 4 个 KDF 节点的虚线下推 -->
+        <line x1="245" y1="110" x2="245" y2="155" stroke="#15803d" stroke-width="0.8" stroke-dasharray="3,2"/>
+        <line x1="490" y1="110" x2="490" y2="155" stroke="#15803d" stroke-width="0.8" stroke-dasharray="3,2"/>
+        <line x1="735" y1="110" x2="735" y2="155" stroke="#15803d" stroke-width="0.8" stroke-dasharray="3,2"/>
+        <line x1="980" y1="110" x2="980" y2="155" stroke="#15803d" stroke-width="0.8" stroke-dasharray="3,2"/>
+
+        <!-- ROW 3 (Y=130-280): 主链 -->
+
+        <!-- CK_0 (= RootKey/起始) -->
+        <rect x="60" y="170" width="100" height="50" rx="6"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="110" y="192" text-anchor="middle" fill="#92400e" font-size="12" font-weight="700">CK₀</text>
+        <text x="110" y="208" text-anchor="middle" fill="#92400e" font-size="9" font-style="italic">= 初始 RootKey</text>
+
+        <!-- 箭头 CK0 → KDF1 -->
+        <line x1="160" y1="195" x2="195" y2="195" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <!-- KDF_1 -->
+        <rect x="200" y="155" width="90" height="80" rx="0"
+              fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+        <text x="245" y="182" text-anchor="middle" fill="#166534" font-size="13" font-weight="700">KDF</text>
+        <text x="245" y="200" text-anchor="middle" fill="#166534" font-size="9">HMAC</text>
+        <text x="245" y="216" text-anchor="middle" fill="#166534" font-size="9">SHA-256</text>
+
+        <!-- 箭头 KDF1 → CK1 -->
+        <line x1="290" y1="195" x2="325" y2="195" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <!-- CK_1 -->
+        <rect x="330" y="170" width="100" height="50" rx="6"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="380" y="192" text-anchor="middle" fill="#92400e" font-size="12" font-weight="700">CK₁</text>
+        <text x="380" y="208" text-anchor="middle" fill="#92400e" font-size="9" font-style="italic">留在状态</text>
+
+        <line x1="430" y1="195" x2="445" y2="195" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <!-- KDF_2 -->
+        <rect x="450" y="155" width="80" height="80" rx="0"
+              fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+        <text x="490" y="182" text-anchor="middle" fill="#166534" font-size="13" font-weight="700">KDF</text>
+        <text x="490" y="216" text-anchor="middle" fill="#166534" font-size="9">SHA-256</text>
+
+        <line x1="530" y1="195" x2="565" y2="195" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <!-- CK_2 -->
+        <rect x="570" y="170" width="100" height="50" rx="6"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="620" y="192" text-anchor="middle" fill="#92400e" font-size="12" font-weight="700">CK₂</text>
+        <text x="620" y="208" text-anchor="middle" fill="#92400e" font-size="9" font-style="italic">留在状态</text>
+
+        <line x1="670" y1="195" x2="690" y2="195" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <!-- KDF_3 -->
+        <rect x="695" y="155" width="80" height="80" rx="0"
+              fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+        <text x="735" y="182" text-anchor="middle" fill="#166534" font-size="13" font-weight="700">KDF</text>
+        <text x="735" y="216" text-anchor="middle" fill="#166534" font-size="9">SHA-256</text>
+
+        <line x1="775" y1="195" x2="810" y2="195" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <!-- CK_3 -->
+        <rect x="815" y="170" width="100" height="50" rx="6"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="865" y="192" text-anchor="middle" fill="#92400e" font-size="12" font-weight="700">CK₃</text>
+        <text x="865" y="208" text-anchor="middle" fill="#92400e" font-size="9" font-style="italic">留在状态</text>
+
+        <line x1="915" y1="195" x2="935" y2="195" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <!-- KDF_4 -->
+        <rect x="940" y="155" width="80" height="80" rx="0"
+              fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+        <text x="980" y="182" text-anchor="middle" fill="#166534" font-size="13" font-weight="700">KDF</text>
+        <text x="980" y="216" text-anchor="middle" fill="#166534" font-size="9">SHA-256</text>
+
+        <line x1="1020" y1="195" x2="1055" y2="195" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <!-- CK_4 ... -->
+        <rect x="1060" y="170" width="80" height="50" rx="6"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2" stroke-dasharray="3,2"/>
+        <text x="1100" y="192" text-anchor="middle" fill="#92400e" font-size="12" font-weight="700">CK₄</text>
+        <text x="1100" y="208" text-anchor="middle" fill="#92400e" font-size="9">…</text>
+
+        <!-- ROW 4 (Y=240-340): MKs 派生 (向下分叉) -->
+        <text x="40" y="270" fill="#475569" font-size="10" font-weight="600">MK 派生:</text>
+
+        <!-- 从每个 KDF 向下派生 MK -->
+        <path d="M 245 235 Q 245 260 220 280" fill="none" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+        <rect x="180" y="280" width="80" height="36" rx="6"
+              fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="220" y="298" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">MK₁</text>
+        <text x="220" y="310" text-anchor="middle" fill="#aa1141" font-size="8">用完即丢</text>
+
+        <path d="M 490 235 Q 490 260 465 280" fill="none" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+        <rect x="425" y="280" width="80" height="36" rx="6"
+              fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="465" y="298" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">MK₂</text>
+        <text x="465" y="310" text-anchor="middle" fill="#aa1141" font-size="8">用完即丢</text>
+
+        <path d="M 735 235 Q 735 260 710 280" fill="none" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+        <rect x="670" y="280" width="80" height="36" rx="6"
+              fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="710" y="298" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">MK₃</text>
+        <text x="710" y="310" text-anchor="middle" fill="#aa1141" font-size="8">用完即丢</text>
+
+        <path d="M 980 235 Q 980 260 955 280" fill="none" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+        <rect x="915" y="280" width="80" height="36" rx="6"
+              fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="955" y="298" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">MK₄</text>
+        <text x="955" y="310" text-anchor="middle" fill="#aa1141" font-size="8">用完即丢</text>
+
+        <!-- 用途标注 (MK 下方): encrypt(M_n) -->
+        <text x="220" y="338" text-anchor="middle" fill="#6b7280" font-size="9">↓ encrypt(M₁)</text>
+        <text x="465" y="338" text-anchor="middle" fill="#6b7280" font-size="9">↓ encrypt(M₂)</text>
+        <text x="710" y="338" text-anchor="middle" fill="#6b7280" font-size="9">↓ encrypt(M₃)</text>
+        <text x="955" y="338" text-anchor="middle" fill="#6b7280" font-size="9">↓ encrypt(M₄)</text>
+
+        <!-- ROW 5 (Y=380-560): 双面板 -->
+
+        <!-- 左面板: KDF 内部展开 -->
+        <g id="panel-kdf-zoom">
+          <rect x="40" y="380" width="540" height="180" rx="10"
+                fill="#ffffff" stroke="#15803d" stroke-width="2"/>
+          <rect x="40" y="380" width="540" height="36" rx="10" fill="#dcfce7"/>
+          <rect x="40" y="406" width="540" height="10" fill="#dcfce7"/>
+          <text x="60" y="404" fill="#166534" font-size="13" font-weight="700">
+            🔍 KDF 内部展开 · 单个节点放大
+          </text>
+
+          <!-- KDF zoom: 左输入 + 上输入 → HMAC → 右输出 -->
+          <!-- 输入 CK_in (左) -->
+          <rect x="60" y="450" width="70" height="32" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="95" y="470" text-anchor="middle" fill="#92400e" font-size="10" font-weight="600">CK_in</text>
+
+          <!-- 输入 Constant C (上) -->
+          <rect x="200" y="436" width="60" height="22" rx="4" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+          <text x="230" y="451" text-anchor="middle" fill="#166534" font-size="9" font-weight="600">C (常量)</text>
+
+          <!-- HMAC box -->
+          <rect x="180" y="466" width="120" height="48" rx="0" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="240" y="486" text-anchor="middle" fill="#166534" font-size="11" font-weight="700">HMAC-SHA256</text>
+          <text x="240" y="503" text-anchor="middle" fill="#166534" font-size="9">→ 64 字节输出</text>
+
+          <!-- 输入箭头 -->
+          <line x1="130" y1="466" x2="178" y2="478" stroke="#475569" stroke-width="1" marker-end="url(#arr-slate)"/>
+          <text x="146" y="462" fill="#6b7280" font-size="8">key</text>
+
+          <line x1="230" y1="458" x2="230" y2="464" stroke="#475569" stroke-width="1" marker-end="url(#arr-slate)"/>
+          <text x="266" y="462" fill="#6b7280" font-size="8">data</text>
+
+          <!-- 输出 64 字节 → split -->
+          <line x1="300" y1="490" x2="335" y2="490" stroke="#475569" stroke-width="1.2" marker-end="url(#arr-slate)"/>
+
+          <!-- 64-byte output box -->
+          <rect x="340" y="465" width="80" height="50" rx="0" fill="#fef3c7" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="380" y="482" text-anchor="middle" fill="#92400e" font-size="9" font-weight="600">64 bytes</text>
+          <line x1="340" y1="490" x2="420" y2="490" stroke="#b45309" stroke-width="1" stroke-dasharray="2,2"/>
+          <text x="380" y="476" text-anchor="middle" fill="#92400e" font-size="8">prefix(32)</text>
+          <text x="380" y="508" text-anchor="middle" fill="#aa1141" font-size="8">suffix(32)</text>
+
+          <!-- 分裂出 CK_out 和 MK -->
+          <line x1="420" y1="478" x2="445" y2="468" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+          <rect x="450" y="450" width="70" height="28" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="485" y="468" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">CK_out</text>
+
+          <line x1="420" y1="502" x2="445" y2="510" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+          <rect x="450" y="498" width="70" height="28" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="485" y="516" text-anchor="middle" fill="#9a0036" font-size="10" font-weight="700">MK</text>
+
+          <text x="60" y="538" fill="#374151" font-size="10" font-weight="600">代码示意:</text>
+          <text x="60" y="552" fill="#475569" font-size="9" font-family="JetBrains Mono">let kdf = hmacSHA256(key: ckIn, data: c)</text>
+          <text x="60" y="566" fill="#475569" font-size="9" font-family="JetBrains Mono">return (ckOut: kdf.prefix(32), mk: kdf.suffix(32))</text>
+        </g>
+
+        <!-- 右面板: Q&A 为什么 CK/MK 必须分离 -->
+        <g id="panel-qa">
+          <rect x="620" y="380" width="540" height="180" rx="10"
+                fill="#ffffff" stroke="#aa1141" stroke-width="2"/>
+          <rect x="620" y="380" width="540" height="36" rx="10" fill="#fce4e4"/>
+          <rect x="620" y="406" width="540" height="10" fill="#fce4e4"/>
+          <text x="640" y="404" fill="#9a0036" font-size="13" font-weight="700">
+            ❓ 为什么 ChainKey 和 MessageKey 必须分离？
+          </text>
+
+          <text x="640" y="438" fill="#1f2937" font-size="11" font-weight="600">
+            ❌ 反例: 假如直接用 CK_n 加密消息
+          </text>
+          <text x="640" y="456" fill="#374151" font-size="10">
+            • CK_n 留在状态用于推进下一格
+          </text>
+          <text x="640" y="472" fill="#374151" font-size="10">
+            • 攻击者拿到 CK_n → 可解 M_n 也可推 CK_{n+1} → 解 M_{n+1}…
+          </text>
+          <text x="640" y="488" fill="#b91c1c" font-size="10" font-weight="600">
+            → 失去前向安全
+          </text>
+
+          <text x="640" y="514" fill="#1f2937" font-size="11" font-weight="600">
+            ✅ 正确做法: CK 留下推进, MK 用完即丢
+          </text>
+          <text x="640" y="532" fill="#374151" font-size="10">
+            • MK_n 加密完 M_n 立即从内存清除
+          </text>
+          <text x="640" y="548" fill="#374151" font-size="10">
+            • 攻击者拿到 CK_n 也只能推未来, 反推不了过去
+          </text>
+        </g>
+
+        <!-- ROW 6 (Y=590-680): Takeaway banner -->
+        <rect x="40" y="590" width="1120" height="80" rx="10"
+              fill="#fff5f7" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="600" y="618" text-anchor="middle" fill="#9a0036" font-size="13" font-weight="700">
+          💡 带走结论
+        </text>
+        <text x="600" y="640" text-anchor="middle" fill="#aa1141" font-size="11">
+          单条对称棘轮 = 单向 hash 链 + 每步分叉出消息密钥
+        </text>
+        <text x="600" y="658" text-anchor="middle" fill="#aa1141" font-size="10.5">
+          ChainKey 是"棘轮的齿"（保留在状态、推进下一格）· MessageKey 是"齿上掉下的钥匙"（一次性、用完即丢）
+        </text>
+      </svg>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="cards">
+      <div class="card c-amber">
+        <div class="card-header">
+          <span class="card-num">CK</span>
+          <h3>ChainKey · 保留型</h3>
+        </div>
+        <ul>
+          <li>• 长度：32 字节</li>
+          <li>• 存活：留在 Session 状态中（直到下次推进）</li>
+          <li>• 推进：HMAC(CK_n, C) → CK_{n+1}</li>
+          <li>• 不直接参与加密，仅作为派生源</li>
+        </ul>
+      </div>
+
+      <div class="card c-cherry">
+        <div class="card-header">
+          <span class="card-num">MK</span>
+          <h3>MessageKey · 一次性</h3>
+        </div>
+        <ul>
+          <li>• 长度：32 字节（或派生出 enc + auth + iv）</li>
+          <li>• 存活：用完即从内存清除（zeroize）</li>
+          <li>• 用途：AES-256-GCM 加密一条消息</li>
+          <li>• 索引：用 chain_index 标识第几个</li>
+        </ul>
+      </div>
+
+      <div class="card c-green">
+        <div class="card-header">
+          <span class="card-num">KDF</span>
+          <h3>KDF · 单向哈希</h3>
+        </div>
+        <ul>
+          <li>• 算法：HMAC-SHA256</li>
+          <li>• 单向性：从输出无法反推输入（密码学假设）</li>
+          <li>• 公开常量 C：让同一个 CK 能派生出两种用途</li>
+          <li>• Olm 实践：用 0x01/0x02 两个常数分别派生 MK/CK</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <strong>💡 一句话理解：</strong>
+      Symmetric Ratchet 就像一根单向齿轮 —
+      <strong>ChainKey</strong> 是齿轮的"齿"（每转一格留下一个新齿、旧齿不可恢复），
+      <strong>MessageKey</strong> 是齿上飞出的"火花"（瞬间用一次就消失）。
+      这种"留下推进 + 飞出即丢"的分工，是单条棘轮实现前向安全的根本机制。
+    </div>
+
+    <div class="reference">
+      <h3>📚 基础知识速查 · Reference</h3>
+      <p class="ref-intro">不熟悉以下底层概念? 这里是 30 秒回顾。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">算法</span>HMAC-SHA256 输出长度</h4>
+          <p>固定 32 字节 (256 bits)。可被分割为 prefix(16) + suffix(16) 或其他组合, 派生多个独立的 32B 子密钥。</p>
+          <code>HMAC(key, data) → 32 bytes</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">设计</span>Domain Separation</h4>
+          <p>用不同的常量 (如 0x01 / 0x02) 作为 KDF 输入, 确保不同用途的派生 key 互相独立、互不影响。</p>
+          <code>MK = HMAC(CK, 0x01)<br>CK' = HMAC(CK, 0x02)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">数据结构</span>Hash Chain (哈希链)</h4>
+          <p>形如 H(H(H(seed))) 的单向序列, 每一步都不可逆。Symmetric Ratchet 的本质就是带分叉的 hash chain。</p>
+          <code>x₀ → H(x₀) → H(H(x₀)) → …</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">算法</span>AEAD (认证加密)</h4>
+          <p>加密 + 认证一体化的算法, 如 AES-GCM。Signal 用 MK 派生 enc/auth/iv 三件套来调用 AEAD。</p>
+          <code>(plaintext, AD) → ciphertext + tag</code>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footer">Signal Double Ratchet · Diagram 03/11 · KDF & Symmetric Ratchet</p>
+  </div>
+</body>
+</html>

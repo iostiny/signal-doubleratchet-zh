@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>07 · X3DH 角色与消息流</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #fdfaf6; --bg-card: #ffffff;
+      --text-primary: #1f2937; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --cherry: #aa1141; --cherry-deep: #9a0036; --cherry-pink: #ea68b6; --cherry-glass: #fce4e4;
+      --teal: #0e7490; --teal-soft: #cffafe;
+      --amber: #b45309; --amber-soft: #fef3c7;
+      --green: #15803d; --green-soft: #dcfce7;
+      --violet: #6d28d9; --violet-soft: #ede9fe;
+      --rule: #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC','JetBrains Mono',-apple-system,sans-serif; background: var(--bg-page); min-height: 100vh; padding: 2rem; color: var(--text-primary); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; }
+    .header-row { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--cherry); }
+    .header-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--cherry); color: white; border-radius: 8px; font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.9rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; color: var(--cherry-deep); letter-spacing: -0.01em; }
+    .crumb { margin-left: auto; padding: 4px 12px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 12px; font-size: 0.7rem; font-weight: 500; }
+    .subtitle { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.6rem; margin-left: 44px; }
+    .diagram-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 3px rgba(170,17,65,0.04); padding: 1.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1100px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .card { background: var(--bg-card); border-radius: 10px; border: 1px solid var(--rule); padding: 1.1rem 1.2rem; border-left-width: 4px; }
+    .card.c-cherry { border-left-color: var(--cherry); }
+    .card.c-amber { border-left-color: var(--amber); }
+    .card.c-teal { border-left-color: var(--teal); }
+    .card.c-green { border-left-color: var(--green); }
+    .card.c-violet { border-left-color: var(--violet); }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+    .card-num { font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: var(--cherry-glass); color: var(--cherry-deep); }
+    .card.c-amber .card-num { background: var(--amber-soft); color: var(--amber); }
+    .card.c-teal .card-num { background: var(--teal-soft); color: var(--teal); }
+    .card.c-green .card-num { background: var(--green-soft); color: var(--green); }
+    .card.c-violet .card-num { background: var(--violet-soft); color: var(--violet); }
+    .card h3 { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); }
+    .card ul { list-style: none; color: var(--text-secondary); font-size: 0.8rem; }
+    .card li { margin-bottom: 0.4rem; line-height: 1.55; }
+    .takeaway { padding: 1.1rem 1.4rem; background: linear-gradient(to right,#fff5f7,#fce4e4,#fff5f7); border-left: 4px solid var(--cherry); border-radius: 8px; color: var(--cherry-deep); font-size: 0.92rem; line-height: 1.65; }
+    .takeaway strong { color: var(--cherry); }
+    .reference { margin-top: 1.5rem; padding: 1.4rem 1.6rem; background: var(--bg-card); border: 1px dashed var(--cherry-pink); border-radius: 12px; }
+    .reference h3 { font-size: 1rem; font-weight: 700; color: var(--cherry-deep); margin-bottom: 0.3rem; }
+    .ref-intro { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic; }
+    .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; }
+    .ref-item { padding: 0.85rem 1rem; background: linear-gradient(to bottom, #fff5f7, #ffffff); border-left: 3px solid var(--cherry-pink); border-radius: 6px; }
+    .ref-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--cherry-deep); margin-bottom: 0.4rem; }
+    .ref-tag { display: inline-block; font-size: 0.62rem; padding: 1px 6px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 4px; margin-right: 0.4rem; font-weight: 500; font-family: 'JetBrains Mono',monospace; vertical-align: middle; }
+    .ref-item p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.4rem; }
+    .ref-item code { display: block; font-size: 0.72rem; padding: 0.35rem 0.55rem; background: rgba(170, 17, 65, 0.06); color: var(--cherry-deep); border-radius: 4px; font-family: 'JetBrains Mono',monospace; word-break: break-all; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono',monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <span class="header-num">07</span>
+        <h1>X3DH 角色与消息流</h1>
+        <span class="crumb">3-Lane Sequence · 4 种密钥</span>
+      </div>
+      <p class="subtitle">IK / SPK / OTK / EK 各自解决什么 · 公私钥怎么分 · 4 个 DH 怎么算</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 980" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr-cherry" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-violet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-pink" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#ea68b6"/>
+          </marker>
+        </defs>
+
+        <!-- ROW 1 (Y=20-58): 密钥色板图例 -->
+        <rect x="40" y="20" width="1120" height="38" rx="8"
+              fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+        <text x="60" y="44" fill="#9a0036" font-size="11" font-weight="600">🔑 密钥色板:</text>
+        <rect x="170" y="32" width="14" height="14" rx="2" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="190" y="44" fill="#6b7280" font-size="10">IK 长期身份</text>
+        <rect x="290" y="32" width="14" height="14" rx="2" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="310" y="44" fill="#6b7280" font-size="10">SPK 中期 (含签名)</text>
+        <rect x="450" y="32" width="14" height="14" rx="2" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+        <text x="470" y="44" fill="#6b7280" font-size="10">OTK 一次性</text>
+        <rect x="580" y="32" width="14" height="14" rx="2" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="600" y="44" fill="#6b7280" font-size="10">EK 临时会话</text>
+        <rect x="710" y="32" width="14" height="14" rx="2" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+        <text x="730" y="44" fill="#6b7280" font-size="10">Server (不可信)</text>
+        <text x="870" y="44" fill="#9a0036" font-size="10" font-style="italic">^pub = 公钥可上行  ^priv = 私钥仅本地</text>
+
+        <!-- ROW 2 (Y=70-110): Lane Headers -->
+        <rect x="60" y="70" width="280" height="40" rx="20"
+              fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
+        <text x="200" y="95" text-anchor="middle" fill="#0e7490" font-size="14" font-weight="700">Bob (接收方)</text>
+
+        <rect x="400" y="70" width="280" height="40" rx="20"
+              fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/>
+        <text x="540" y="95" text-anchor="middle" fill="#6d28d9" font-size="14" font-weight="700">Server (邮箱)</text>
+
+        <rect x="740" y="70" width="280" height="40" rx="20"
+              fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+        <text x="880" y="95" text-anchor="middle" fill="#9a0036" font-size="14" font-weight="700">Alice (发送方)</text>
+
+        <!-- 生命线 -->
+        <line x1="200" y1="115" x2="200" y2="780" stroke="#0e7490" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.4"/>
+        <line x1="540" y1="115" x2="540" y2="780" stroke="#6d28d9" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.4"/>
+        <line x1="880" y1="115" x2="880" y2="780" stroke="#aa1141" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.4"/>
+
+        <!-- ROW 3 (Y=130-220): Phase 1 - Bob 上传预密钥 -->
+        <text x="40" y="146" fill="#0e7490" font-size="11" font-weight="700">▶ Phase 1: Bob 注册时 / 周期性上传预密钥</text>
+
+        <rect x="60" y="155" width="280" height="80" rx="6"
+              fill="#ffffff" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="200" y="174" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="600">本地生成 + 持有私钥</text>
+        <text x="200" y="190" text-anchor="middle" fill="#374151" font-size="9.5">(IK_B^priv, IK_B^pub)  · Identity</text>
+        <text x="200" y="204" text-anchor="middle" fill="#374151" font-size="9.5">(SPK_B^priv, SPK_B^pub) · 中期</text>
+        <text x="200" y="218" text-anchor="middle" fill="#374151" font-size="9.5">[OTK_B¹..OTK_Bⁿ]  · 一次性 池</text>
+
+        <!-- 上传箭头 Bob → Server -->
+        <line x1="340" y1="195" x2="398" y2="195" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal)"/>
+        <text x="370" y="190" text-anchor="middle" fill="#0e7490" font-size="9" font-weight="600">upload</text>
+
+        <!-- Server stores -->
+        <rect x="400" y="155" width="280" height="80" rx="6"
+              fill="#ffffff" stroke="#6d28d9" stroke-width="1.5"/>
+        <text x="540" y="174" text-anchor="middle" fill="#6d28d9" font-size="11" font-weight="600">公钥仓库 (Bob's Bundle)</text>
+        <text x="540" y="190" text-anchor="middle" fill="#374151" font-size="9.5">{ IK_B^pub, SPK_B^pub + sig,</text>
+        <text x="540" y="204" text-anchor="middle" fill="#374151" font-size="9.5">  OTK pool: [otk¹^pub, otk²^pub, ...] }</text>
+        <text x="540" y="218" text-anchor="middle" fill="#6d28d9" font-size="9" font-style="italic">SPK 由 IK 签名以证身份</text>
+
+        <!-- ROW 4 (Y=250-340): Phase 2 - Alice fetch -->
+        <text x="40" y="266" fill="#aa1141" font-size="11" font-weight="700">▶ Phase 2: Alice 想给 Bob 发消息, 拉取 Bundle</text>
+
+        <!-- Alice request -->
+        <line x1="876" y1="285" x2="544" y2="285" stroke="#aa1141" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-cherry)"/>
+        <text x="710" y="280" text-anchor="middle" fill="#9a0036" font-size="9" font-weight="600">GET /bundle/bob</text>
+
+        <!-- Server response -->
+        <line x1="544" y1="318" x2="876" y2="318" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet)"/>
+        <rect x="610" y="298" width="180" height="36" rx="6" fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="4,3"/>
+        <text x="700" y="316" text-anchor="middle" fill="#9a0036" font-size="10" font-weight="600">Bob's Bundle</text>
+        <text x="700" y="328" text-anchor="middle" fill="#6b7280" font-size="9">取出一个 OTK¹, 标记已用</text>
+
+        <!-- Alice receives bundle -->
+        <rect x="740" y="345" width="280" height="50" rx="6"
+              fill="#ffffff" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="880" y="362" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">收到 Bob 的公钥组合</text>
+        <text x="880" y="378" text-anchor="middle" fill="#374151" font-size="9.5">{ IK_B^pub, SPK_B^pub, OTK_B¹^pub }</text>
+        <text x="880" y="390" text-anchor="middle" fill="#9a0036" font-size="9" font-style="italic">注: 验证 SPK_B 的 IK_B 签名</text>
+
+        <!-- ROW 5 (Y=420-580): Phase 3 - Alice 计算 + 发送 -->
+        <text x="40" y="436" fill="#aa1141" font-size="11" font-weight="700">▶ Phase 3: Alice 生成临时密钥 EK, 算 4 次 DH, 发起初始消息</text>
+
+        <rect x="740" y="445" width="280" height="160" rx="6"
+              fill="#ffffff" stroke="#aa1141" stroke-width="2"/>
+        <text x="880" y="465" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">① 本地生成临时密钥</text>
+        <text x="880" y="481" text-anchor="middle" fill="#374151" font-size="9.5">(EK_A^priv, EK_A^pub) — 仅当前会话</text>
+
+        <text x="880" y="503" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">② 计算 4 次 DH</text>
+        <text x="880" y="518" text-anchor="middle" fill="#374151" font-size="9.5" font-family="JetBrains Mono">DH₁ = DH(IK_A^priv, SPK_B^pub)</text>
+        <text x="880" y="532" text-anchor="middle" fill="#374151" font-size="9.5" font-family="JetBrains Mono">DH₂ = DH(EK_A^priv, IK_B^pub)</text>
+        <text x="880" y="546" text-anchor="middle" fill="#374151" font-size="9.5" font-family="JetBrains Mono">DH₃ = DH(EK_A^priv, SPK_B^pub)</text>
+        <text x="880" y="560" text-anchor="middle" fill="#374151" font-size="9.5" font-family="JetBrains Mono">DH₄ = DH(EK_A^priv, OTK_B¹^pub)</text>
+
+        <text x="880" y="582" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="600">③ SharedSec = KDF(DH₁ ‖ DH₂ ‖ DH₃ ‖ DH₄)</text>
+        <text x="880" y="598" text-anchor="middle" fill="#15803d" font-size="9.5" font-style="italic">→ 用作 Double Ratchet 的初始 RootKey</text>
+
+        <!-- Alice 发送初始消息 → Server -->
+        <line x1="876" y1="640" x2="544" y2="640" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry)"/>
+        <rect x="600" y="623" width="200" height="36" rx="6" fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="4,3"/>
+        <text x="700" y="640" text-anchor="middle" fill="#9a0036" font-size="10" font-weight="600">initial msg</text>
+        <text x="700" y="652" text-anchor="middle" fill="#6b7280" font-size="9">{ IK_A^pub, EK_A^pub, otk_id, ciphertext }</text>
+
+        <!-- Server forward → Bob -->
+        <line x1="544" y1="676" x2="204" y2="676" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet)"/>
+        <text x="370" y="672" text-anchor="middle" fill="#6d28d9" font-size="9" font-weight="600">forward (Bob 收件箱)</text>
+
+        <!-- ROW 6 (Y=700-780): Phase 4 - Bob 计算 -->
+        <text x="40" y="700" fill="#0e7490" font-size="11" font-weight="700">▶ Phase 4: Bob 收到, 用对称的 4 个 DH 算出同样 SharedSec</text>
+
+        <rect x="60" y="710" width="280" height="68" rx="6"
+              fill="#ffffff" stroke="#0e7490" stroke-width="2"/>
+        <text x="200" y="728" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="600">从消息头取 IK_A^pub, EK_A^pub, otk_id</text>
+        <text x="200" y="744" text-anchor="middle" fill="#374151" font-size="9.5" font-family="JetBrains Mono">DH₁ = DH(SPK_B^priv, IK_A^pub) ✓</text>
+        <text x="200" y="757" text-anchor="middle" fill="#374151" font-size="9.5" font-family="JetBrains Mono">DH₂ = DH(IK_B^priv, EK_A^pub) ✓ ...</text>
+        <text x="200" y="772" text-anchor="middle" fill="#15803d" font-size="10" font-weight="600">→ 同样的 SharedSec ✓</text>
+
+        <!-- ROW 7 (Y=800-920): 4 DH 拆解表 -->
+        <rect x="40" y="800" width="1120" height="120" rx="10"
+              fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <rect x="40" y="800" width="1120" height="32" rx="10" fill="#fde68a"/>
+        <rect x="40" y="826" width="1120" height="10" fill="#fde68a"/>
+        <text x="60" y="822" fill="#92400e" font-size="13" font-weight="700">🔬 4 个 DH 各自混入了什么 / 解决了什么</text>
+
+        <text x="60" y="852" fill="#1f2937" font-size="10.5" font-weight="700">DH₁</text>
+        <text x="100" y="852" fill="#374151" font-size="10" font-family="JetBrains Mono">IK_A × SPK_B</text>
+        <text x="280" y="852" fill="#9a0036" font-size="10">混入 Alice 长期 + Bob 中期 → "认证 Alice 是 Alice"</text>
+
+        <text x="60" y="872" fill="#1f2937" font-size="10.5" font-weight="700">DH₂</text>
+        <text x="100" y="872" fill="#374151" font-size="10" font-family="JetBrains Mono">EK_A × IK_B</text>
+        <text x="280" y="872" fill="#9a0036" font-size="10">混入 Alice 临时 + Bob 长期 → "认证 Bob 是 Bob"</text>
+
+        <text x="60" y="892" fill="#1f2937" font-size="10.5" font-weight="700">DH₃</text>
+        <text x="100" y="892" fill="#374151" font-size="10" font-family="JetBrains Mono">EK_A × SPK_B</text>
+        <text x="280" y="892" fill="#9a0036" font-size="10">混入双方"中临"密钥 → 提供前向安全 (临时密钥用完即丢)</text>
+
+        <text x="60" y="912" fill="#1f2937" font-size="10.5" font-weight="700">DH₄</text>
+        <text x="100" y="912" fill="#374151" font-size="10" font-family="JetBrains Mono">EK_A × OTK_B</text>
+        <text x="280" y="912" fill="#9a0036" font-size="10">混入"一次性" → 即使 SPK 长期不轮换, 每次会话也独立 (额外前向)</text>
+
+        <text x="700" y="852" fill="#92400e" font-size="10" font-style="italic">Bob 用对称私钥执行同样 4 次 DH, 得到相同 SharedSec</text>
+        <text x="700" y="872" fill="#92400e" font-size="10" font-style="italic">最终 SharedSec = KDF(DH₁ ‖ DH₂ ‖ DH₃ ‖ DH₄)</text>
+        <text x="700" y="892" fill="#92400e" font-size="10" font-style="italic">缺任一 DH 都会破坏对应的安全属性</text>
+        <text x="700" y="912" fill="#92400e" font-size="10" font-style="italic">SharedSec → 喂给 Double Ratchet 作 RootKey</text>
+
+        <!-- ROW 8 (Y=940-970): Takeaway -->
+        <rect x="40" y="940" width="1120" height="32" rx="8"
+              fill="#fff5f7" stroke="#aa1141" stroke-width="1.2"/>
+        <text x="600" y="961" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">
+          💡 X3DH = 身份认证 (IK) + 中期可用性 (SPK) + 前向安全 (OTK + EK) + 单次会话隔离 (EK), 4 个 DH 缺一不可
+        </text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card c-cherry">
+        <div class="card-header">
+          <span class="card-num">IK</span>
+          <h3>Identity Key · 长期身份</h3>
+        </div>
+        <ul>
+          <li>• ECDSA / EdDSA / curve25519 长期密钥对</li>
+          <li>• 用户注册时一次性生成, 通常永不更换</li>
+          <li>• 用途: 验证身份 (我就是我), 给 SPK 签名</li>
+          <li>• 失去 IK = 身份被盗 (但不影响过去消息: 前向安全)</li>
+        </ul>
+      </div>
+
+      <div class="card c-teal">
+        <div class="card-header">
+          <span class="card-num">SPK</span>
+          <h3>Signed PreKey · 中期</h3>
+        </div>
+        <ul>
+          <li>• 周期性轮换 (典型: 每周 / 每月)</li>
+          <li>• 由 IK 签名, 证明"是 Bob 同意的"</li>
+          <li>• 提供"OTK 用尽时的备用握手能力"</li>
+          <li>• 旧 SPK 保留一段时间以解密延迟到达消息</li>
+        </ul>
+      </div>
+
+      <div class="card c-green">
+        <div class="card-header">
+          <span class="card-num">OTK</span>
+          <h3>One-Time PreKey · 一次性</h3>
+        </div>
+        <ul>
+          <li>• 客户端预先批量生成 (e.g., 100 个), 上传 server</li>
+          <li>• server 每发出一个消耗一个</li>
+          <li>• 提供额外的前向安全 + 防 replay</li>
+          <li>• 需要客户端定期补充 (详见 #09)</li>
+        </ul>
+      </div>
+
+      <div class="card c-amber">
+        <div class="card-header">
+          <span class="card-num">EK</span>
+          <h3>Ephemeral Key · 临时</h3>
+        </div>
+        <ul>
+          <li>• 发送方在每次会话首条消息时生成</li>
+          <li>• 公钥 EK_A^pub 随消息发出, 私钥用完丢弃</li>
+          <li>• 提供单次会话隔离 (跨会话不可关联)</li>
+          <li>• 区分 ^pub / ^priv 至关重要 (常见混淆点)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <strong>💡 一句话理解：</strong>
+      X3DH = "三层密钥 + 一次握手"——
+      <strong>IK</strong> 验身份, <strong>SPK</strong> 保可用, <strong>OTK</strong> 加前向, <strong>EK</strong> 隔会话。
+      4 个 DH 计算把这 4 类密钥两两混合, 任一类被替换 / 缺失都会丢失对应的安全属性 — 这是为什么 Signal 偏要做"3DH+1"而不是简单的 1DH。
+    </div>
+
+    <div class="reference">
+      <h3>📚 基础知识速查 · Reference</h3>
+      <p class="ref-intro">不熟悉以下底层概念? 这里是 30 秒回顾。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">签名</span>EdDSA / Ed25519</h4>
+          <p>椭圆曲线数字签名算法, Curve25519 上的签名版本。SPK 用 IK 签名, 证明"是该用户授权上传的"。</p>
+          <code>sig = Ed25519.sign(IK_priv, SPK_pub)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">设计</span>4-way DH 组合</h4>
+          <p>4 次独立 DH 计算的 hash 拼接, 确保任何一方的密钥被替换都会改变 SharedSec。任一 DH 失效即整体失效。</p>
+          <code>SharedSec = HKDF(DH₁ ‖ DH₂ ‖ DH₃ ‖ DH₄)</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">数据结构</span>PreKey Bundle</h4>
+          <p>服务端发给请求方的"握手包"。包含发布方所有公钥 + SPK 的签名, 让发起方一次性获取 X3DH 所需输入。</p>
+          <code>{ IK^pub, SPK^pub, sig, OTK^pub }</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">命名</span>公私钥语法约定</h4>
+          <p>本图谱中用 ^pub / ^priv 上下标区分公私钥。这是常见的混淆点 — 务必记清楚谁参与 DH。</p>
+          <code>K^pub = 公钥可上行<br>K^priv = 私钥仅本地</code>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footer">Signal Double Ratchet · Diagram 07/11 · X3DH Roles & Sequence</p>
+  </div>
+</body>
+</html>

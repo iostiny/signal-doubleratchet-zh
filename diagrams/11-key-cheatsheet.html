@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>11 · 密钥总账速查</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-page: #fdfaf6; --bg-card: #ffffff;
+      --text-primary: #1f2937; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --cherry: #aa1141; --cherry-deep: #9a0036; --cherry-pink: #ea68b6; --cherry-glass: #fce4e4;
+      --teal: #0e7490; --teal-soft: #cffafe;
+      --amber: #b45309; --amber-soft: #fef3c7;
+      --green: #15803d; --green-soft: #dcfce7;
+      --violet: #6d28d9; --violet-soft: #ede9fe;
+      --rule: #e5e7eb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans SC','JetBrains Mono',-apple-system,sans-serif; background: var(--bg-page); min-height: 100vh; padding: 2rem; color: var(--text-primary); }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .header { margin-bottom: 1.5rem; }
+    .header-row { display: flex; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--cherry); }
+    .header-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--cherry); color: white; border-radius: 8px; font-family: 'JetBrains Mono',monospace; font-weight: 700; font-size: 0.9rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; color: var(--cherry-deep); letter-spacing: -0.01em; }
+    .crumb { margin-left: auto; padding: 4px 12px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 12px; font-size: 0.7rem; font-weight: 500; }
+    .subtitle { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.6rem; margin-left: 44px; }
+    .diagram-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 3px rgba(170,17,65,0.04); padding: 1.5rem; overflow-x: auto; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1100px; display: block; }
+    .takeaway { padding: 1.1rem 1.4rem; background: linear-gradient(to right,#fff5f7,#fce4e4,#fff5f7); border-left: 4px solid var(--cherry); border-radius: 8px; color: var(--cherry-deep); font-size: 0.92rem; line-height: 1.65; margin-bottom: 1rem; }
+    .takeaway strong { color: var(--cherry); }
+    .reference { margin-top: 1.5rem; padding: 1.4rem 1.6rem; background: var(--bg-card); border: 1px dashed var(--cherry-pink); border-radius: 12px; }
+    .reference h3 { font-size: 1rem; font-weight: 700; color: var(--cherry-deep); margin-bottom: 0.3rem; }
+    .ref-intro { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; font-style: italic; }
+    .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; }
+    .ref-item { padding: 0.85rem 1rem; background: linear-gradient(to bottom, #fff5f7, #ffffff); border-left: 3px solid var(--cherry-pink); border-radius: 6px; }
+    .ref-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--cherry-deep); margin-bottom: 0.4rem; }
+    .ref-tag { display: inline-block; font-size: 0.62rem; padding: 1px 6px; background: var(--cherry-glass); color: var(--cherry-deep); border-radius: 4px; margin-right: 0.4rem; font-weight: 500; font-family: 'JetBrains Mono',monospace; vertical-align: middle; }
+    .ref-item p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.4rem; }
+    .ref-item code { display: block; font-size: 0.72rem; padding: 0.35rem 0.55rem; background: rgba(170, 17, 65, 0.06); color: var(--cherry-deep); border-radius: 4px; font-family: 'JetBrains Mono',monospace; word-break: break-all; }
+    .footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.72rem; font-family: 'JetBrains Mono',monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <span class="header-num">11</span>
+        <h1>密钥总账速查</h1>
+        <span class="crumb">Cheatsheet · 10 种 Key</span>
+      </div>
+      <p class="subtitle">每种 Key 的所有者 · 生命周期 · 公私属性 · 解决的问题 · 派生关系</p>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 1080" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr-amber" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#b45309"/>
+          </marker>
+          <marker id="arr-cherry" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#15803d"/>
+          </marker>
+          <marker id="arr-slate" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+          </marker>
+        </defs>
+
+        <!-- ROW 1: 场景说明 -->
+        <rect x="40" y="20" width="1120" height="34" rx="8"
+              fill="#fff5f7" stroke="#ea68b6" stroke-width="1.2" stroke-dasharray="5,3"/>
+        <text x="600" y="42" text-anchor="middle" fill="#9a0036" font-size="11.5" font-weight="600">
+          📋 全套 Signal Protocol 共出现 10 种密钥/中间值, 每种解决一个特定问题, 缺任何一个都会破坏某项安全属性
+        </text>
+
+        <!-- ROW 2: 表格 (Y=70-560) -->
+
+        <!-- 表头 -->
+        <rect x="40" y="70" width="1120" height="40" rx="6"
+              fill="#fce4e4"/>
+        <text x="55" y="94" fill="#9a0036" font-size="11" font-weight="700">符号</text>
+        <text x="135" y="94" fill="#9a0036" font-size="11" font-weight="700">全名</text>
+        <text x="290" y="94" fill="#9a0036" font-size="11" font-weight="700">所有者</text>
+        <text x="380" y="94" fill="#9a0036" font-size="11" font-weight="700">公/私</text>
+        <text x="450" y="94" fill="#9a0036" font-size="11" font-weight="700">生命周期</text>
+        <text x="600" y="94" fill="#9a0036" font-size="11" font-weight="700">解决什么问题</text>
+        <text x="900" y="94" fill="#9a0036" font-size="11" font-weight="700">所在阶段</text>
+
+        <!-- 行 1: IK -->
+        <rect x="40" y="110" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="118" width="60" height="24" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="80" y="135" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">IK</text>
+        <text x="135" y="135" fill="#1f2937" font-size="10">Identity Key 长期身份密钥</text>
+        <text x="290" y="135" fill="#374151" font-size="10">用户 (终身)</text>
+        <text x="380" y="135" fill="#374151" font-size="10">公+私</text>
+        <text x="450" y="135" fill="#374151" font-size="10">注册时生成 · 永不变</text>
+        <text x="600" y="135" fill="#9a0036" font-size="10">身份认证 (这就是 Bob 本人)</text>
+        <text x="900" y="135" fill="#374151" font-size="10">X3DH (DH₁, DH₂)</text>
+
+        <!-- 行 2: SPK -->
+        <rect x="40" y="150" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="158" width="60" height="24" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="80" y="175" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">SPK</text>
+        <text x="135" y="175" fill="#1f2937" font-size="10">Signed PreKey 中期签名密钥</text>
+        <text x="290" y="175" fill="#374151" font-size="10">用户 (周/月)</text>
+        <text x="380" y="175" fill="#374151" font-size="10">公+私</text>
+        <text x="450" y="175" fill="#374151" font-size="10">周期轮换 · IK 签名认证</text>
+        <text x="600" y="175" fill="#9a0036" font-size="10">中期可用性 + IK 失窃风险隔离</text>
+        <text x="900" y="175" fill="#374151" font-size="10">X3DH (DH₁, DH₃)</text>
+
+        <!-- 行 3: OTK -->
+        <rect x="40" y="190" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="198" width="60" height="24" rx="4" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+        <text x="80" y="215" text-anchor="middle" fill="#166534" font-size="11" font-weight="700">OTK</text>
+        <text x="135" y="215" fill="#1f2937" font-size="10">One-Time PreKey 一次性密钥</text>
+        <text x="290" y="215" fill="#374151" font-size="10">用户 (单次)</text>
+        <text x="380" y="215" fill="#374151" font-size="10">公+私</text>
+        <text x="450" y="215" fill="#374151" font-size="10">用过即丢 · 池化管理</text>
+        <text x="600" y="215" fill="#15803d" font-size="10">额外前向安全 + 防 replay (详见 #09)</text>
+        <text x="900" y="215" fill="#374151" font-size="10">X3DH (DH₄)</text>
+
+        <!-- 行 4: EK -->
+        <rect x="40" y="230" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="238" width="60" height="24" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="80" y="255" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">EK</text>
+        <text x="135" y="255" fill="#1f2937" font-size="10">Ephemeral Key 临时会话密钥</text>
+        <text x="290" y="255" fill="#374151" font-size="10">发送方 (单会话)</text>
+        <text x="380" y="255" fill="#374151" font-size="10">公+私</text>
+        <text x="450" y="255" fill="#374151" font-size="10">每次 X3DH 临时生成</text>
+        <text x="600" y="255" fill="#92400e" font-size="10">单次会话隔离 · 同时充当首条 ratchet_key</text>
+        <text x="900" y="255" fill="#374151" font-size="10">X3DH + DR 启动</text>
+
+        <!-- 行 5: SharedSec -->
+        <rect x="40" y="270" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="278" width="60" height="24" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="80" y="295" text-anchor="middle" fill="#92400e" font-size="9.5" font-weight="700">SharedSec</text>
+        <text x="135" y="295" fill="#1f2937" font-size="10">Shared Secret 共享秘密</text>
+        <text x="290" y="295" fill="#374151" font-size="10">双方独立算</text>
+        <text x="380" y="295" fill="#374151" font-size="10">私 · 永不上行</text>
+        <text x="450" y="295" fill="#374151" font-size="10">X3DH 出来即转化为 RK₁</text>
+        <text x="600" y="295" fill="#92400e" font-size="10">X3DH 与 Double Ratchet 的桥</text>
+        <text x="900" y="295" fill="#374151" font-size="10">X3DH 终点</text>
+
+        <!-- 行 6: RootKey -->
+        <rect x="40" y="310" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="318" width="60" height="24" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="80" y="335" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">RK</text>
+        <text x="135" y="335" fill="#1f2937" font-size="10">Root Key 跨棘轮主键</text>
+        <text x="290" y="335" fill="#374151" font-size="10">双方独立算</text>
+        <text x="380" y="335" fill="#374151" font-size="10">私</text>
+        <text x="450" y="335" fill="#374151" font-size="10">每次 DH 翻转后更新</text>
+        <text x="600" y="335" fill="#92400e" font-size="10">后向安全 (Post-Compromise)</text>
+        <text x="900" y="335" fill="#374151" font-size="10">DH Ratchet</text>
+
+        <!-- 行 7: Sec_n -->
+        <rect x="40" y="350" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="358" width="60" height="24" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="80" y="375" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">Sec_n</text>
+        <text x="135" y="375" fill="#1f2937" font-size="10">DH Sec 翻转中间值</text>
+        <text x="290" y="375" fill="#374151" font-size="10">双方独立算</text>
+        <text x="380" y="375" fill="#374151" font-size="10">私 · 用完即丢</text>
+        <text x="450" y="375" fill="#374151" font-size="10">单次 ping-pong 期间</text>
+        <text x="600" y="375" fill="#92400e" font-size="10">把对方"新公钥"喂给 KDF 推进 RK</text>
+        <text x="900" y="375" fill="#374151" font-size="10">DH Ratchet (详见 #04)</text>
+
+        <!-- 行 8: ChainKey -->
+        <rect x="40" y="390" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="398" width="60" height="24" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="80" y="415" text-anchor="middle" fill="#9a0036" font-size="10" font-weight="700">CK</text>
+        <text x="135" y="415" fill="#1f2937" font-size="10">Chain Key 单链推进键</text>
+        <text x="290" y="415" fill="#374151" font-size="10">本端</text>
+        <text x="380" y="415" fill="#374151" font-size="10">私</text>
+        <text x="450" y="415" fill="#374151" font-size="10">同链内长期 · DH 翻转时 reset</text>
+        <text x="600" y="415" fill="#9a0036" font-size="10">前向安全的"齿轮齿"</text>
+        <text x="900" y="415" fill="#374151" font-size="10">Symmetric Ratchet</text>
+
+        <!-- 行 9: MessageKey -->
+        <rect x="40" y="430" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="438" width="60" height="24" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="80" y="455" text-anchor="middle" fill="#9a0036" font-size="10" font-weight="700">MK</text>
+        <text x="135" y="455" fill="#1f2937" font-size="10">Message Key 消息加密键</text>
+        <text x="290" y="455" fill="#374151" font-size="10">本端</text>
+        <text x="380" y="455" fill="#374151" font-size="10">私 · 用完即丢</text>
+        <text x="450" y="455" fill="#374151" font-size="10">单条消息 (毫秒级)</text>
+        <text x="600" y="455" fill="#9a0036" font-size="10">直接加密一条消息 (AES-GCM)</text>
+        <text x="900" y="455" fill="#374151" font-size="10">Symmetric Ratchet (详见 #03)</text>
+
+        <!-- 行 10: ratchet_key -->
+        <rect x="40" y="470" width="1120" height="40" rx="0" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.5"/>
+        <rect x="50" y="478" width="60" height="24" rx="4" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="80" y="495" text-anchor="middle" fill="#0e7490" font-size="9" font-weight="700">ratch_key</text>
+        <text x="135" y="495" fill="#1f2937" font-size="10">ratchet_key 消息携带的公钥</text>
+        <text x="290" y="495" fill="#374151" font-size="10">发送方</text>
+        <text x="380" y="495" fill="#374151" font-size="10">公 · 上行</text>
+        <text x="450" y="495" fill="#374151" font-size="10">直到对方"也翻"</text>
+        <text x="600" y="495" fill="#0e7490" font-size="10">通知对方"我的新公钥来了, 请翻"</text>
+        <text x="900" y="495" fill="#374151" font-size="10">每条 DR 消息头</text>
+
+        <!-- 表格底部 -->
+        <rect x="40" y="510" width="1120" height="40" rx="0" fill="#fef3c7"/>
+        <text x="600" y="535" text-anchor="middle" fill="#92400e" font-size="11" font-style="italic" font-weight="600">
+          总计: 6 种长期/中期/单会话密钥 + 4 种瞬时派生值 = 完整 Signal Protocol 状态
+        </text>
+
+        <!-- ROW 3: 派生关系图 (Y=580-940) -->
+        <text x="40" y="600" fill="#9a0036" font-size="13" font-weight="700">🌳 密钥派生关系图</text>
+
+        <!-- TIER 1: 双方持有的"原料"密钥 -->
+        <text x="60" y="635" fill="#92400e" font-size="10" font-weight="700">⬛ Tier 1 — 客户端预先持有的"原料"</text>
+
+        <rect x="60" y="650" width="100" height="40" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="110" y="667" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">IK</text>
+        <text x="110" y="681" text-anchor="middle" fill="#9a0036" font-size="9">长期</text>
+
+        <rect x="180" y="650" width="100" height="40" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="230" y="667" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">SPK</text>
+        <text x="230" y="681" text-anchor="middle" fill="#9a0036" font-size="9">中期 (含签名)</text>
+
+        <rect x="300" y="650" width="100" height="40" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1.8"/>
+        <text x="350" y="667" text-anchor="middle" fill="#166534" font-size="11" font-weight="700">OTK</text>
+        <text x="350" y="681" text-anchor="middle" fill="#166534" font-size="9">一次性</text>
+
+        <rect x="420" y="650" width="100" height="40" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.8"/>
+        <text x="470" y="667" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">EK</text>
+        <text x="470" y="681" text-anchor="middle" fill="#92400e" font-size="9">临时</text>
+
+        <!-- 4 个箭头汇聚到 X3DH -->
+        <line x1="110" y1="690" x2="600" y2="755" stroke="#475569" stroke-width="1" marker-end="url(#arr-slate)"/>
+        <line x1="230" y1="690" x2="610" y2="755" stroke="#475569" stroke-width="1" marker-end="url(#arr-slate)"/>
+        <line x1="350" y1="690" x2="620" y2="755" stroke="#475569" stroke-width="1" marker-end="url(#arr-slate)"/>
+        <line x1="470" y1="690" x2="630" y2="755" stroke="#475569" stroke-width="1" marker-end="url(#arr-slate)"/>
+
+        <!-- TIER 2: X3DH 出 SharedSec -->
+        <text x="60" y="730" fill="#92400e" font-size="10" font-weight="700">⬛ Tier 2 — X3DH 产物</text>
+
+        <rect x="555" y="755" width="160" height="50" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="635" y="775" text-anchor="middle" fill="#92400e" font-size="12" font-weight="700">SharedSec</text>
+        <text x="635" y="792" text-anchor="middle" fill="#92400e" font-size="9" font-style="italic">= 初始 RootKey₁</text>
+
+        <line x1="715" y1="780" x2="755" y2="780" stroke="#b45309" stroke-width="2.5" marker-end="url(#arr-amber)"/>
+        <text x="735" y="772" text-anchor="middle" fill="#9a0036" font-size="9" font-weight="600">→ 接力</text>
+
+        <!-- TIER 3: RootKey 主链 + 翻转输入 Sec_n -->
+        <text x="60" y="830" fill="#92400e" font-size="10" font-weight="700">⬛ Tier 3 — DH Ratchet 主链 (跨轮)</text>
+
+        <rect x="755" y="755" width="80" height="50" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="795" y="775" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RK₁</text>
+        <text x="795" y="790" text-anchor="middle" fill="#92400e" font-size="9">RootKey</text>
+
+        <line x1="835" y1="780" x2="855" y2="780" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <rect x="857" y="755" width="80" height="50" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="897" y="775" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RK₂</text>
+
+        <line x1="937" y1="780" x2="957" y2="780" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+        <rect x="959" y="755" width="80" height="50" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+        <text x="999" y="775" text-anchor="middle" fill="#92400e" font-size="11" font-weight="700">RK₃</text>
+
+        <text x="1060" y="785" fill="#92400e" font-size="11">…</text>
+
+        <!-- Sec_n 注入 -->
+        <rect x="855" y="830" width="80" height="34" rx="6" fill="#fde68a" stroke="#b45309" stroke-width="1.5"/>
+        <text x="895" y="852" text-anchor="middle" fill="#92400e" font-size="10" font-weight="700">Sec_n</text>
+
+        <line x1="895" y1="830" x2="895" y2="810" stroke="#b45309" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <text x="965" y="850" fill="#92400e" font-size="9" font-style="italic">每次 DH 翻转喂入</text>
+
+        <!-- TIER 4: ChainKey 子链 -->
+        <text x="60" y="900" fill="#9a0036" font-size="10" font-weight="700">⬛ Tier 4 — Symmetric Ratchet 子链 (单轮)</text>
+
+        <!-- 从 RK₂ 派生 SendChain -->
+        <line x1="897" y1="805" x2="500" y2="935" stroke="#aa1141" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="700" y="888" fill="#aa1141" font-size="9" font-weight="600">RK 翻转 → 派生新 CK</text>
+
+        <rect x="60" y="920" width="100" height="40" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="110" y="937" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">CK₀</text>
+        <text x="110" y="951" text-anchor="middle" fill="#9a0036" font-size="9">SendChain</text>
+
+        <line x1="160" y1="940" x2="200" y2="940" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+
+        <rect x="200" y="920" width="100" height="40" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="250" y="937" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">CK₁</text>
+        <text x="250" y="951" text-anchor="middle" fill="#9a0036" font-size="9">advance</text>
+
+        <line x1="300" y1="940" x2="340" y2="940" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+
+        <rect x="340" y="920" width="100" height="40" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.8"/>
+        <text x="390" y="937" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">CK₂</text>
+
+        <text x="465" y="945" fill="#9a0036" font-size="11">…</text>
+
+        <!-- MK 派生 -->
+        <line x1="250" y1="960" x2="250" y2="990" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+
+        <rect x="220" y="990" width="60" height="30" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="250" y="1010" text-anchor="middle" fill="#9a0036" font-size="10" font-weight="700">MK₁</text>
+
+        <line x1="390" y1="960" x2="390" y2="990" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+        <rect x="360" y="990" width="60" height="30" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="390" y="1010" text-anchor="middle" fill="#9a0036" font-size="10" font-weight="700">MK₂</text>
+
+        <text x="450" y="1010" fill="#9a0036" font-size="11">…</text>
+
+        <text x="60" y="985" fill="#9a0036" font-size="9" font-weight="600">↓ 每个 CK 派生 MK</text>
+
+        <!-- ratchet_key 注解 -->
+        <rect x="600" y="920" width="240" height="40" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="720" y="937" text-anchor="middle" fill="#0e7490" font-size="11" font-weight="700">ratchet_key</text>
+        <text x="720" y="951" text-anchor="middle" fill="#0e7490" font-size="9">= 当前自己的 EK^pub / SK^pub</text>
+
+        <line x1="600" y1="940" x2="445" y2="940" stroke="#0e7490" stroke-width="1" stroke-dasharray="3,2"/>
+        <text x="505" y="930" fill="#0e7490" font-size="9" font-style="italic">每条 MK 加密的 msg 都附带</text>
+
+        <text x="900" y="945" fill="#0e7490" font-size="9" font-style="italic">EK 退化为长期</text>
+        <text x="900" y="958" fill="#0e7490" font-size="9" font-style="italic">ratchet 的"信号灯"</text>
+
+        <!-- ROW 4: 关键洞察 -->
+        <rect x="40" y="1030" width="1120" height="40" rx="8"
+              fill="#fff5f7" stroke="#aa1141" stroke-width="1.2"/>
+        <text x="600" y="1056" text-anchor="middle" fill="#9a0036" font-size="11" font-weight="700">
+          💡 6 种持久密钥 (IK, SPK, OTK×N, EK, RK, CK) + 4 种瞬时派生值 (SharedSec, Sec_n, MK, ratchet_key) = 完整 Signal 状态
+        </text>
+      </svg>
+    </div>
+
+    <div class="takeaway">
+      <strong>💡 一句话理解：</strong>
+      Signal 的 10 种密钥/派生值看似繁多, 但每一种都有<strong>不可替代</strong>的作用——
+      去掉 IK 失去身份、去掉 SPK 失去中期可用、去掉 OTK 失去额外前向、去掉 EK 失去会话隔离、
+      去掉 RK 失去后向安全、去掉 CK/MK 失去前向安全、去掉 ratchet_key 双方无法同步翻转。
+      理解这张表 = 理解整个 Signal Protocol 的状态空间。
+    </div>
+
+    <div class="reference">
+      <h3>📚 基础知识速查 · Reference</h3>
+      <p class="ref-intro">不熟悉以下底层概念? 这里是 30 秒回顾。</p>
+      <div class="ref-grid">
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">分类</span>密钥按生命周期分类</h4>
+          <p>long-term (终身, 如 IK), medium-term (周/月, 如 SPK), ephemeral (单会话, 如 EK), derived (单条消息, 如 MK)。</p>
+          <code>越短命 → 前向安全越强</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">安全</span>FS vs PCS</h4>
+          <p>Forward Secrecy 保护过去 (KDF 单向), Post-Compromise Security 保护未来 (DH 注入新熵)。Signal 同时提供。</p>
+          <code>FS ⇄ PCS · 时间方向上对称</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">概念</span>派生 vs 协商</h4>
+          <p>派生 (Derivation) = 单方计算 (KDF), 协商 (Agreement) = 双方互动 (DH)。两者协同支撑整个协议。</p>
+          <code>derive: KDF · agree: DH</code>
+        </div>
+
+        <div class="ref-item">
+          <h4><span class="ref-tag">实现</span>vodozemac::Message</h4>
+          <p>Olm/vodozemac 的消息 struct, 5 个字段: version / ratchet_key / chain_index / ciphertext / mac。直接对应本图谱。</p>
+          <code>pub struct Message { version, ratchet_key,<br>  chain_index, ciphertext, mac }</code>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="footer">Signal Double Ratchet · Diagram 11/11 · Key Cheatsheet</p>
+  </div>
+</body>
+</html>
