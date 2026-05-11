@@ -540,8 +540,8 @@ body {
           <text x="930" y="326" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/3</text>
         </g>
 
-        <!-- Step 3: 底部 amber session 框 + 三条连线 -->
-        <g data-step="3">
+        <!-- Step 3: 底部 amber session 框 + 三条连线（Step 5 改用 active/inactive 摞框） -->
+        <g data-step="3" data-step-end="4">
           <rect x="350" y="430" width="120" height="40" rx="8" class="actor-amber" stroke-width="1.5"/>
           <text x="410" y="448" text-anchor="middle" font-size="11" class="label-amber" font-weight="700">SessionRecord</text>
           <text x="410" y="463" text-anchor="middle" font-size="10" class="svg-mono label-muted">→ bob/1</text>
@@ -732,7 +732,7 @@ body {
 
         <!-- Step 5 inactive 摞 (跨章不显示，这里用 Step 6 only 的简化) -->
 
-        <!-- Step 7: 加 Server 云朵 + 信封三元组 -->
+        <!-- Step 7: Server 云朵 + 路由虚线（持续到 Step 8 self-sync 仍可见） -->
         <g data-step="7">
           <ellipse cx="780" cy="430" rx="90" ry="36" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
           <text x="780" y="430" text-anchor="middle" font-size="13" class="label-slate" font-weight="700">☁️ Server</text>
@@ -742,7 +742,10 @@ body {
           <line x1="780" y1="395" x2="930" y2="190" stroke="#475569" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
           <line x1="780" y1="395" x2="930" y2="290" stroke="#475569" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
           <line x1="780" y1="430" x2="930" y2="380" stroke="#475569" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+        </g>
 
+        <!-- Step 7 only: OutEnvelope 信封三元组 box（Step 8 给算法 panel 让位） -->
+        <g data-step="7" data-step-end="7">
           <rect x="380" y="370" width="280" height="50" rx="8" fill="#fff" stroke="#6d28d9" stroke-width="1.5"/>
           <text x="520" y="388" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">OutEnvelope · 投递结构</text>
           <text x="520" y="408" text-anchor="middle" font-size="11" class="svg-mono label-violet">(device_id, registration_id, ct)</text>
@@ -983,11 +986,11 @@ body {
           <text x="540" y="295" text-anchor="middle" font-size="11" class="label-muted">device linking · provisioning 在 App 层</text>
         </g>
 
-        <!-- Step 11: 拉 PreKeyBundle -->
+        <!-- Step 11: Signal 目录服务（PreKeyBundle 仓库 + device list）— 持续到 Step 12-13 -->
         <g data-step="11">
           <ellipse cx="780" cy="430" rx="90" ry="32" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
           <text x="780" y="430" text-anchor="middle" font-size="13" class="label-slate" font-weight="700">☁️ Server</text>
-          <text x="780" y="448" text-anchor="middle" font-size="10" class="label-muted">key distribution</text>
+          <text x="780" y="448" text-anchor="middle" font-size="10" class="label-muted">目录服务</text>
         </g>
         <g data-step="11" data-step-end="11">
           <line x1="700" y1="290" x2="780" y2="400" stroke="#6d28d9" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arr-violet-5)"/>
