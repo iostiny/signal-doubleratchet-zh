@@ -1354,12 +1354,11 @@ body {
 
         <!-- Step 24: FS vs PCS time regions -->
         <g data-step="24" data-step-end="24">
-          <!-- Time axis -->
-          <line x1="80" y1="280" x2="1020" y2="280" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate6)"/>
-          <text x="60" y="285" font-size="12" class="label-slate">时间</text>
-          <text x="1030" y="276" font-size="11" class="label-muted">→</text>
+          <!-- Time axis (below bars, visible end-to-end) -->
+          <line x1="80" y1="300" x2="1030" y2="300" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate6)"/>
+          <text x="80" y="316" font-size="12" class="label-slate">时间</text>
 
-          <!-- Attack point -->
+          <!-- Attack point (extended to cross new axis) -->
           <line x1="550" y1="220" x2="550" y2="320" stroke="#b91c1c" stroke-width="2.5" stroke-dasharray="4 4"/>
           <text x="550" y="210" text-anchor="middle" font-size="13" class="label-red" font-weight="700">💀 攻击者偷到密钥</text>
 
