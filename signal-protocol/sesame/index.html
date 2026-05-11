@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Sesame · 多设备会话渐进教程</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Phycat-Cherry 渐进教程主题
+   ============================================================ */
+:root {
+  --bg-page:        #fdfaf6;
+  --bg-card:        #ffffff;
+  --bg-soft-pink:   #fce4e4;
+
+  --text-primary:   #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted:     #9ca3af;
+
+  --cherry:         #aa1141;
+  --cherry-deep:    #9a0036;
+  --cherry-soft:    #ffa6a6;
+  --cherry-pink:    #ea68b6;
+  --cherry-glass:   #fce4e4;
+
+  --teal:           #0e7490;
+  --teal-soft:      #cffafe;
+  --amber:          #b45309;
+  --amber-soft:     #fef3c7;
+  --green:          #15803d;
+  --green-soft:     #dcfce7;
+  --violet:         #6d28d9;
+  --violet-soft:    #ede9fe;
+  --slate:          #475569;
+  --slate-soft:     #f1f5f9;
+  --red-deep:       #b91c1c;
+  --red-soft:       #fee2e2;
+
+  --rule:           #e5e7eb;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans SC', 'JetBrains Mono', -apple-system, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ============== App layout ============== */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* ============== Sidebar / stepper ============== */
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--rule);
+  padding: 1.6rem 1.2rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  align-self: start;
+}
+.brand {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 1.6rem;
+}
+.chap {
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.chap-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.45rem;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.chap-name .num {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--cherry);
+  font-size: 0.7rem;
+}
+.dots { display: flex; gap: 6px; }
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--rule);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dot:hover { transform: scale(1.25); }
+.dot.read { background: var(--cherry-soft); }
+.dot.active {
+  background: var(--cherry);
+  box-shadow: 0 0 0 3px var(--cherry-glass);
+}
+
+/* ============== Stage ============== */
+.stage {
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 2rem 2rem;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+}
+.header-ch {
+  padding: 3px 10px;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.header-counter {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* SVG stage */
+.svg-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(170,17,65,0.04);
+  padding: 1rem 1.2rem;
+  position: relative;
+}
+.chapter-svg {
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  display: none;
+}
+.chapter-svg.active { display: block; }
+
+/* SVG element visibility — controlled by data-step */
+[data-step] {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 320ms ease, transform 320ms ease;
+  pointer-events: none;
+}
+[data-step].visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Caption card */
+.caption {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--cherry);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  min-height: 78px;
+}
+.caption-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.25rem;
+}
+.caption-body {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+.caption-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.caption-body em {
+  font-style: normal;
+  color: var(--text-muted);
+  font-size: 0.78em;
+  margin-left: 0.3em;
+}
+
+/* Deep-dive: references + rust code */
+.extras {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.extras:empty { display: none; }
+.extras.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+}
+@media (max-width: 1100px) {
+  .extras.two-col { grid-template-columns: 1fr; }
+}
+.extras-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  font-size: 0.82rem;
+}
+.extras-card.refs { border-left: 3px solid var(--violet); }
+.extras-card.code { border-left: 3px solid var(--green); padding: 0; overflow: hidden; }
+.extras-card h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.extras-card.refs h4 { color: var(--violet); }
+.extras-card.code h4 {
+  color: var(--green);
+  padding: 0.7rem 1rem 0.4rem;
+  margin-bottom: 0;
+}
+.extras-card.refs ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.extras-card.refs li {
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.extras-card.refs a {
+  color: var(--cherry-deep);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--cherry-pink);
+}
+.extras-card.refs a:hover {
+  color: var(--cherry);
+  border-bottom-style: solid;
+}
+.extras-card.refs .ref-note {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin-left: 0.4em;
+}
+.extras-card.code pre {
+  margin: 0;
+  padding: 0.4rem 1rem 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: pre;
+  background: linear-gradient(to bottom, #ffffff, #fafff7);
+}
+.extras-card.code .kw { color: var(--violet); font-weight: 600; }
+.extras-card.code .ty { color: var(--teal); }
+.extras-card.code .fn { color: var(--cherry); }
+.extras-card.code .cm { color: var(--text-muted); font-style: italic; }
+.extras-card.code .str { color: var(--amber); }
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.controls button {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.controls button:hover:not(:disabled) {
+  border-color: var(--cherry);
+  color: var(--cherry-deep);
+  background: var(--cherry-glass);
+}
+.controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.controls button.primary {
+  background: var(--cherry);
+  color: white;
+  border-color: var(--cherry);
+}
+.controls button.primary:hover:not(:disabled) {
+  background: var(--cherry-deep);
+  color: white;
+}
+.controls button.ghost {
+  border: none;
+  color: var(--text-muted);
+}
+.controls .hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: 0.8rem;
+}
+
+/* ============== Common SVG styles ============== */
+.svg-text { font-family: 'Noto Sans SC', sans-serif; }
+.svg-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Reusable SVG classes */
+.actor-cherry { fill: var(--cherry-glass); stroke: var(--cherry); }
+.actor-teal   { fill: var(--teal-soft); stroke: var(--teal); }
+.actor-red    { fill: var(--red-soft); stroke: var(--red-deep); }
+.actor-violet { fill: var(--violet-soft); stroke: var(--violet); }
+.actor-amber  { fill: var(--amber-soft); stroke: var(--amber); }
+.actor-green  { fill: var(--green-soft); stroke: var(--green); }
+
+.label-cherry { fill: var(--cherry-deep); }
+.label-teal   { fill: var(--teal); }
+.label-red    { fill: var(--red-deep); }
+.label-violet { fill: var(--violet); }
+.label-amber  { fill: var(--amber); }
+.label-green  { fill: var(--green); }
+.label-slate  { fill: var(--slate); }
+.label-muted  { fill: var(--text-muted); }
+
+/* Sub-step animations: pulse for emphasis */
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 6px var(--cherry-soft)); }
+}
+.pulse { animation: pulse-glow 2.4s ease infinite; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .sidebar { display: none; }
+  .stage { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============== Sidebar ============== -->
+  <aside class="sidebar">
+    <div class="brand">🔄 Sesame · 多设备会话</div>
+    <div class="brand-sub">渐进教程 · 13 步</div>
+
+    <div class="chap" data-ch="1">
+      <div class="chap-name"><span class="num">CH1</span> 多设备问题</div>
+      <div class="dots" data-ch-dots="1"></div>
+    </div>
+    <div class="chap" data-ch="2">
+      <div class="chap-name"><span class="num">CH2</span> 会话结构</div>
+      <div class="dots" data-ch-dots="2"></div>
+    </div>
+    <div class="chap" data-ch="3">
+      <div class="chap-name"><span class="num">CH3</span> 发送扇出</div>
+      <div class="dots" data-ch-dots="3"></div>
+    </div>
+    <div class="chap" data-ch="4">
+      <div class="chap-name"><span class="num">CH4</span> 接收与提升</div>
+      <div class="dots" data-ch-dots="4"></div>
+    </div>
+    <div class="chap" data-ch="5">
+      <div class="chap-name"><span class="num">CH5</span> 设备生命周期</div>
+      <div class="dots" data-ch-dots="5"></div>
+    </div>
+  </aside>
+
+  <!-- ============== Stage ============== -->
+  <main class="stage">
+    <header class="header">
+      <span class="header-ch" id="header-ch">CH1</span>
+      <h1 class="header-title" id="header-title">多设备问题</h1>
+      <span class="header-counter" id="header-counter">Step 1 / 13</span>
+    </header>
+
+    <section class="svg-wrap">
+
+      <!-- ============================================================
+           Ch1 — 多设备问题
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="1" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-slate-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-red-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+          </marker>
+        </defs>
+
+        <!-- Alice phone 始终在 (Step 1+) -->
+        <g data-step="1">
+          <rect x="140" y="160" width="140" height="70" rx="14" class="actor-cherry" stroke-width="2"/>
+          <text x="210" y="195" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">📱 Alice phone</text>
+          <text x="210" y="215" text-anchor="middle" font-size="11" class="label-muted">本机 = 发起方</text>
+        </g>
+
+        <!-- Bob phone -->
+        <g data-step="1">
+          <rect x="860" y="120" width="140" height="70" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="155" text-anchor="middle" font-size="14" font-weight="700" class="label-teal">📱 Bob phone</text>
+          <text x="930" y="175" text-anchor="middle" font-size="11" class="label-muted">device_id=1</text>
+        </g>
+
+        <!-- Bob iPad -->
+        <g data-step="1">
+          <rect x="860" y="220" width="140" height="70" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="255" text-anchor="middle" font-size="14" font-weight="700" class="label-teal">📲 Bob iPad</text>
+          <text x="930" y="275" text-anchor="middle" font-size="11" class="label-muted">device_id=2</text>
+        </g>
+
+        <!-- Bob laptop -->
+        <g data-step="1">
+          <rect x="860" y="320" width="140" height="70" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="355" text-anchor="middle" font-size="14" font-weight="700" class="label-teal">💻 Bob laptop</text>
+          <text x="930" y="375" text-anchor="middle" font-size="11" class="label-muted">device_id=3</text>
+        </g>
+
+        <!-- Step 1 only: 灰虚线 + 红 ✕ -->
+        <g data-step="1" data-step-end="1">
+          <line x1="290" y1="200" x2="860" y2="200" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6 6"/>
+          <text x="540" y="190" text-anchor="middle" font-size="22" class="label-red" font-weight="700">✕</text>
+          <text x="540" y="230" text-anchor="middle" font-size="12" class="label-red" font-weight="600">"发给 Bob" 该走哪一台？</text>
+        </g>
+
+        <!-- Step 2: 设备 mono 地址 -->
+        <g data-step="2">
+          <text x="210" y="248" text-anchor="middle" font-size="12" class="svg-mono label-cherry" font-weight="600">alice/1</text>
+          <text x="930" y="195" text-anchor="middle" font-size="12" class="svg-mono label-teal" font-weight="600">bob/1</text>
+          <text x="930" y="295" text-anchor="middle" font-size="12" class="svg-mono label-teal" font-weight="600">bob/2</text>
+          <text x="930" y="395" text-anchor="middle" font-size="12" class="svg-mono label-teal" font-weight="600">bob/3</text>
+          <text x="540" y="200" text-anchor="middle" font-size="13" class="label-violet" font-weight="700">ProtocolAddress</text>
+          <text x="540" y="220" text-anchor="middle" font-size="11" class="label-muted">= (name, device_id)</text>
+          <text x="540" y="240" text-anchor="middle" font-size="11" class="label-muted">每台设备独立 IK + SPK + OTPK</text>
+        </g>
+
+        <!-- Step 1 only: 困境说明面板 -->
+        <g data-step="1" data-step-end="1">
+          <rect x="320" y="380" width="460" height="110" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="550" y="402" text-anchor="middle" font-size="12" class="label-red" font-weight="700">⚠️ Double Ratchet 的端点假设</text>
+          <text x="550" y="424" text-anchor="middle" font-size="11" class="label-slate">DR 协议本身只在"两个端点"之间 ping-pong：</text>
+          <text x="550" y="442" text-anchor="middle" font-size="11" class="svg-mono label-slate">(Alice 的一对 IK) ↔ (Bob 的一对 IK)</text>
+          <text x="550" y="462" text-anchor="middle" font-size="11" class="label-slate">现实里 Bob 有 N 台设备 → N 对独立的 IK</text>
+          <text x="550" y="480" text-anchor="middle" font-size="10" class="label-muted">"发给 Bob"这句话在协议层面无法直接表达</text>
+        </g>
+
+        <!-- Step 2 only: ProtocolAddress 结构面板 -->
+        <g data-step="2" data-step-end="2">
+          <rect x="320" y="380" width="460" height="110" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="550" y="402" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">ProtocolAddress · 寻址原子</text>
+          <text x="550" y="422" text-anchor="middle" font-size="11" class="svg-mono label-violet">struct ProtocolAddress { name: String, device_id: DeviceId }</text>
+          <text x="550" y="440" text-anchor="middle" font-size="11" class="label-slate">name 通常 = ServiceId 字符串（账号 UUID）</text>
+          <text x="550" y="458" text-anchor="middle" font-size="11" class="svg-mono label-slate">DeviceId = NonZeroU8 → 单账号上限 255 台设备</text>
+          <text x="550" y="478" text-anchor="middle" font-size="10" class="label-muted">规范来源：Sesame §2 Terms + libsignal address.rs</text>
+        </g>
+
+        <!-- Hint top -->
+        <g data-step="1" data-step-end="1">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">DR 端点 = 一台设备；多设备时一个"Bob"对应多个端点</text>
+        </g>
+        <g data-step="2" data-step-end="2">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">每台设备有独立的 (name, device_id)，独立的 IK + SPK + OTPK</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch2 — 会话结构
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="2" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-slate-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-amber-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+          <marker id="arr-violet-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+        </defs>
+
+        <!-- Alice phone (始终) -->
+        <g data-step="3">
+          <rect x="140" y="160" width="140" height="70" rx="14" class="actor-cherry" stroke-width="2"/>
+          <text x="210" y="195" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">📱 Alice phone</text>
+          <text x="210" y="215" text-anchor="middle" font-size="11" class="svg-mono label-muted">alice/1</text>
+        </g>
+
+        <!-- Bob 三台设备 -->
+        <g data-step="3">
+          <rect x="860" y="120" width="140" height="60" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="146" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">📱 Bob phone</text>
+          <text x="930" y="166" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/1</text>
+
+          <rect x="860" y="200" width="140" height="60" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="226" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">📲 Bob iPad</text>
+          <text x="930" y="246" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/2</text>
+
+          <rect x="860" y="280" width="140" height="60" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="306" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">💻 Bob laptop</text>
+          <text x="930" y="326" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/3</text>
+        </g>
+
+        <!-- Step 3: 底部 amber session 框 + 三条连线 -->
+        <g data-step="3">
+          <rect x="350" y="430" width="120" height="40" rx="8" class="actor-amber" stroke-width="1.5"/>
+          <text x="410" y="448" text-anchor="middle" font-size="11" class="label-amber" font-weight="700">SessionRecord</text>
+          <text x="410" y="463" text-anchor="middle" font-size="10" class="svg-mono label-muted">→ bob/1</text>
+
+          <rect x="490" y="430" width="120" height="40" rx="8" class="actor-amber" stroke-width="1.5"/>
+          <text x="550" y="448" text-anchor="middle" font-size="11" class="label-amber" font-weight="700">SessionRecord</text>
+          <text x="550" y="463" text-anchor="middle" font-size="10" class="svg-mono label-muted">→ bob/2</text>
+
+          <rect x="630" y="430" width="120" height="40" rx="8" class="actor-amber" stroke-width="1.5"/>
+          <text x="690" y="448" text-anchor="middle" font-size="11" class="label-amber" font-weight="700">SessionRecord</text>
+          <text x="690" y="463" text-anchor="middle" font-size="10" class="svg-mono label-muted">→ bob/3</text>
+
+          <line x1="280" y1="195" x2="410" y2="430" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <line x1="280" y1="195" x2="550" y2="430" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <line x1="280" y1="195" x2="690" y2="430" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+          <line x1="410" y1="430" x2="860" y2="150" stroke="#b45309" stroke-width="1.2" opacity="0.5"/>
+          <line x1="550" y1="430" x2="860" y2="230" stroke="#b45309" stroke-width="1.2" opacity="0.5"/>
+          <line x1="690" y1="430" x2="860" y2="310" stroke="#b45309" stroke-width="1.2" opacity="0.5"/>
+
+          <text x="540" y="415" text-anchor="middle" font-size="11" class="label-muted">DR session 黑盒带 · 每对 (UserID, DeviceID) 一份</text>
+        </g>
+
+        <!-- Step 4: 中带 violet 表格 UserRecord -->
+        <g data-step="4">
+          <rect x="400" y="120" width="300" height="180" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="550" y="148" text-anchor="middle" font-size="13" class="label-violet" font-weight="700">UserRecords · 会话簿</text>
+          <line x1="420" y1="160" x2="680" y2="160" stroke="#6d28d9" stroke-width="1" opacity="0.4"/>
+
+          <text x="420" y="190" font-size="12" class="svg-mono label-violet" font-weight="600">bob_uuid</text>
+          <text x="500" y="190" font-size="12" class="label-muted">→</text>
+          <text x="520" y="190" font-size="12" class="svg-mono label-violet">{ 1, 2, 3 }</text>
+
+          <text x="420" y="220" font-size="12" class="svg-mono label-violet" font-weight="600">alice_uuid</text>
+          <text x="500" y="220" font-size="12" class="label-muted">→</text>
+          <text x="520" y="220" font-size="12" class="svg-mono label-violet">{ 1 }</text>
+
+          <text x="420" y="252" font-size="11" class="label-muted">DeviceRecord 内含：</text>
+          <text x="430" y="270" font-size="11" class="label-muted">• 1 个 active session</text>
+          <text x="430" y="285" font-size="11" class="label-muted">• N 个 inactive sessions（保留收延迟消息）</text>
+
+          <line x1="600" y1="190" x2="690" y2="430" stroke="#6d28d9" stroke-width="1" stroke-dasharray="2 3" opacity="0.5"/>
+          <line x1="600" y1="190" x2="550" y2="430" stroke="#6d28d9" stroke-width="1" stroke-dasharray="2 3" opacity="0.5"/>
+          <line x1="600" y1="190" x2="410" y2="430" stroke="#6d28d9" stroke-width="1" stroke-dasharray="2 3" opacity="0.5"/>
+        </g>
+
+        <!-- Step 5: active vs inactive 摞框 (替换 Step 3 的 SessionRecord 视图) -->
+        <g data-step="5">
+          <!-- bob/1 -->
+          <rect x="350" y="420" width="120" height="22" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="410" y="436" text-anchor="middle" font-size="10" class="label-amber" font-weight="700">active</text>
+          <rect x="356" y="446" width="108" height="9" rx="2" fill="#f1f5f9" stroke="#9ca3af" stroke-width="0.8"/>
+          <rect x="356" y="458" width="108" height="9" rx="2" fill="#f1f5f9" stroke="#9ca3af" stroke-width="0.8"/>
+          <text x="410" y="480" text-anchor="middle" font-size="9" class="label-muted">inactive (2)</text>
+
+          <!-- bob/2 -->
+          <rect x="490" y="420" width="120" height="22" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="550" y="436" text-anchor="middle" font-size="10" class="label-amber" font-weight="700">active</text>
+          <rect x="496" y="446" width="108" height="9" rx="2" fill="#f1f5f9" stroke="#9ca3af" stroke-width="0.8"/>
+          <text x="550" y="468" text-anchor="middle" font-size="9" class="label-muted">inactive (1)</text>
+
+          <!-- bob/3 -->
+          <rect x="630" y="420" width="120" height="22" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="690" y="436" text-anchor="middle" font-size="10" class="label-amber" font-weight="700">active</text>
+          <text x="690" y="460" text-anchor="middle" font-size="9" class="label-muted">inactive (0)</text>
+
+          <text x="540" y="405" text-anchor="middle" font-size="11" class="label-muted">active 用于加密；inactive 仅供试解延迟消息</text>
+        </g>
+
+        <!-- Step 3 only · 黑盒接口卡 -->
+        <g data-step="3" data-step-end="3">
+          <rect x="730" y="120" width="290" height="180" rx="10" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
+          <text x="875" y="142" text-anchor="middle" font-size="12" class="label-amber" font-weight="700">SessionRecord · 黑盒接口</text>
+          <text x="745" y="170" font-size="11" class="label-slate" font-weight="600">对外只暴露两个动词</text>
+          <text x="755" y="190" font-size="10" class="svg-mono label-amber">message_encrypt(addr, ptext)</text>
+          <text x="755" y="206" font-size="10" class="svg-mono label-amber">message_decrypt_*(msg, addr)</text>
+
+          <text x="745" y="234" font-size="11" class="label-slate" font-weight="600">黑盒里有什么</text>
+          <text x="755" y="252" font-size="10" class="label-muted">root key / sending CK / receiving CK</text>
+          <text x="755" y="266" font-size="10" class="label-muted">DH 公私钥 / 消息序号 / skipped MK</text>
+          <text x="755" y="284" font-size="10" class="label-muted">→ 详见 beginner 教程 CH3-CH4</text>
+        </g>
+
+        <!-- Hints -->
+        <g data-step="3" data-step-end="3">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">一对 (UserID, DeviceID) → 一份 SessionRecord（内含 current DR state）</text>
+        </g>
+        <!-- Step 4 only · 嵌套结构示意 -->
+        <g data-step="4" data-step-end="4">
+          <rect x="730" y="370" width="290" height="130" rx="10" fill="#fff" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="875" y="392" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">两层嵌套</text>
+          <text x="745" y="412" font-size="10" class="svg-mono label-violet">UserRecord {</text>
+          <text x="755" y="428" font-size="10" class="svg-mono label-slate">  user_id: ServiceId,</text>
+          <text x="755" y="444" font-size="10" class="svg-mono label-slate">  devices: HashMap&lt;DeviceId, DeviceRecord&gt;,</text>
+          <text x="745" y="460" font-size="10" class="svg-mono label-violet">}</text>
+          <text x="745" y="476" font-size="10" class="svg-mono label-violet">DeviceRecord {</text>
+          <text x="755" y="490" font-size="10" class="svg-mono label-slate">  active + inactive sessions, registration_id</text>
+        </g>
+
+        <g data-step="4" data-step-end="4">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Sesame 规范的两层映射：libsignal 不提供，应用层维护</text>
+        </g>
+        <!-- Step 5 only · active/inactive 规则面板 -->
+        <g data-step="5" data-step-end="5">
+          <rect x="60" y="100" width="290" height="190" rx="10" fill="#fff" stroke="#b45309" stroke-width="1.5"/>
+          <text x="205" y="122" text-anchor="middle" font-size="12" class="label-amber" font-weight="700">active / inactive 三规则</text>
+
+          <text x="80" y="150" font-size="11" class="label-amber" font-weight="600">① 新 session 上位</text>
+          <text x="80" y="166" font-size="10" class="label-slate">对端重装 / 重新协商 → 新 session 成 active</text>
+          <text x="80" y="180" font-size="10" class="label-slate">旧 active 降为 inactive 摞顶</text>
+
+          <text x="80" y="208" font-size="11" class="label-amber" font-weight="600">② inactive 命中</text>
+          <text x="80" y="224" font-size="10" class="label-slate">收到旧链上的延迟消息 → 解密成功</text>
+          <text x="80" y="238" font-size="10" class="label-slate">该 inactive 立即 promote 为 active</text>
+
+          <text x="80" y="262" font-size="11" class="label-amber" font-weight="600">③ inactive 上限</text>
+          <text x="80" y="276" font-size="10" class="label-slate">数量 / 时限 由 SessionRecord 内部封装</text>
+        </g>
+
+        <g data-step="5" data-step-end="5">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">active 用于加密；inactive 仅用于 trial-decrypt 收延迟消息</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch3 — 发送扇出
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="3" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-amber-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+          <marker id="arr-cherry-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+        </defs>
+
+        <!-- Alice phone 始终 -->
+        <g data-step="6">
+          <rect x="140" y="160" width="140" height="70" rx="14" class="actor-cherry" stroke-width="2"/>
+          <text x="210" y="195" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">📱 Alice phone</text>
+          <text x="210" y="215" text-anchor="middle" font-size="11" class="svg-mono label-muted">alice/1</text>
+        </g>
+
+        <!-- Bob 三台设备 -->
+        <g data-step="6">
+          <rect x="860" y="120" width="140" height="60" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="146" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">📱 Bob phone</text>
+          <text x="930" y="166" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/1</text>
+
+          <rect x="860" y="220" width="140" height="60" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="246" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">📲 Bob iPad</text>
+          <text x="930" y="266" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/2</text>
+
+          <rect x="860" y="320" width="140" height="60" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="346" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">💻 Bob laptop</text>
+          <text x="930" y="366" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/3</text>
+        </g>
+
+        <!-- Step 6: 中央扇出 -->
+        <g data-step="6">
+          <rect x="400" y="160" width="280" height="180" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="540" y="188" text-anchor="middle" font-size="13" class="label-violet" font-weight="700">Sesame 控制层 · fan-out</text>
+          <line x1="420" y1="200" x2="660" y2="200" stroke="#6d28d9" stroke-width="1" opacity="0.4"/>
+          <text x="540" y="225" text-anchor="middle" font-size="11" class="label-muted">枚举 recipient 全部 device</text>
+          <text x="540" y="245" text-anchor="middle" font-size="11" class="label-muted">每个 active session 跑一次 encrypt</text>
+          <text x="540" y="275" text-anchor="middle" font-size="12" class="svg-mono label-violet" font-weight="600">for d in book.devices_of(bob)</text>
+          <text x="540" y="295" text-anchor="middle" font-size="12" class="svg-mono label-violet">  message_encrypt(...)</text>
+          <text x="540" y="320" text-anchor="middle" font-size="11" class="label-muted">→ 输出 N 个独立密文</text>
+
+          <!-- plaintext 进入 -->
+          <line x1="290" y1="195" x2="390" y2="220" stroke="#6d28d9" stroke-width="2.5" marker-end="url(#arr-violet-3)"/>
+          <text x="335" y="195" text-anchor="middle" font-size="11" class="svg-mono label-violet" font-weight="600">plaintext</text>
+
+          <!-- 三支密文出 -->
+          <line x1="680" y1="200" x2="850" y2="150" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber-3)"/>
+          <text x="775" y="160" font-size="10" class="svg-mono label-amber" font-weight="600">ciphertext_1</text>
+
+          <line x1="680" y1="250" x2="850" y2="250" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber-3)"/>
+          <text x="775" y="240" font-size="10" class="svg-mono label-amber" font-weight="600">ciphertext_2</text>
+
+          <line x1="680" y1="300" x2="850" y2="350" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber-3)"/>
+          <text x="775" y="338" font-size="10" class="svg-mono label-amber" font-weight="600">ciphertext_3</text>
+        </g>
+
+        <!-- Step 5 inactive 摞 (跨章不显示，这里用 Step 6 only 的简化) -->
+
+        <!-- Step 7: 加 Server 云朵 + 信封三元组 -->
+        <g data-step="7">
+          <ellipse cx="780" cy="430" rx="90" ry="36" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
+          <text x="780" y="430" text-anchor="middle" font-size="13" class="label-slate" font-weight="700">☁️ Server</text>
+          <text x="780" y="450" text-anchor="middle" font-size="10" class="label-muted">只看信封，不看明文</text>
+
+          <line x1="690" y1="395" x2="780" y2="400" stroke="#6d28d9" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <line x1="780" y1="395" x2="930" y2="190" stroke="#475569" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+          <line x1="780" y1="395" x2="930" y2="290" stroke="#475569" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+          <line x1="780" y1="430" x2="930" y2="380" stroke="#475569" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>
+
+          <rect x="380" y="370" width="280" height="50" rx="8" fill="#fff" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="520" y="388" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">OutEnvelope · 投递结构</text>
+          <text x="520" y="408" text-anchor="middle" font-size="11" class="svg-mono label-violet">(device_id, registration_id, ct)</text>
+        </g>
+
+        <!-- Step 8: Self-sync · 加 Alice iPad + violet 回弹 + 高亮 alice 行 -->
+        <g data-step="8">
+          <rect x="140" y="260" width="140" height="70" rx="14" class="actor-cherry" stroke-width="2"/>
+          <text x="210" y="295" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">📲 Alice iPad</text>
+          <text x="210" y="315" text-anchor="middle" font-size="11" class="svg-mono label-muted">alice/2</text>
+
+          <line x1="400" y1="290" x2="290" y2="295" stroke="#6d28d9" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr-violet-3)"/>
+          <text x="345" y="280" text-anchor="middle" font-size="11" class="svg-mono label-violet" font-weight="600">self-copy</text>
+
+          <rect x="700" y="170" width="180" height="50" rx="8" fill="#fff" stroke="#6d28d9" stroke-width="2"/>
+          <text x="790" y="188" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">recipient set</text>
+          <text x="790" y="208" text-anchor="middle" font-size="10" class="svg-mono label-muted">{bob, self} − {self.cur}</text>
+        </g>
+
+        <!-- Step 6 only · 加密语义说明面板 -->
+        <g data-step="6" data-step-end="6">
+          <rect x="140" y="370" width="260" height="120" rx="10" fill="#fff" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="270" y="392" text-anchor="middle" font-size="11" class="label-cherry" font-weight="700">为什么不能广播一份密文</text>
+          <text x="270" y="412" text-anchor="middle" font-size="10" class="label-slate">每个 SessionRecord 对应一对独立的</text>
+          <text x="270" y="427" text-anchor="middle" font-size="10" class="svg-mono label-slate">(root key, sending CK)</text>
+          <text x="270" y="445" text-anchor="middle" font-size="10" class="label-slate">同一明文喂三条链 → 三个 MK 各异</text>
+          <text x="270" y="463" text-anchor="middle" font-size="10" class="label-slate">→ 三份独立密文，互相之间无法解</text>
+          <text x="270" y="481" text-anchor="middle" font-size="9" class="label-muted">DR 的端点单位是设备，不是用户</text>
+        </g>
+
+        <!-- Hints -->
+        <g data-step="6" data-step-end="6">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">一明文 → N 份独立加密的密文，每个 session 独立</text>
+        </g>
+        <!-- Step 7 only · 服务器视角对比 -->
+        <g data-step="7" data-step-end="7">
+          <rect x="60" y="445" width="320" height="65" rx="8" fill="#fff" stroke="#475569" stroke-width="1.2"/>
+          <text x="220" y="463" text-anchor="middle" font-size="11" class="label-slate" font-weight="700">服务器看到 ✓</text>
+          <text x="80" y="481" font-size="10" class="label-slate">• device_id（路由用）</text>
+          <text x="80" y="495" font-size="10" class="label-slate">• registration_id（检测重装）</text>
+          <text x="220" y="481" font-size="10" class="label-slate">• 密文长度 / 时间戳</text>
+          <text x="220" y="495" font-size="10" class="label-slate">• 谁在跟谁聊</text>
+
+          <rect x="400" y="445" width="280" height="65" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.2"/>
+          <text x="540" y="463" text-anchor="middle" font-size="11" class="label-red" font-weight="700">服务器看不到 ✕</text>
+          <text x="420" y="481" font-size="10" class="label-red">• 任何明文</text>
+          <text x="420" y="495" font-size="10" class="label-red">• N 份密文之间的关联</text>
+          <text x="555" y="481" font-size="10" class="label-red">• Session 内部状态</text>
+          <text x="555" y="495" font-size="10" class="label-red">• MK / RK / CK</text>
+        </g>
+
+        <g data-step="7" data-step-end="7">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">服务器只看信封（device_id + registration_id），看不到明文</text>
+        </g>
+        <!-- Step 8 only · self-sync 算法面板（移到左下避开 Server 椭圆 x=690-870） -->
+        <g data-step="8" data-step-end="8">
+          <rect x="60" y="380" width="560" height="120" rx="10" class="actor-cherry" stroke-width="1.5"/>
+          <text x="340" y="402" text-anchor="middle" font-size="12" class="label-cherry" font-weight="700">multi-device fan-out · 收件集合算法</text>
+          <text x="80" y="424" font-size="11" class="svg-mono label-slate">recipients = ∪{ recipient, sender_user }</text>
+          <text x="80" y="442" font-size="11" class="svg-mono label-slate">for u in recipients:</text>
+          <text x="80" y="460" font-size="11" class="svg-mono label-slate">  for d in book.devices_of(u):</text>
+          <text x="80" y="478" font-size="11" class="svg-mono label-slate">    if (u, d) == (sender_user, sender_dev): skip</text>
+          <text x="80" y="494" font-size="11" class="svg-mono label-slate">    encrypt(addr=(u, d), ptext) → envelope</text>
+        </g>
+
+        <g data-step="8" data-step-end="8">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">扇出循环再套一层：收件集合 = {recipient, self}，排除自己的当前 device_id</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch4 — 接收与提升
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="4" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-amber-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+          <marker id="arr-green-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+          <marker id="arr-slate-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+        </defs>
+
+        <!-- Alice phone (接收方) + SessionRecord 框 -->
+        <g data-step="9">
+          <rect x="140" y="180" width="160" height="70" rx="14" class="actor-cherry" stroke-width="2"/>
+          <text x="220" y="215" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">📱 Alice phone</text>
+          <text x="220" y="235" text-anchor="middle" font-size="11" class="svg-mono label-muted">recipient</text>
+
+          <!-- SessionRecord 摞框 -->
+          <rect x="320" y="180" width="200" height="36" rx="6" fill="#f1f5f9" stroke="#9ca3af" stroke-width="1.5"/>
+          <text x="420" y="203" text-anchor="middle" font-size="11" class="label-muted" font-weight="600">active (旧)</text>
+
+          <text x="420" y="232" text-anchor="middle" font-size="10" class="label-muted">previous_session_states ↓</text>
+
+          <rect x="320" y="240" width="200" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
+          <text x="420" y="256" text-anchor="middle" font-size="10" class="label-amber">inactive · candidate A</text>
+
+          <rect x="320" y="266" width="200" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
+          <text x="420" y="282" text-anchor="middle" font-size="10" class="label-amber">inactive · candidate B</text>
+
+          <rect x="320" y="292" width="200" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
+          <text x="420" y="308" text-anchor="middle" font-size="10" class="label-amber">inactive · candidate C</text>
+
+          <text x="420" y="170" text-anchor="middle" font-size="11" class="label-violet" font-weight="600">SessionRecord (sender)</text>
+        </g>
+
+        <!-- Bob phone (sender) -->
+        <g data-step="9">
+          <rect x="860" y="180" width="160" height="70" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="940" y="215" text-anchor="middle" font-size="14" font-weight="700" class="label-teal">📱 Bob phone</text>
+          <text x="940" y="235" text-anchor="middle" font-size="11" class="svg-mono label-muted">sender · bob/1</text>
+
+          <!-- ☁ Server -->
+          <ellipse cx="690" cy="100" rx="80" ry="32" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
+          <text x="690" y="100" text-anchor="middle" font-size="13" class="label-slate" font-weight="700">☁️ Server</text>
+          <text x="690" y="118" text-anchor="middle" font-size="10" class="label-muted">forward</text>
+
+          <!-- ciphertext 反向 -->
+          <line x1="860" y1="180" x2="760" y2="120" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber-4)"/>
+          <line x1="620" y1="120" x2="530" y2="190" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber-4)"/>
+          <text x="690" y="160" text-anchor="middle" font-size="11" class="svg-mono label-amber" font-weight="600">ciphertext (delayed)</text>
+        </g>
+
+        <!-- Step 9 only: trial decrypt 流程 + promote -->
+        <g data-step="9" data-step-end="9">
+          <!-- candidate B 命中：变绿 + ✓ -->
+          <rect x="320" y="266" width="200" height="22" rx="4" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+          <text x="420" y="282" text-anchor="middle" font-size="10" class="label-green" font-weight="700">✓ candidate B 解密成功</text>
+
+          <!-- 上提箭头 -->
+          <path d="M 540 277 Q 600 240, 540 195" stroke="#15803d" stroke-width="2" stroke-dasharray="4 3" fill="none" marker-end="url(#arr-green-4)"/>
+          <text x="600" y="240" font-size="11" class="label-green" font-weight="600">promote</text>
+
+          <!-- 旧 active 落入 inactive -->
+          <path d="M 320 200 Q 280 235, 320 254" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="3 3" fill="none" marker-end="url(#arr-slate-4)"/>
+          <text x="270" y="232" font-size="10" class="label-muted">demote</text>
+
+          <rect x="320" y="380" width="380" height="80" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="510" y="402" text-anchor="middle" font-size="12" class="label-green" font-weight="700">trial-decrypt 顺序</text>
+          <text x="510" y="422" text-anchor="middle" font-size="11" class="svg-mono label-green">current → previous_session_states[..]</text>
+          <text x="510" y="440" text-anchor="middle" font-size="11" class="label-green">命中后 promote 命中的为 active；旧 active 降为 inactive head</text>
+          <text x="510" y="455" text-anchor="middle" font-size="10" class="label-muted">不匹配 → 触发 stale 流程（CH5 Step 12）</text>
+        </g>
+
+        <!-- 状态机迁移图 (Step 9 only · 底部右侧) -->
+        <g data-step="9" data-step-end="9">
+          <rect x="730" y="380" width="290" height="100" rx="10" class="actor-violet" stroke-width="1.5"/>
+          <text x="875" y="402" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">SessionState 转移</text>
+
+          <rect x="745" y="412" width="80" height="22" rx="5" fill="#f1f5f9" stroke="#9ca3af" stroke-width="1"/>
+          <text x="785" y="427" text-anchor="middle" font-size="10" class="label-muted">old active</text>
+
+          <line x1="825" y1="423" x2="855" y2="423" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-slate-4)"/>
+          <text x="840" y="412" text-anchor="middle" font-size="9" class="label-muted">demote</text>
+
+          <rect x="855" y="412" width="80" height="22" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+          <text x="895" y="427" text-anchor="middle" font-size="10" class="label-amber">inactive</text>
+
+          <rect x="745" y="446" width="80" height="22" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+          <text x="785" y="461" text-anchor="middle" font-size="10" class="label-amber">candidate</text>
+
+          <line x1="825" y1="457" x2="855" y2="457" stroke="#15803d" stroke-width="1.5" marker-end="url(#arr-green-4)"/>
+          <text x="840" y="446" text-anchor="middle" font-size="9" class="label-green" font-weight="600">promote</text>
+
+          <rect x="855" y="446" width="80" height="22" rx="5" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="895" y="461" text-anchor="middle" font-size="10" class="label-green" font-weight="700">new active</text>
+
+          <text x="875" y="478" text-anchor="middle" font-size="9" class="label-muted">每次成功解密都跑这一轮</text>
+        </g>
+
+        <g data-step="9" data-step-end="9">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">trial-decrypt: current → previous；命中后 promote 为 active</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch5 — 设备生命周期
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="5" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-slate-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-red-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+          </marker>
+        </defs>
+
+        <!-- Alice phone 始终 -->
+        <g data-step="10">
+          <rect x="140" y="200" width="140" height="70" rx="14" class="actor-cherry" stroke-width="2"/>
+          <text x="210" y="235" text-anchor="middle" font-size="14" font-weight="700" class="label-cherry">📱 Alice phone</text>
+          <text x="210" y="255" text-anchor="middle" font-size="11" class="svg-mono label-muted">alice/1</text>
+        </g>
+
+        <!-- Bob 三台已知设备 -->
+        <g data-step="10">
+          <rect x="860" y="100" width="140" height="58" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="124" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">📱 Bob phone</text>
+          <text x="930" y="144" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/1</text>
+
+          <rect x="860" y="170" width="140" height="58" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="194" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">📲 Bob iPad</text>
+          <text x="930" y="214" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/2</text>
+
+          <rect x="860" y="240" width="140" height="58" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="264" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">💻 Bob laptop</text>
+          <text x="930" y="284" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/3</text>
+        </g>
+
+        <!-- 中带 violet 表格 (Step 10 起) -->
+        <g data-step="10">
+          <rect x="380" y="170" width="320" height="160" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="540" y="195" text-anchor="middle" font-size="13" class="label-violet" font-weight="700">UserRecords · Address book</text>
+          <line x1="400" y1="205" x2="680" y2="205" stroke="#6d28d9" stroke-width="1" opacity="0.4"/>
+          <text x="400" y="232" font-size="12" class="svg-mono label-violet" font-weight="600">bob</text>
+          <text x="445" y="232" font-size="12" class="label-muted">→</text>
+          <text x="465" y="232" font-size="12" class="svg-mono label-violet">{ 1, 2, 3 }</text>
+          <text x="400" y="262" font-size="12" class="svg-mono label-violet" font-weight="600">alice</text>
+          <text x="445" y="262" font-size="12" class="label-muted">→</text>
+          <text x="465" y="262" font-size="12" class="svg-mono label-violet">{ 1 }</text>
+        </g>
+
+        <!-- Step 10 only: 第 4 台灰描边设备 + ❓ 占位 -->
+        <g data-step="10" data-step-end="10">
+          <rect x="860" y="310" width="140" height="58" rx="14" fill="#fff" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6 4"/>
+          <text x="930" y="334" text-anchor="middle" font-size="13" font-weight="700" class="label-muted">💻 Bob laptop 2</text>
+          <text x="930" y="354" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/4 · 未知</text>
+
+          <text x="660" y="232" font-size="14" class="label-muted" font-weight="700">❓</text>
+          <text x="540" y="295" text-anchor="middle" font-size="11" class="label-muted">device linking · provisioning 在 App 层</text>
+        </g>
+
+        <!-- Step 11: 拉 PreKeyBundle -->
+        <g data-step="11">
+          <ellipse cx="780" cy="430" rx="90" ry="32" fill="#f1f5f9" stroke="#475569" stroke-width="2"/>
+          <text x="780" y="430" text-anchor="middle" font-size="13" class="label-slate" font-weight="700">☁️ Server</text>
+          <text x="780" y="448" text-anchor="middle" font-size="10" class="label-muted">key distribution</text>
+        </g>
+        <g data-step="11" data-step-end="11">
+          <line x1="700" y1="290" x2="780" y2="400" stroke="#6d28d9" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arr-violet-5)"/>
+          <text x="690" y="370" font-size="10" class="label-violet" font-weight="600">fetch prekey bundle (bob/4)</text>
+        </g>
+        <g data-step="11">
+          <!-- bob/4 实线 cherry -->
+          <rect x="860" y="310" width="140" height="58" rx="14" class="actor-teal" stroke-width="2"/>
+          <text x="930" y="334" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">💻 Bob laptop 2</text>
+          <text x="930" y="354" text-anchor="middle" font-size="10" class="svg-mono label-muted">bob/4</text>
+
+          <!-- 表格 bob 行更新 -->
+          <rect x="445" y="218" width="115" height="20" rx="3" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+          <text x="503" y="232" text-anchor="middle" font-size="11" class="svg-mono label-green" font-weight="700">{ 1, 2, 3, 4 }</text>
+        </g>
+
+        <!-- Step 12: stale 标记 -->
+        <g data-step="12" data-step-end="12">
+          <!-- bob/2 灰 + ⚠️ -->
+          <rect x="860" y="170" width="140" height="58" rx="14" fill="#f1f5f9" stroke="#b91c1c" stroke-width="2" stroke-dasharray="5 3"/>
+          <text x="930" y="194" text-anchor="middle" font-size="13" font-weight="700" class="label-muted">📲 Bob iPad</text>
+          <text x="930" y="214" text-anchor="middle" font-size="10" class="svg-mono label-red" font-weight="700">⚠️ stale</text>
+
+          <!-- 表格 cell ⚠️ -->
+          <text x="490" y="232" text-anchor="middle" font-size="14" class="label-red" font-weight="700">⚠️</text>
+
+          <!-- 沙漏 -->
+          <text x="800" y="200" text-anchor="middle" font-size="14" class="label-amber">⏳</text>
+          <text x="800" y="218" text-anchor="middle" font-size="9" class="label-muted">MAXLATENCY</text>
+
+          <rect x="320" y="380" width="380" height="80" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="510" y="402" text-anchor="middle" font-size="12" class="label-red" font-weight="700">stale 不立即删</text>
+          <text x="510" y="420" text-anchor="middle" font-size="11" class="label-muted">SessionNotFound / UntrustedIdentity 触发</text>
+          <text x="510" y="438" text-anchor="middle" font-size="11" class="label-muted">保留至 MAXLATENCY 收延迟消息；超时后清</text>
+          <text x="510" y="455" text-anchor="middle" font-size="10" class="label-muted">下一次发送时 fan-out 自动重建</text>
+        </g>
+
+        <!-- Step 13: 设备移除 + 收敛 ✓ -->
+        <g data-step="13" data-step-end="13">
+          <!-- bob/2 淡出（灰） -->
+          <rect x="860" y="170" width="140" height="58" rx="14" fill="#fff" stroke="#e5e7eb" stroke-width="1.5" opacity="0.4"/>
+          <text x="930" y="194" text-anchor="middle" font-size="13" font-weight="700" fill="#e5e7eb">📲 Bob iPad</text>
+          <text x="930" y="214" text-anchor="middle" font-size="10" class="svg-mono" fill="#e5e7eb">已移除</text>
+
+          <!-- 表格更新：bob → {1, 3, 4} -->
+          <rect x="445" y="218" width="115" height="20" rx="3" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+          <text x="503" y="232" text-anchor="middle" font-size="11" class="svg-mono label-green" font-weight="700">{ 1, 3, 4 }</text>
+
+          <!-- 收敛 ✓ -->
+          <text x="780" y="478" text-anchor="middle" font-size="22" class="label-green" font-weight="700">✓</text>
+          <text x="780" y="498" text-anchor="middle" font-size="11" class="label-green" font-weight="700">converged</text>
+        </g>
+
+        <!-- Step 10 only · provisioning 流程小图 -->
+        <g data-step="10" data-step-end="10">
+          <rect x="60" y="390" width="660" height="100" rx="10" fill="#fff" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="390" y="412" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">device linking · App 层 provisioning（libsignal 不提供）</text>
+
+          <rect x="80" y="430" width="100" height="44" rx="6" class="actor-cherry" stroke-width="1.2"/>
+          <text x="130" y="452" text-anchor="middle" font-size="11" class="label-cherry" font-weight="600">primary</text>
+          <text x="130" y="468" text-anchor="middle" font-size="9" class="label-muted">显示 QR 码</text>
+
+          <line x1="180" y1="452" x2="220" y2="452" stroke="#6d28d9" stroke-width="1.5" marker-end="url(#arr-violet-5)"/>
+
+          <rect x="220" y="430" width="100" height="44" rx="6" class="actor-teal" stroke-width="1.2"/>
+          <text x="270" y="452" text-anchor="middle" font-size="11" class="label-teal" font-weight="600">new device</text>
+          <text x="270" y="468" text-anchor="middle" font-size="9" class="label-muted">扫码 + 生成 IK</text>
+
+          <line x1="320" y1="452" x2="360" y2="452" stroke="#6d28d9" stroke-width="1.5" marker-end="url(#arr-violet-5)"/>
+
+          <rect x="360" y="430" width="120" height="44" rx="6" fill="#f1f5f9" stroke="#475569" stroke-width="1.2"/>
+          <text x="420" y="452" text-anchor="middle" font-size="11" class="label-slate" font-weight="600">☁️ server</text>
+          <text x="420" y="468" text-anchor="middle" font-size="9" class="label-muted">注册 device_id</text>
+
+          <line x1="480" y1="452" x2="520" y2="452" stroke="#6d28d9" stroke-width="1.5" marker-end="url(#arr-violet-5)"/>
+
+          <rect x="520" y="430" width="180" height="44" rx="6" fill="#fff" stroke="#6d28d9" stroke-width="1.2"/>
+          <text x="610" y="450" text-anchor="middle" font-size="11" class="label-violet" font-weight="600">上传 prekey bundle</text>
+          <text x="610" y="466" text-anchor="middle" font-size="9" class="label-muted">IK + SPK + OTPK 池</text>
+        </g>
+
+        <!-- Hints -->
+        <g data-step="10" data-step-end="10">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">device linking 是 App 层 provisioning（QR 码 + 服务端配对），不在 libsignal</text>
+        </g>
+        <!-- Step 11 only · PreKeyBundle 字段卡 -->
+        <g data-step="11" data-step-end="11">
+          <rect x="60" y="380" width="280" height="120" rx="10" class="actor-violet" stroke-width="1.5"/>
+          <text x="200" y="402" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">PreKeyBundle 字段</text>
+          <text x="80" y="422" font-size="10" class="svg-mono label-violet">registration_id: u32</text>
+          <text x="80" y="438" font-size="10" class="svg-mono label-violet">device_id: DeviceId</text>
+          <text x="80" y="454" font-size="10" class="svg-mono label-violet">pre_key: Option&lt;OTPK&gt;</text>
+          <text x="80" y="470" font-size="10" class="svg-mono label-violet">signed_pre_key: SignedKey</text>
+          <text x="80" y="486" font-size="10" class="svg-mono label-violet">kyber_pre_key, identity_key, signature</text>
+        </g>
+
+        <g data-step="11" data-step-end="11">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">首次发送前 process_prekey_bundle 建立初始 DR session</text>
+        </g>
+        <!-- Step 12 only · 错误分类小卡 -->
+        <g data-step="12" data-step-end="12">
+          <rect x="60" y="100" width="280" height="180" rx="10" fill="#fff" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="200" y="122" text-anchor="middle" font-size="12" class="label-red" font-weight="700">SignalProtocolError 触发条件</text>
+
+          <text x="80" y="150" font-size="11" class="svg-mono label-red" font-weight="600">SessionNotFound</text>
+          <text x="80" y="166" font-size="10" class="label-slate">本地无该 (user, device) session</text>
+          <text x="80" y="180" font-size="10" class="label-muted">→ schedule_prekey_fetch + mark_stale</text>
+
+          <text x="80" y="208" font-size="11" class="svg-mono label-red" font-weight="600">UntrustedIdentity</text>
+          <text x="80" y="224" font-size="10" class="label-slate">对端 IK 变了（重装 / 换设备）</text>
+          <text x="80" y="238" font-size="10" class="label-muted">→ 显示 safety number 变更提示</text>
+
+          <text x="80" y="262" font-size="11" class="svg-mono label-red" font-weight="600">DuplicateMessage</text>
+          <text x="80" y="276" font-size="10" class="label-slate">收到已解过的旧密文 → 丢弃</text>
+        </g>
+
+        <g data-step="12" data-step-end="12">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">stale 不立即删，保留 MAXLATENCY 接收延迟消息；超时后清</text>
+        </g>
+        <!-- Step 13 only · 收敛条件总结卡 -->
+        <g data-step="13" data-step-end="13">
+          <rect x="60" y="380" width="660" height="110" rx="10" class="actor-green" stroke-width="1.5"/>
+          <text x="390" y="402" text-anchor="middle" font-size="12" class="label-green" font-weight="700">最终一致性 · convergence loop</text>
+          <text x="390" y="424" text-anchor="middle" font-size="11" class="label-slate">收敛条件 = 本地 device set == 服务端 device set 且全部 active 可用</text>
+          <text x="390" y="444" text-anchor="middle" font-size="11" class="label-slate">不收敛 → 应用 stale diff → 重跑 fan-out</text>
+          <text x="390" y="462" text-anchor="middle" font-size="11" class="label-slate">扇出失败 → discard 当前批次防"半更新" → 整批重试</text>
+          <text x="390" y="480" text-anchor="middle" font-size="10" class="label-muted">兜底 = 重试 + MAXLATENCY 超时清理 双保险</text>
+        </g>
+
+        <g data-step="13" data-step-end="13">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">收敛条件 = 本地 set == 服务端 set 且 active 可用；不收敛就重跑扇出</text>
+        </g>
+      </svg>
+
+    </section>
+
+    <!-- Caption -->
+    <section class="caption">
+      <div class="caption-title" id="caption-title"></div>
+      <div class="caption-body" id="caption-body"></div>
+    </section>
+
+    <!-- Deep-dive: references + rust code -->
+    <section class="extras" id="extras"></section>
+
+    <!-- Controls -->
+    <nav class="controls">
+      <button id="btn-prev">◀ 上一步</button>
+      <button id="btn-next" class="primary">下一步 ▶</button>
+      <button id="btn-replay" class="ghost">↻ 重头来</button>
+      <span class="hint">键盘 ← / → 也能切；URL 自动保存当前步</span>
+    </nav>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Step controller
+   ============================================================ */
+const STEPS = [
+  // Ch1 · 多设备问题
+  { ch: 1, title: '单设备假设的崩塌', body: 'Double Ratchet 当初的假设是<strong>两端各一台设备</strong>：Alice 一对 IK，Bob 一对 IK，DH ratchet 在两个端点之间 ping-pong。<br>但现实里 Bob 同时持有 phone + iPad + laptop，每台都装了同一个账号。"发给 Bob"≠"发给 Bob 的某台设备" —— 那条原本简洁的 DR 信道根本不知道该把消息推给哪一台。<br>Sesame 就是为了把这层缺失的语义补上。<em>DR session 内部细节本教程当黑盒，需要回顾请翻 beginner 渐进版。</em>' },
+  { ch: 1, title: 'ProtocolAddress = (name, device_id)', body: 'Sesame 的最小寻址单元叫 <code>ProtocolAddress</code>，在 libsignal 里就是 <code>(name: String, device_id: DeviceId)</code> 二元组。<br>• <code>name</code> 通常填 <code>ServiceId</code> 字符串（账号 UUID）。<br>• <code>device_id</code> 是 <code>NonZeroU8</code> —— 一个账号最多 255 台设备。<br>每台设备各自生成自己的身份密钥 IK、签名预共享密钥 SPK、一池子一次性 OTPK，独立向服务器注册。<br>从此 "alice/1" "bob/2" 是两个完全不同的 DR 端点，跟两个独立账号没有本质区别。' },
+  // Ch2 · 会话结构
+  { ch: 2, title: '每设备一份 DR session（黑盒）', body: '本机为对端的<strong>每台设备</strong>各维护一份 <code>SessionRecord</code>。<br>SessionRecord 内部封装了 DR 状态机：root key、sending chain、receiving chain、skipped messages …… 这层在 Sesame 视角里全是黑盒，只关心两件事：<br>① <code>encrypt(addr, plaintext)</code> 出一个密文；<br>② <code>decrypt(addr, ciphertext)</code> 出明文。<br>libsignal 通过 <code>SessionStore</code> trait 把读写交给 App 实现，本地存哪儿（SQLite / Keychain）由 App 决定。' },
+  { ch: 2, title: '会话簿 · UserRecord → DeviceRecord 映射', body: '本地为每个联系人维护"<code>UserID → {DeviceID → DeviceRecord}</code>"两层表。这是 Sesame 规范术语，叫 <code>UserRecord</code>（按用户聚合）和 <code>DeviceRecord</code>（按设备聚合）。<br>libsignal <strong>没有专门的 UserRecord 类型</strong>，由 <code>SessionStore</code>（按 ProtocolAddress 取 SessionRecord）+ 应用层维护的 device list 拼出来。<br>这张表的意义：发送一条消息时，先按 UserID 查到全部 DeviceID，再按每个 DeviceID 取 SessionRecord。<em>"会话簿"是 Sesame 的灵魂数据结构。</em>' },
+  { ch: 2, title: 'Active session vs Inactive sessions', body: '每个 DeviceRecord 内部还分两层：<br>• <strong>active session</strong>：当前用来加密的那一份 DR 状态。<br>• <strong>inactive sessions (n)</strong>：之前的旧 session 摞着，留作 trial-decrypt 收延迟消息。<br>规则三条：<br>① 新建 session（如对端重装）时，旧 active 降为 inactive head。<br>② 收到一条用 inactive 加密的消息，命中后 <strong>promote 它为新 active</strong>。<br>③ inactive 数量有上限 / 时限，规则在 <code>SessionRecord</code> 内部封装。<br>这套机制让 session 切换平滑：不会因为一边升级而立刻丢失对端在途的旧消息。' },
+  // Ch3 · 发送扇出
+  { ch: 3, title: '发送扇出 fan-out', body: 'Sesame 的招牌动作来了：<br>一条明文 → 枚举 Bob 的<strong>全部 device</strong> → 对每个 device 的 active session 各跑一次 <code>message_encrypt</code> → 得到 N 份独立密文。<br>每份密文的 KDF 链是<strong>完全独立</strong>的 —— 同一段明文，三台设备解出来的 root key、CK、MK 各不相同。这就是为什么"加密"语义上无法把一份密文广播给多设备：DR 的端点单位是设备，不是用户。<br>循环本身在<strong>应用层</strong>实现，libsignal 只暴露单设备的 encrypt 原语；这是一个有意的设计 —— 让协议核心保持简单，让多设备策略归 App。' },
+  { ch: 3, title: '投递结构与服务器视角', body: '客户端把扇出后的 (DeviceID, ciphertext) 列表打包给服务器，服务器按 device_id 路由给对应设备。<br>每个信封额外带一个 <code>registration_id</code>：这是设备注册时拿到的随机 ID，用来检测<strong>设备重装</strong>（如 Bob iPad 抹机重装后 registration_id 会变，发出去的旧密文会被丢弃，触发对端重新拉 prekey bundle）。<br>服务器只看信封 —— device_id + registration_id —— <strong>看不到明文，也不关心 N 份密文的相互关系</strong>。这保住了 E2EE 边界。' },
+  { ch: 3, title: 'Self-sync · 给自己其它设备也发一份', body: 'Alice phone 发的消息，Alice iPad / Alice laptop 也得能看到，否则她切到 iPad 就看不到自己刚发的话。<br>解法：扇出的<strong>收件集合 = {recipient, self}</strong>，再<strong>排除自己的当前 device_id</strong>（不需要发给本机自己）。<br>对 self 的每台其它设备，<strong>同样跑一遍 fan-out</strong> —— 复用 SessionRecord（self↔self 也是一对一对一的 session），密文走同样通道。<br>最终一条消息可能产生 (Bob 设备数 + Alice 其它设备数) 份密文。这是多端历史一致性的基础。' },
+  // Ch4 · 接收与提升
+  { ch: 4, title: '接收与 session 提升', body: '本机收到一份密文 → 按 (sender_user, sender_device) 取出 SessionRecord → 按 trial-decrypt 顺序试解：<br>① 先用 <strong>current session_state</strong>（最新 active）；<br>② 不行就遍历 <strong>previous_session_states</strong>（旧 inactive）。<br>命中后做两件事：<br>• 把命中的 inactive 提升为新 active（<strong>promote</strong>），旧 active 降为 inactive head（<strong>demote</strong>）；<br>• 把更新后的 SessionRecord 写回 store。<br>所有 candidate 都失败 → 触发 stale 流程（CH5 Step 12 详解）。' },
+  // Ch5 · 设备生命周期
+  { ch: 5, title: '新设备加入 · linking + 设备列表刷新', body: 'Bob 给自己绑了一台新 laptop。要让 Alice 下次发送时把这台 laptop 也覆盖到，链路上有两步：<br>① <strong>device linking</strong>：通过 QR 码 + 服务端 provisioning 协议把新设备激活、生成 IK / 上传 prekey bundle。<em>这一段在 libsignal 之外，属于 App / 服务端协议范畴。</em><br>② <strong>device list 刷新</strong>：Alice 客户端按需向服务器查询 Bob 的最新 device list，发现多了 device_id=4。<br>刷新时机一般是：发送前 / 解密失败重试时 / server 在响应里返回 stale 提示时。' },
+  { ch: 5, title: '与新设备建立 session · 拉 PreKeyBundle', body: 'Alice 第一次给 bob/4 发消息前，本地没有任何 SessionRecord，必须先跑一次握手：<br>① 向服务器请求 bob/4 的 <code>PreKeyBundle</code>（含 IK + SPK + (optional) OTPK + Kyber prekey + 签名）。<br>② 调 <code>process_prekey_bundle(addr, store, bundle, ..)</code>，内部跑 X3DH，生成初始 DR session 写入 SessionStore。<br>③ 之后调 <code>message_encrypt</code>，会自动产出一条特殊的 <code>PreKeySignalMessage</code>，对端收到后镜像跑 X3DH 得到对称 root key。<br><em>X3DH 细节本教程不展开，请翻 beginner 渐进版 CH5。</em>' },
+  { ch: 5, title: '失效 session 与 stale 标记', body: '某天 Alice 给 bob/2 发消息，对端突然解不开了。常见原因：bob/2 抹机重装、IK 变了、本地 SessionRecord 损坏。<br>libsignal 抛 <code>SessionNotFound</code> 或 <code>UntrustedIdentity</code> 错误，应用层把对应 DeviceRecord 标 <strong>stale</strong>：<br>• 不立即删 —— 还要保留 <strong>MAXLATENCY</strong> 时间窗收对端在途的旧消息。<br>• 下次发送扇出时跳过 stale device，并触发"重新拉 prekey bundle 建立新 session"流程。<br>规范还有个 <code>MAX_UNACKNOWLEDGED_SESSION_AGE</code>，用于发送侧自检：刚建的 session 如果一直没收到对端回应，超时就主动丢弃重建。' },
+  { ch: 5, title: '设备移除与最终一致性', body: '设备移除（Bob 注销 iPad）的传播路径：<br>① 服务器返回的 device list 里少了 device_id=2。<br>② Alice 把对应 DeviceRecord 标 stale，过 MAXLATENCY 后清掉对应 SessionRecord。<br>③ 下次扇出，bob/2 自然不在收件集合里。<br>多端最终一致性的判定：<strong>本地 device set == 服务端 device set，且全部 active session 可用</strong>。任何一项不满足就重跑 fan-out。<br>规范还要求：扇出过程中如果<strong>任一份</strong>密文发送失败，要么全部成功，要么 discard 防"半更新"。最终一致性靠重试 + stale 超时双保险兜底。<br>🎉 至此 13 步走完，你已经掌握 Sesame 的核心数据结构与运行时语义。深入到具体 trait 签名 / SessionRecord 字段 / X3DH 握手细节，请翻 libsignal 仓库或 beginner / advanced 教程。' },
+];
+
+const TOTAL = STEPS.length; // 13
+
+/* ============================================================
+   STEP_EXTRAS: 每步对应的『延伸阅读 + Rust 骨架』
+   refs: 权威外站索引 (Signal spec / libsignal 仓库)
+   code: Rust 实现骨架 (使用 libsignal-protocol 真实 API)
+   注意: 代码字符串中 < > 必须写成 &lt; &gt; (innerHTML 注入)
+   ============================================================ */
+const STEP_EXTRAS = {
+  1: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/', title: 'Sesame Algorithm · 官方规范', note: 'Signal 多设备会话管理的源文件' },
+      { url: 'https://signal.org/docs/specifications/doubleratchet/', title: 'Double Ratchet 规范', note: '本教程把 DR 当黑盒，需要复习时翻这里' },
+    ],
+    code: `<span class="cm">// Cargo.toml: libsignal-protocol = "0.x"</span>
+<span class="cm">// 朴素 API 无法表达"发给某台设备"</span>
+<span class="kw">async fn</span> <span class="fn">encrypt_to</span>(
+    &amp;<span class="kw">mut</span> self,
+    _bob: <span class="ty">ServiceId</span>,
+    _plaintext: &amp;[<span class="ty">u8</span>],
+) -&gt; <span class="ty">Vec</span>&lt;<span class="ty">u8</span>&gt; {
+    <span class="fn">todo!</span>(<span class="str">"signature doesn't capture which device"</span>)
+    <span class="cm">// 一条明文 → 一份密文，但 Bob 有 phone/iPad/laptop 三台设备</span>
+    <span class="cm">// → 必须把签名扩成 "encrypt to (user, device)"</span>
+}`
+  },
+  2: {
+    refs: [
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/address.rs', title: 'libsignal · ProtocolAddress 源码' },
+      { url: 'https://signal.org/docs/specifications/sesame/#terms', title: 'Sesame §2 · Terms', note: 'UserID / DeviceID 的官方定义' },
+    ],
+    code: `<span class="kw">use</span> libsignal_protocol::{ProtocolAddress, DeviceId, ServiceId};
+
+<span class="cm">// DeviceId 是 NonZeroU8 → 一个账号最多 255 台设备</span>
+<span class="kw">let</span> bob_phone  = ProtocolAddress::new(
+    <span class="str">"bob_uuid"</span>.into(),
+    DeviceId::new(1).unwrap(),
+);
+<span class="kw">let</span> bob_ipad   = ProtocolAddress::new(<span class="str">"bob_uuid"</span>.into(), DeviceId::new(2).unwrap());
+<span class="kw">let</span> bob_laptop = ProtocolAddress::new(<span class="str">"bob_uuid"</span>.into(), DeviceId::new(3).unwrap());
+
+<span class="cm">// ServiceId 也提供便捷构造</span>
+<span class="kw">let</span> addr = bob_service_id.to_protocol_address(DeviceId::new(2).unwrap());`
+  },
+  3: {
+    refs: [
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/storage/traits.rs', title: 'libsignal · SessionStore trait 源码' },
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/state/session.rs', title: 'SessionRecord 源码', note: '内部含 current SessionState + 若干 previous' },
+    ],
+    code: `<span class="kw">use</span> libsignal_protocol::{
+    ProtocolAddress, SessionRecord, SignalProtocolError,
+};
+
+<span class="cm">// libsignal 把"会话存储"抽成 trait 让 App 实现 (SQLite / Keychain / 内存…)</span>
+<span class="kw">#[async_trait(?Send)]</span>
+<span class="kw">pub trait</span> <span class="ty">SessionStore</span> {
+    <span class="kw">async fn</span> <span class="fn">load_session</span>(
+        &amp;self,
+        addr: &amp;ProtocolAddress,
+    ) -&gt; <span class="ty">Result</span>&lt;<span class="ty">Option</span>&lt;SessionRecord&gt;, SignalProtocolError&gt;;
+
+    <span class="kw">async fn</span> <span class="fn">store_session</span>(
+        &amp;<span class="kw">mut</span> self,
+        addr: &amp;ProtocolAddress,
+        record: &amp;SessionRecord,
+    ) -&gt; <span class="ty">Result</span>&lt;(), SignalProtocolError&gt;;
+}`
+  },
+  4: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/#data-structures', title: 'Sesame §3 · Data Structures', note: 'UserRecord / DeviceRecord 规范定义' },
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/storage/inmem.rs', title: 'libsignal · 内存版 SessionStore 实现', note: '看 HashMap 怎么按 ProtocolAddress 索引' },
+    ],
+    code: `<span class="kw">use</span> std::collections::HashMap;
+<span class="kw">use</span> libsignal_protocol::{ServiceId, DeviceId};
+
+<span class="cm">// libsignal 不提供 UserRecord 类型，应用侧自管</span>
+<span class="kw">pub struct</span> <span class="ty">AddressBook</span> {
+    devices: <span class="ty">HashMap</span>&lt;ServiceId, <span class="ty">Vec</span>&lt;DeviceId&gt;&gt;,
+}
+
+<span class="kw">impl</span> <span class="ty">AddressBook</span> {
+    <span class="kw">pub fn</span> <span class="fn">devices_of</span>(&amp;self, user: &amp;ServiceId) -&gt; &amp;[DeviceId] {
+        self.devices.get(user).map(|v| v.as_slice()).unwrap_or(&amp;[])
+    }
+}`
+  },
+  5: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/#initiating-and-receiving-sessions', title: 'Sesame §4.2 · Active vs Inactive', note: 'session 切换语义的官方表述' },
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/state/session.rs', title: 'SessionRecord · session_state 与 previous 链的内部 API' },
+    ],
+    code: `<span class="kw">use</span> libsignal_protocol::SessionRecord;
+
+<span class="kw">let</span> <span class="kw">mut</span> record: SessionRecord = store.load_session(&amp;addr).await?.unwrap();
+
+<span class="cm">// 当前 active state · 用于加密下一条消息</span>
+<span class="kw">let</span> current = record.session_state_mut()?;
+
+<span class="cm">// 遍历旧 inactive · trial-decrypt 时会用到</span>
+<span class="kw">for</span> prev <span class="kw">in</span> record.previous_session_states()? {
+    <span class="cm">// prev 是只读的旧 SessionState，可尝试解密</span>
+}
+
+<span class="cm">// promote 时机：</span>
+<span class="cm">// ① 收到由 inactive 加密的消息且解密成功</span>
+<span class="cm">// ② 对端 IK 不变但 fingerprint 不变下重新协商</span>
+<span class="cm">// ③ 应用显式调 archive_current_state() 切到新 active</span>`
+  },
+  6: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/#sending-messages', title: 'Sesame §4.3 · Sending Messages', note: 'fan-out 的规范流程' },
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/session_cipher.rs', title: 'libsignal · message_encrypt 实现' },
+    ],
+    code: `<span class="kw">use</span> libsignal_protocol::{message_encrypt, CiphertextMessage};
+
+<span class="cm">// 扇出循环在应用层；每次调用独立提交 SessionRecord</span>
+<span class="kw">let</span> <span class="kw">mut</span> envelopes = <span class="ty">Vec</span>::new();
+<span class="kw">for</span> &amp;device_id <span class="kw">in</span> book.devices_of(&amp;bob) {
+    <span class="kw">let</span> addr = bob.to_protocol_address(device_id);
+    <span class="kw">let</span> ct: CiphertextMessage = <span class="fn">message_encrypt</span>(
+        ptext,
+        &amp;addr,
+        &amp;<span class="kw">mut</span> session_store,
+        &amp;<span class="kw">mut</span> identity_store,
+        now,
+        &amp;<span class="kw">mut</span> rng,
+    ).await?;
+    envelopes.push((device_id, ct));
+}
+<span class="cm">// 同一条 ptext → N 份独立密文 (各自 KDF 链不同)</span>`
+  },
+  7: {
+    refs: [
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/bridge/shared/src/net/chat.rs', title: 'libsignal · MultiRecipient send 实现', note: 'SingleOutboundSealedSenderMessage 字段定义' },
+      { url: 'https://signal.org/blog/sealed-sender/', title: 'Signal Blog · Sealed Sender', note: '元数据隐藏机制' },
+    ],
+    code: `<span class="cm">// 投递结构 (简化版，对应 SingleOutboundSealedSenderMessage)</span>
+<span class="kw">pub struct</span> <span class="ty">OutEnvelope</span> {
+    <span class="kw">pub</span> device_id:       <span class="ty">DeviceId</span>,
+    <span class="kw">pub</span> registration_id: <span class="ty">u32</span>,    <span class="cm">// 检测对端重装</span>
+    <span class="kw">pub</span> contents:        <span class="ty">Vec</span>&lt;<span class="ty">u8</span>&gt;, <span class="cm">// 序列化后的密文</span>
+}
+
+<span class="cm">// 服务端只读 device_id + registration_id 来路由，看不到 contents</span>
+<span class="kw">async fn</span> <span class="fn">send_to_user</span>(
+    chat: &amp;ChatService,
+    envelopes: <span class="ty">Vec</span>&lt;OutEnvelope&gt;,
+) -&gt; <span class="ty">Result</span>&lt;(), NetError&gt; {
+    chat.send_multi_recipient(envelopes).await
+}`
+  },
+  8: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/#sending-messages', title: 'Sesame §4.3 · Self-Encryption', note: '"send to all our other devices" 的规范要求' },
+    ],
+    code: `<span class="cm">// 扇出循环再套一层 user 维度</span>
+<span class="kw">let</span> <span class="kw">mut</span> envelopes = <span class="ty">Vec</span>::new();
+<span class="kw">for</span> user <span class="kw">in</span> [&amp;bob, &amp;me] {
+    <span class="kw">for</span> &amp;device_id <span class="kw">in</span> book.devices_of(user) {
+        <span class="cm">// 跳过自身的当前设备 (不需要给本机发)</span>
+        <span class="kw">if</span> user == &amp;me &amp;&amp; device_id == self_device_id {
+            <span class="kw">continue</span>;
+        }
+        <span class="kw">let</span> addr = user.to_protocol_address(device_id);
+        <span class="kw">let</span> ct = <span class="fn">message_encrypt</span>(
+            ptext, &amp;addr,
+            &amp;<span class="kw">mut</span> session_store, &amp;<span class="kw">mut</span> identity_store,
+            now, &amp;<span class="kw">mut</span> rng,
+        ).await?;
+        envelopes.push((user.clone(), device_id, ct));
+    }
+}`
+  },
+  9: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/#receiving-messages', title: 'Sesame §4.4 · Receiving Messages', note: 'trial-decrypt + promote 的规范步骤' },
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/session_cipher.rs', title: 'libsignal · message_decrypt 路由实现' },
+    ],
+    code: `<span class="kw">use</span> libsignal_protocol::{
+    message_decrypt_signal, message_decrypt_prekey, CiphertextMessage,
+};
+
+<span class="cm">// 命中后 store 顺序写回 SessionRecord (libsignal 内部已处理 promote/demote)</span>
+<span class="kw">let</span> plaintext = <span class="kw">match</span> ciphertext {
+    CiphertextMessage::SignalMessage(m) =&gt; {
+        <span class="fn">message_decrypt_signal</span>(
+            &amp;m, &amp;sender_addr,
+            &amp;<span class="kw">mut</span> session_store, &amp;<span class="kw">mut</span> identity_store,
+            &amp;<span class="kw">mut</span> rng,
+        ).await?
+    }
+    CiphertextMessage::PreKeySignalMessage(m) =&gt; {
+        <span class="fn">message_decrypt_prekey</span>(
+            &amp;m, &amp;sender_addr,
+            &amp;<span class="kw">mut</span> session_store, &amp;<span class="kw">mut</span> identity_store,
+            &amp;<span class="kw">mut</span> pre_key_store, &amp;<span class="kw">mut</span> signed_pre_key_store,
+            &amp;<span class="kw">mut</span> kyber_pre_key_store,
+            &amp;<span class="kw">mut</span> rng,
+        ).await?
+    }
+    _ =&gt; <span class="kw">return</span> <span class="ty">Err</span>(SignalProtocolError::InvalidMessage(<span class="str">"unsupported"</span>.into())),
+};`
+  },
+  10: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/#device-changes', title: 'Sesame §4.5 · Device Changes' },
+      { url: 'https://github.com/signalapp/libsignal/tree/main/rust/protocol/src', title: 'libsignal/protocol · 注意：provisioning 不在 protocol crate 内' },
+    ],
+    code: `<span class="cm">// libsignal 不含 provisioning API; QR 码 + 服务端配对在 App 层完成</span>
+<span class="kw">async fn</span> <span class="fn">refresh_device_list</span>(
+    server: &amp;ChatService,
+    user: &amp;ServiceId,
+) -&gt; <span class="ty">Result</span>&lt;<span class="ty">Vec</span>&lt;DeviceId&gt;, NetError&gt; {
+    <span class="cm">// 服务器 endpoint 是 App / 服务端协议范畴</span>
+    <span class="kw">let</span> resp = server.get_device_list(user).await?;
+    <span class="ty">Ok</span>(resp.devices.into_iter().map(|d| d.device_id).collect())
+}
+
+<span class="cm">// 刷新时机:</span>
+<span class="cm">// ① 发送前抢一次 (避免漏掉最新设备)</span>
+<span class="cm">// ② 服务端在响应里返回 stale 提示时</span>
+<span class="cm">// ③ 长时间未发送，重新激活会话时</span>`
+  },
+  11: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/x3dh/', title: 'X3DH · 完整规范', note: 'process_prekey_bundle 内部跑的协议' },
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/session.rs', title: 'libsignal · process_prekey_bundle 实现' },
+    ],
+    code: `<span class="kw">use</span> libsignal_protocol::{
+    process_prekey_bundle, PreKeyBundle, ProtocolAddress,
+};
+
+<span class="cm">// PreKeyBundle 字段 (来自服务端 key distribution endpoint)</span>
+<span class="cm">// { registration_id, device_id, pre_key, signed_pre_key,</span>
+<span class="cm">//   kyber_pre_key, identity_key, signature, ... }</span>
+
+<span class="kw">let</span> bob_laptop_addr = bob.to_protocol_address(DeviceId::new(4).unwrap());
+
+<span class="fn">process_prekey_bundle</span>(
+    &amp;bob_laptop_addr,
+    &amp;<span class="kw">mut</span> session_store,
+    &amp;<span class="kw">mut</span> identity_store,
+    &amp;bundle,
+    now,
+    &amp;<span class="kw">mut</span> rng,
+).await?;
+
+<span class="cm">// 之后 message_encrypt 会自动产 PreKeySignalMessage</span>
+<span class="cm">// 对端镜像跑 X3DH → 双方对齐 root key, 进入正常 DR</span>`
+  },
+  12: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/#receiving-messages', title: 'Sesame §4.4 · Stale Sessions', note: 'MAXLATENCY 与 stale 窗口的规范要求' },
+      { url: 'https://github.com/signalapp/libsignal/blob/main/rust/protocol/src/error.rs', title: 'libsignal · SignalProtocolError 枚举', note: 'SessionNotFound / UntrustedIdentity 等错误的来源' },
+    ],
+    code: `<span class="kw">use</span> libsignal_protocol::SignalProtocolError;
+
+<span class="kw">match</span> <span class="fn">message_encrypt</span>(ptext, &amp;addr, &amp;<span class="kw">mut</span> session_store, ..).await {
+    <span class="ty">Err</span>(SignalProtocolError::SessionNotFound(a)) =&gt; {
+        <span class="fn">mark_stale</span>(&amp;a);
+        <span class="fn">schedule_prekey_fetch</span>(&amp;a);
+    }
+    <span class="ty">Err</span>(SignalProtocolError::UntrustedIdentity(a, _new_ik)) =&gt; {
+        <span class="fn">prompt_user_safety_number_change</span>(&amp;a);
+    }
+    <span class="ty">Ok</span>(ct) =&gt; envelopes.push((addr.device_id(), ct)),
+    <span class="ty">Err</span>(e) =&gt; <span class="kw">return</span> <span class="ty">Err</span>(e.into()),
+}
+
+<span class="cm">// MAX_UNACKNOWLEDGED_SESSION_AGE: 发送侧自检 (规范建议)</span>
+<span class="cm">//   刚建的 session 一直没收到对端回应 → 超时主动丢弃重建</span>`
+  },
+  13: {
+    refs: [
+      { url: 'https://signal.org/docs/specifications/sesame/', title: 'Sesame · 完整规范 (再读一遍)' },
+      { url: 'https://github.com/signalapp/libsignal', title: 'libsignal · 官方 Rust + 跨平台实现' },
+      { url: '../beginner/index.html', title: 'beginner · DR + X3DH 渐进版' },
+      { url: '../advanced/index.html', title: 'advanced · DR 老手深度图' },
+    ],
+    code: `<span class="cm">// 把多设备发送整合成一个收敛循环</span>
+<span class="kw">loop</span> {
+    <span class="kw">let</span> latest = <span class="fn">refresh_device_list</span>(&amp;server, &amp;bob).await?;
+    book.update(&amp;bob, latest);
+
+    <span class="kw">let</span> envelopes = <span class="fn">fan_out</span>(&amp;ptext, &amp;recipient_set, &amp;book, ..).await?;
+
+    <span class="kw">match</span> server.send(envelopes).await {
+        <span class="ty">Ok</span>(_) =&gt; <span class="kw">break</span>, <span class="cm">// 收敛 ✓</span>
+        <span class="ty">Err</span>(StaleDevices { added, removed }) =&gt; {
+            book.apply_diff(added, removed);
+            <span class="cm">// 任一份失败 → discard 当前批次防"半更新"，重跑</span>
+            <span class="kw">continue</span>;
+        }
+        <span class="ty">Err</span>(e) =&gt; <span class="kw">return</span> <span class="ty">Err</span>(e.into()),
+    }
+}
+<span class="cm">// 收敛条件: 本地 device set == 服务端 device set 且全部 active 可用</span>`
+  },
+};
+
+function renderExtras(step) {
+  const el = document.getElementById('extras');
+  const extra = STEP_EXTRAS[step] || {};
+  let html = '';
+
+  if (extra.refs && extra.refs.length) {
+    html += '<div class="extras-card refs"><h4>📚 延伸阅读 · 原理出处</h4><ul>';
+    for (const r of extra.refs) {
+      const note = r.note ? `<span class="ref-note">— ${r.note}</span>` : '';
+      html += `<li><a href="${r.url}" target="_blank" rel="noopener">${r.title}</a>${note}</li>`;
+    }
+    html += '</ul></div>';
+  }
+
+  if (extra.code) {
+    html += `<div class="extras-card code"><h4>🦀 Rust 骨架</h4><pre>${extra.code}</pre></div>`;
+  }
+
+  // Single-card → stretch full width; both cards → keep 2-col grid
+  el.classList.toggle('two-col', !!(extra.refs && extra.refs.length && extra.code));
+  el.innerHTML = html;
+}
+
+// Build dots in sidebar
+function buildDots() {
+  const groups = {};
+  STEPS.forEach((s, i) => {
+    (groups[s.ch] ||= []).push(i + 1);
+  });
+  Object.entries(groups).forEach(([ch, steps]) => {
+    const wrap = document.querySelector(`.dots[data-ch-dots="${ch}"]`);
+    if (!wrap) return;
+    steps.forEach(n => {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.dataset.step = n;
+      d.title = `Step ${n}`;
+      d.addEventListener('click', () => goTo(n));
+      wrap.appendChild(d);
+    });
+  });
+}
+
+let currentStep = 1;
+
+function goTo(step) {
+  step = Math.max(1, Math.min(TOTAL, step));
+  currentStep = step;
+  const cur = STEPS[step - 1];
+
+  // Activate the right chapter SVG
+  document.querySelectorAll('.chapter-svg').forEach(svg => {
+    svg.classList.toggle('active', +svg.dataset.ch === cur.ch);
+  });
+
+  // Apply visibility to all data-step elements
+  document.querySelectorAll('[data-step]').forEach(el => {
+    const start = +el.dataset.step;
+    const end = el.dataset.stepEnd ? +el.dataset.stepEnd : 999;
+    const visible = step >= start && step <= end;
+    // Defer to next frame so transition triggers
+    requestAnimationFrame(() => el.classList.toggle('visible', visible));
+  });
+
+  // Update header
+  document.getElementById('header-ch').textContent = 'CH' + cur.ch;
+  document.getElementById('header-title').textContent = cur.title;
+  document.getElementById('header-counter').textContent = `Step ${step} / ${TOTAL}`;
+
+  // Update caption
+  document.getElementById('caption-title').textContent = cur.title;
+  document.getElementById('caption-body').innerHTML = cur.body;
+
+  // Render references + rust code
+  renderExtras(step);
+
+  // Update dots (active / read)
+  document.querySelectorAll('.dot').forEach(d => {
+    const n = +d.dataset.step;
+    d.classList.toggle('active', n === step);
+    d.classList.toggle('read', n < step);
+  });
+
+  // Update controls
+  document.getElementById('btn-prev').disabled = step === 1;
+  document.getElementById('btn-next').disabled = step === TOTAL;
+
+  // Sync URL
+  if (history.replaceState) {
+    history.replaceState(null, '', '#step-' + step);
+  } else {
+    location.hash = 'step-' + step;
+  }
+}
+
+function initFromHash() {
+  const m = location.hash.match(/step-(\d+)/);
+  return m ? +m[1] : 1;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildDots();
+  goTo(initFromHash());
+
+  document.getElementById('btn-prev').addEventListener('click', () => goTo(currentStep - 1));
+  document.getElementById('btn-next').addEventListener('click', () => goTo(currentStep + 1));
+  document.getElementById('btn-replay').addEventListener('click', () => goTo(1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(currentStep - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(currentStep + 1); }
+    if (e.key === 'Home')       { e.preventDefault(); goTo(1); }
+    if (e.key === 'End')        { e.preventDefault(); goTo(TOTAL); }
+  });
+
+  window.addEventListener('hashchange', () => {
+    const n = initFromHash();
+    if (n !== currentStep) goTo(n);
+  });
+});
+</script>
+</body>
+</html>

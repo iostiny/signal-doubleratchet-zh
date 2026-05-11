@@ -93,12 +93,9 @@ body {
 
 .choice-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.4rem;
   margin-bottom: 3rem;
-}
-@media (max-width: 760px) {
-  .choice-grid { grid-template-columns: 1fr; }
 }
 .choice {
   display: block;
@@ -120,6 +117,8 @@ body {
 .choice.beginner:hover { border-color: var(--cherry-deep); }
 .choice.advanced { border-color: var(--teal); }
 .choice.advanced:hover { border-color: #0a5e76; }
+.choice.sesame { border-color: var(--violet); }
+.choice.sesame:hover { border-color: #5b21b6; }
 
 .choice-icon {
   font-size: 2.6rem;
@@ -143,6 +142,10 @@ body {
   background: var(--teal-soft);
   color: var(--teal);
 }
+.choice.sesame .choice-tag {
+  background: #ede9fe;
+  color: var(--violet);
+}
 .choice-title {
   font-size: 1.2rem;
   font-weight: 700;
@@ -150,6 +153,7 @@ body {
 }
 .choice.beginner .choice-title { color: var(--cherry-deep); }
 .choice.advanced .choice-title { color: var(--teal); }
+.choice.sesame .choice-title { color: var(--violet); }
 
 .choice-desc {
   font-size: 0.88rem;
@@ -173,6 +177,7 @@ body {
   margin-right: 0.5em;
 }
 .choice.advanced .choice-bullets li::before { color: var(--teal); }
+.choice.sesame .choice-bullets li::before { color: var(--violet); }
 
 .choice-cta {
   display: inline-flex;
@@ -190,6 +195,10 @@ body {
 }
 .choice.advanced .choice-cta {
   background: var(--teal);
+  color: white;
+}
+.choice.sesame .choice-cta {
+  background: var(--violet);
   color: white;
 }
 .choice:hover .choice-cta { transform: translateX(4px); }
@@ -294,6 +303,22 @@ body {
       <span class="choice-cta">浏览图谱总览 →</span>
     </a>
 
+    <a class="choice sesame" href="./sesame/index.html">
+      <div class="choice-icon">🔄</div>
+      <span class="choice-tag">FOR MULTI-DEVICE · 多设备</span>
+      <h2 class="choice-title">Sesame · 13 步多设备会话</h2>
+      <p class="choice-desc">
+        DR 假设两个端点；现实里一个用户有手机+iPad+笔记本。Sesame 是 Signal 在 DR 之上的多设备会话管理层。13 步讲清楚 fan-out 扇出、self-sync、设备增删、stale 恢复，对齐 libsignal Rust 真实接口。
+      </p>
+      <ul class="choice-bullets">
+        <li>5 章 13 步，约 25 分钟读完</li>
+        <li>libsignal 真实 API · ProtocolAddress / SessionStore</li>
+        <li>把 DR 当黑盒 · 聚焦多设备层</li>
+        <li>覆盖 fan-out · self-sync · stale · 收敛</li>
+      </ul>
+      <span class="choice-cta">从第 1 步开始 →</span>
+    </a>
+
   </div>
 
   <div class="lower-tips">
@@ -301,7 +326,7 @@ body {
     <ul>
       <li>没听过 ECDH / KDF / 棘轮 → 选 <strong>渐进版</strong></li>
       <li>看过 Signal 论文或写过 X3DH 实现 → 选 <strong>深度版</strong></li>
-      <li>想理解"一个账号多设备如何同步加密消息" → 选 <strong>Sesame 多设备</strong>（即将上线）</li>
+      <li>想理解"一个账号多设备如何同步加密消息" → 选 <strong>Sesame 多设备</strong></li>
       <li>分享给同事 → URL 后加 <code>#step-N</code> 可定位到具体步</li>
     </ul>
   </div>
