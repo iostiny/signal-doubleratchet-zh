@@ -27,13 +27,77 @@ doc/
 - **字体**：Noto Sans SC（中文）+ JetBrains Mono（代码 / 公式）。
 - **每个专题根目录必须有 `index.html`**：作为该专题的 landing 页，列出该专题下所有子内容。
 
-## 添加新专题的标准流程
+## 主 Hub (`index.html`) 设计规范
 
-1. 选 slug（`kebab-case`，例如 `zkp-tutorial`、`tls-1.3-notes`）
-2. `mkdir <slug>/` + 写专题 landing `<slug>/index.html`（参考 `signal-double-ratchet/index.html` 的两栏布局）
-3. 在仓库根 `index.html` 的 `.topic-grid` 里加一张 `<a class="topic">` 卡片
-4. 视觉沿用 cherry palette + 顶部 chip + 描述 + 元数据
-5. 内部子目录命名建议用语义名（`beginner/` / `advanced/` / `reference/`），不要用实现细节命名（避免 `diagrams/`、`html-files/`）
+主入口是 **content-driven** 风格（不是 portfolio、不是 corporate grid）。试过 portfolio "hi, 我是 iostiny" 风格 —— 用户反馈"像简历不像文档站"，已废弃。**禁止再回到 portfolio 写法**。
+
+### 四个区块（自上而下）
+
+1. **Hero** — 极简，无 bio，无 hello-style
+   - 左：`iostiny / doc` 用 JetBrains Mono 字体，`/` 用 `--cherry-pink` 色
+   - 右（推到 main 末端）：一行灰色 tagline，如"中文技术文档与图谱"
+   - 下方 1px 浅灰分隔线
+2. **专题卡片**（核心）— 每张专题一张大卡 (`.topic-card`)，上下两段结构（见下）
+3. **Upcoming hint** — 单行 mono 灰字 `下一个专题在路上 · X · Y · Z · ……`
+   - **绝对不要**做"占位卡"（虚线框 + "更多专题陆续添加"）—— 视觉上强调"啥都没有"
+4. **Footer** — 一行 mono：`github.com/iostiny/doc · CC-BY 4.0 · 源码 MIT`
+
+### `.topic-card` 的结构
+
+每张卡 `<a class="topic-card" href="./<slug>/">` 上下两段：
+
+**上半 `.preview`**（高约 170px）
+- 浅米黄渐变背景（`linear-gradient(135deg, #fffaf2 0%, #ffffff 100%)`），hover 时变 `#fff5ea → #fff`
+- 内嵌一个 `<svg viewBox="0 0 760 170">`，必须是**该专题里真实存在的可视化的缩略版**，不是装饰图、不是 emoji、不是 generic icon
+- 选最具识别度的视觉。Signal 选了 KDF 链（CK→KDF→CK 派生 MK），因为它是 Symmetric Ratchet 的核心标志
+- 顶部 11px 小灰字描述（如 `Signal · Symmetric Ratchet · 每条消息派生专属 MK`）
+- 底部 `.preview-caption`：`PREVIEW · TOPIC NAME` mono 小字，let-spacing 0.04em
+
+**下半 `.card-body`**
+- `.card-tag` — `SIGNAL · E2EE · 协议图谱` 类型 chip，cherry-glass 底
+- `.card-title` — 1.3rem cherry-deep h2
+- `.card-desc` — 0.94rem 灰字描述，max 3-4 行（max-width 720px）
+- `.card-bullets` — 2×2 网格（CSS grid `repeat(auto-fit, minmax(200px, 1fr))`），4 条简短要点，cherry-pink 圆点
+- `.card-cta` — `开始阅读 →`，cherry 边框；hover 整卡时反色为实心 cherry + 箭头右移 4px
+
+### 配色策略（重要）
+
+- **Preview 区**：用**该专题的"标志性配色"**，让访客一眼记住"这个专题长什么样"
+  - Signal: `--amber`（CK / 链）+ `--cherry`（MK / 消息）—— 跟教程内部一致
+  - ZKP (未来): 建议 `--violet`（commitment）+ `--green`（verify）
+  - TLS (未来): 建议 `--teal`（handshake）+ `--cherry`（cipher）
+- **Card body**: 永远用 `--cherry`（site 主色），跨专题统一
+- 视觉语义："preview 是内容的色，card body 是 site 的色"
+
+### 整卡可点 + hover 动画
+
+整张 `.topic-card` 是 `<a>` 元素。hover 时：
+- 卡片 `translateY(-3px)` + 加深 box-shadow + cherry 边框
+- preview-bg 微变（更暖）
+- CTA 反色 + arrow 右移
+- 全部 transition 0.18-0.2s ease
+
+## 添加新专题的 checklist
+
+按顺序执行：
+
+1. **选 slug**：`kebab-case`，名词性，避免实现细节。例：`zkp-tutorial` ✓ / `zkp-htmls` ✗
+2. **写专题内容**：`mkdir <slug>/` → 至少有一个 `<slug>/index.html` 作为专题 landing；若有多种讲法可分 `<slug>/beginner/` `<slug>/advanced/` 等语义子目录（参考 Signal 专题）
+3. **挑 hero SVG**：在专题内容里选**最具标识度**的一张图，缩略为 760×170 viewBox。如果没有现成的，先做这张图再上线
+4. **复制 `.topic-card` 块到主 `index.html`**：
+   - 改 `href="./<slug>/"`
+   - **重写 SVG preview**：保留 viewBox 760×170 和顶部小字 + 底部 caption 结构；图内主体换成新专题的标志性可视化；颜色用该专题的标志性配色
+   - 改 `.card-tag` 为该专题的类型标签（如 `ZKP · COMMITMENT · 入门`）
+   - 改 `.card-title` 为专题完整名（保留 `· 副标题` 格式）
+   - 改 `.card-desc` 3-4 行简介
+   - 改 `.card-bullets` 4 条要点（保持 2×2，每条约 10-16 字）
+5. **更新 upcoming hint**：从未来列表里**移除**这个专题
+6. **不要**改 hero、不要改 footer、不要改 CSS 变量、不要给主 hub 加新 section（如分组头）—— 只有专题 >= 3 个时才考虑分组
+7. 测试 hover、CTA、mobile 响应式（≤600px）
+
+### 主 hub 永远只有一个文件
+
+`index.html` 单文件包含所有 CSS、SVG、JS。增加专题不创建新 HTML 文件，只在主 hub 里新增一张 `.topic-card`。
 
 ## Signal Double Ratchet 专题（`signal-double-ratchet/`）
 
