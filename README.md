@@ -11,13 +11,13 @@ Signal Double Ratchet 协议的两套独立讲法：
 
 ## 为什么做这个
 
-官方 [Signal Protocol 规范](https://signal.org/docs/) 严谨，但对新手门槛较高；中文资料则普遍停留在「介绍性博客」层级，缺少把「直觉 → 数学 → 工程实现」串起来的渐进材料。
+官方 [Signal Protocol 规范](https://signal.org/docs/) 在公式与文字层面已经完整，但对新接触密码学的读者门槛偏高，缺少把「直觉 → 数学 → 工程实现」串起来的渐进材料。
 
 本仓库尝试：
 
 - **新手版**用 25 个累积演进步骤，每步只引入一个新概念
 - **老手版**用 11 张独立架构图，覆盖 KDF 链 / DH ratchet / 乱序处理 / X3DH / 服务端契约
-- **双版本共用** `phycat-cherry`（cream + cherry red）视觉主题，长时间阅读不疲劳
+- **双版本共用** cream + cherry red 浅色主题，长时间阅读不疲劳
 
 ## 技术栈
 
