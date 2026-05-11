@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noise Protocol · 零基础渐进教程</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Phycat-Cherry 渐进教程主题
+   ============================================================ */
+:root {
+  --bg-page:        #fdfaf6;
+  --bg-card:        #ffffff;
+  --bg-soft-pink:   #fce4e4;
+
+  --text-primary:   #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted:     #9ca3af;
+
+  --cherry:         #aa1141;
+  --cherry-deep:    #9a0036;
+  --cherry-soft:    #ffa6a6;
+  --cherry-pink:    #ea68b6;
+  --cherry-glass:   #fce4e4;
+
+  --teal:           #0e7490;
+  --teal-soft:      #cffafe;
+  --amber:          #b45309;
+  --amber-soft:     #fef3c7;
+  --green:          #15803d;
+  --green-soft:     #dcfce7;
+  --violet:         #6d28d9;
+  --violet-soft:    #ede9fe;
+  --slate:          #475569;
+  --slate-soft:     #f1f5f9;
+  --red-deep:       #b91c1c;
+  --red-soft:       #fee2e2;
+
+  --rule:           #e5e7eb;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans SC', 'JetBrains Mono', -apple-system, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ============== App layout ============== */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* ============== Sidebar / stepper ============== */
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--rule);
+  padding: 1.6rem 1.2rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  align-self: start;
+}
+.brand {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 1.6rem;
+}
+.chap {
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.chap-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.45rem;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.chap-name .num {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--cherry);
+  font-size: 0.7rem;
+}
+.dots { display: flex; gap: 6px; }
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--rule);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dot:hover { transform: scale(1.25); }
+.dot.read { background: var(--cherry-soft); }
+.dot.active {
+  background: var(--cherry);
+  box-shadow: 0 0 0 3px var(--cherry-glass);
+}
+
+/* ============== Stage ============== */
+.stage {
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 2rem 2rem;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+}
+.header-ch {
+  padding: 3px 10px;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.header-counter {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* SVG stage */
+.svg-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(170,17,65,0.04);
+  padding: 1rem 1.2rem;
+  position: relative;
+}
+.chapter-svg {
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  display: none;
+}
+.chapter-svg.active { display: block; }
+
+/* SVG element visibility — controlled by data-step */
+[data-step] {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 320ms ease, transform 320ms ease;
+  pointer-events: none;
+}
+[data-step].visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Caption card */
+.caption {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--cherry);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  min-height: 78px;
+}
+.caption-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.25rem;
+}
+.caption-body {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+.caption-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.caption-body em {
+  font-style: normal;
+  color: var(--text-muted);
+  font-size: 0.78em;
+  margin-left: 0.3em;
+}
+
+/* Deep-dive: references + swift code */
+.extras {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.extras:empty { display: none; }
+.extras.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+}
+@media (max-width: 1100px) {
+  .extras.two-col { grid-template-columns: 1fr; }
+}
+.extras-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  font-size: 0.82rem;
+}
+.extras-card.refs { border-left: 3px solid var(--violet); }
+.extras-card.code { border-left: 3px solid var(--green); padding: 0; overflow: hidden; }
+.extras-card h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.extras-card.refs h4 { color: var(--violet); }
+.extras-card.code h4 {
+  color: var(--green);
+  padding: 0.7rem 1rem 0.4rem;
+  margin-bottom: 0;
+}
+.extras-card.refs ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.extras-card.refs li {
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.extras-card.refs a {
+  color: var(--cherry-deep);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--cherry-pink);
+}
+.extras-card.refs a:hover {
+  color: var(--cherry);
+  border-bottom-style: solid;
+}
+.extras-card.refs .ref-note {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin-left: 0.4em;
+}
+.extras-card.code pre {
+  margin: 0;
+  padding: 0.4rem 1rem 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: pre;
+  background: linear-gradient(to bottom, #ffffff, #fafff7);
+}
+.extras-card.code .kw { color: var(--violet); font-weight: 600; }
+.extras-card.code .ty { color: var(--teal); }
+.extras-card.code .fn { color: var(--cherry); }
+.extras-card.code .cm { color: var(--text-muted); font-style: italic; }
+.extras-card.code .str { color: var(--amber); }
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.controls button {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.controls button:hover:not(:disabled) {
+  border-color: var(--cherry);
+  color: var(--cherry-deep);
+  background: var(--cherry-glass);
+}
+.controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.controls button.primary {
+  background: var(--cherry);
+  color: white;
+  border-color: var(--cherry);
+}
+.controls button.primary:hover:not(:disabled) {
+  background: var(--cherry-deep);
+  color: white;
+}
+.controls button.ghost {
+  border: none;
+  color: var(--text-muted);
+}
+.controls .hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: 0.8rem;
+}
+
+/* ============== Common SVG styles ============== */
+.svg-text { font-family: 'Noto Sans SC', sans-serif; }
+.svg-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Reusable SVG classes */
+.actor-cherry { fill: var(--cherry-glass); stroke: var(--cherry); }
+.actor-teal   { fill: var(--teal-soft); stroke: var(--teal); }
+.actor-red    { fill: var(--red-soft); stroke: var(--red-deep); }
+.actor-violet { fill: var(--violet-soft); stroke: var(--violet); }
+.actor-amber  { fill: var(--amber-soft); stroke: var(--amber); }
+.actor-green  { fill: var(--green-soft); stroke: var(--green); }
+
+.label-cherry { fill: var(--cherry-deep); }
+.label-teal   { fill: var(--teal); }
+.label-red    { fill: var(--red-deep); }
+.label-violet { fill: var(--violet); }
+.label-amber  { fill: var(--amber); }
+.label-green  { fill: var(--green); }
+.label-slate  { fill: var(--slate); }
+.label-muted  { fill: var(--text-muted); }
+
+/* Sub-step animations: pulse for emphasis */
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 6px var(--cherry-soft)); }
+}
+.pulse { animation: pulse-glow 2.4s ease infinite; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .sidebar { display: none; }
+  .stage { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============== Sidebar ============== -->
+  <aside class="sidebar">
+    <div class="brand">🔇 Noise Protocol</div>
+    <div class="brand-sub">渐进版本 · 16 步</div>
+
+    <div class="chap" data-ch="1">
+      <div class="chap-name"><span class="num">CH1</span> 动机</div>
+      <div class="dots" data-ch-dots="1"></div>
+    </div>
+    <div class="chap" data-ch="2">
+      <div class="chap-name"><span class="num">CH2</span> 原语 + 记号</div>
+      <div class="dots" data-ch-dots="2"></div>
+    </div>
+    <div class="chap" data-ch="3">
+      <div class="chap-name"><span class="num">CH3</span> 状态机</div>
+      <div class="dots" data-ch-dots="3"></div>
+    </div>
+    <div class="chap" data-ch="4">
+      <div class="chap-name"><span class="num">CH4</span> XX 握手三轮</div>
+      <div class="dots" data-ch-dots="4"></div>
+    </div>
+    <div class="chap" data-ch="5">
+      <div class="chap-name"><span class="num">CH5</span> Transport</div>
+      <div class="dots" data-ch-dots="5"></div>
+    </div>
+    <div class="chap" data-ch="6">
+      <div class="chap-name"><span class="num">CH6</span> Bitchat 落地</div>
+      <div class="dots" data-ch-dots="6"></div>
+    </div>
+  </aside>
+
+  <!-- ============== Stage ============== -->
+  <main class="stage">
+    <header class="header">
+      <span class="header-ch" id="header-ch">CH1</span>
+      <h1 class="header-title" id="header-title">为什么 BLE 聊天用不了 TLS</h1>
+      <span class="header-counter" id="header-counter">Step 1 / 16</span>
+    </header>
+
+    <section class="svg-wrap">
+
+      <!-- ============================================================
+           Ch1 — 动机 (Step 1-2)
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="1" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-slate-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-red-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+          </marker>
+        </defs>
+
+        <!-- Hint top -->
+        <g data-step="1" data-step-end="1">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">BLE p2p 没 server / 没 PKI / 没 CA — TLS 的信任锚直接缺位</text>
+        </g>
+        <g data-step="2" data-step-end="2">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Noise 是协议构建器，按需拼出 mutual auth + identity hiding + PFS + KCI 抗性</text>
+        </g>
+
+        <!-- Alice -->
+        <g data-step="1">
+          <circle cx="140" cy="240" r="44" class="actor-cherry" stroke-width="2"/>
+          <text x="140" y="246" text-anchor="middle" font-size="22" font-weight="700" class="label-cherry">A</text>
+          <text x="140" y="305" text-anchor="middle" font-size="14" font-weight="600" class="label-cherry">Alice</text>
+          <text x="140" y="324" text-anchor="middle" font-size="11" class="label-muted">iPhone · BLE</text>
+        </g>
+
+        <!-- Bob -->
+        <g data-step="1">
+          <circle cx="960" cy="240" r="44" class="actor-teal" stroke-width="2"/>
+          <text x="960" y="246" text-anchor="middle" font-size="22" font-weight="700" class="label-teal">B</text>
+          <text x="960" y="305" text-anchor="middle" font-size="14" font-weight="600" class="label-teal">Bob</text>
+          <text x="960" y="324" text-anchor="middle" font-size="11" class="label-muted">iPhone · BLE</text>
+        </g>
+
+        <!-- BLE channel (always visible from step 1) -->
+        <g data-step="1">
+          <line x1="190" y1="240" x2="910" y2="240" stroke="#475569" stroke-width="2" stroke-dasharray="6 4"/>
+          <text x="550" y="232" text-anchor="middle" font-size="12" class="label-slate" font-weight="500">BLE GATT 通道（短距离 · 离线）</text>
+        </g>
+
+        <!-- Step 1: CA / Server box with red X -->
+        <g data-step="1" data-step-end="1">
+          <rect x="430" y="120" width="240" height="70" rx="10" fill="#f1f5f9" stroke="#9ca3af" stroke-width="1.5"/>
+          <text x="550" y="148" text-anchor="middle" font-size="13" class="label-slate" font-weight="600">CA · 证书颁发机构</text>
+          <text x="550" y="170" text-anchor="middle" font-size="11" class="label-muted">Server 也要在线签发证书</text>
+          <!-- big red X across it -->
+          <line x1="420" y1="115" x2="680" y2="195" stroke="#b91c1c" stroke-width="3"/>
+          <line x1="680" y1="115" x2="420" y2="195" stroke="#b91c1c" stroke-width="3"/>
+          <text x="700" y="160" font-size="13" class="label-red" font-weight="700">不可达</text>
+        </g>
+
+        <!-- Step 1: TLS broken text -->
+        <g data-step="1" data-step-end="1">
+          <text x="550" y="400" text-anchor="middle" font-size="13" class="label-red" font-weight="600">TLS 的"先去 CA 验证证书"假设彻底报废</text>
+          <text x="550" y="420" text-anchor="middle" font-size="11" class="label-muted">但仍要双向认证 + 前向保密 + 身份不被旁观者识破</text>
+        </g>
+
+        <!-- Step 2: Noise pattern capsule -->
+        <g data-step="2">
+          <rect x="350" y="130" width="400" height="56" rx="28" class="actor-amber" stroke-width="2"/>
+          <text x="550" y="155" text-anchor="middle" font-size="14" font-weight="700" class="label-amber svg-mono">Noise_XX_25519_ChaChaPoly_SHA256</text>
+          <text x="550" y="173" text-anchor="middle" font-size="11" class="label-muted">Pattern_DH_Cipher_Hash · 协议名即是配方</text>
+        </g>
+
+        <!-- Step 2: 4 small property labels -->
+        <g data-step="2">
+          <rect x="180" y="380" width="160" height="60" rx="8" class="actor-violet" stroke-width="1.5"/>
+          <text x="260" y="402" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">mutual auth</text>
+          <text x="260" y="422" text-anchor="middle" font-size="10" class="label-muted">双方都验证对方身份</text>
+
+          <rect x="360" y="380" width="160" height="60" rx="8" class="actor-violet" stroke-width="1.5"/>
+          <text x="440" y="402" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">identity hiding</text>
+          <text x="440" y="422" text-anchor="middle" font-size="10" class="label-muted">static key 在密文里传</text>
+
+          <rect x="540" y="380" width="160" height="60" rx="8" class="actor-violet" stroke-width="1.5"/>
+          <text x="620" y="402" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">PFS</text>
+          <text x="620" y="422" text-anchor="middle" font-size="10" class="label-muted">每会话新 ephemeral key</text>
+
+          <rect x="720" y="380" width="160" height="60" rx="8" class="actor-violet" stroke-width="1.5"/>
+          <text x="800" y="402" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">KCI 抗性</text>
+          <text x="800" y="422" text-anchor="middle" font-size="10" class="label-muted">单边私钥泄漏不能仿冒</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch2 — 原语 + 记号 (Step 3-4)
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="2" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+        </defs>
+
+        <!-- Hint -->
+        <g data-step="3" data-step-end="3">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">XX_25519_ChaChaPoly_SHA256 名字里这四件原语 — 全部由 CryptoKit 提供</text>
+        </g>
+        <g data-step="4" data-step-end="4">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">读懂 Noise spec 的钥匙：每个 token 要么放公钥，要么做 DH</text>
+        </g>
+
+        <!-- Step 3: 4 primitive boxes top row -->
+        <g data-step="3">
+          <rect x="80" y="110" width="200" height="100" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="180" y="138" text-anchor="middle" font-size="14" font-weight="700" class="label-violet">X25519 DH</text>
+          <text x="180" y="160" text-anchor="middle" font-size="11" class="label-slate">Curve25519 椭圆曲线</text>
+          <text x="180" y="178" text-anchor="middle" font-size="10" class="label-muted">两人公开信道协商共享秘密</text>
+          <text x="180" y="196" text-anchor="middle" font-size="10" class="svg-mono label-violet">32B 私钥 → 32B 共享</text>
+
+          <rect x="300" y="110" width="200" height="100" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="400" y="138" text-anchor="middle" font-size="14" font-weight="700" class="label-violet">ChaChaPoly AEAD</text>
+          <text x="400" y="160" text-anchor="middle" font-size="11" class="label-slate">认证加密 (RFC 8439)</text>
+          <text x="400" y="178" text-anchor="middle" font-size="10" class="label-muted">同时提供机密性 + 完整性</text>
+          <text x="400" y="196" text-anchor="middle" font-size="10" class="svg-mono label-violet">12B nonce + 16B tag</text>
+
+          <rect x="520" y="110" width="200" height="100" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="620" y="138" text-anchor="middle" font-size="14" font-weight="700" class="label-violet">SHA-256</text>
+          <text x="620" y="160" text-anchor="middle" font-size="11" class="label-slate">单向哈希</text>
+          <text x="620" y="178" text-anchor="middle" font-size="10" class="label-muted">累积 transcript 摘要</text>
+          <text x="620" y="196" text-anchor="middle" font-size="10" class="svg-mono label-violet">任意输入 → 32B 输出</text>
+
+          <rect x="740" y="110" width="200" height="100" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="840" y="138" text-anchor="middle" font-size="14" font-weight="700" class="label-violet">HKDF</text>
+          <text x="840" y="160" text-anchor="middle" font-size="11" class="label-slate">密钥派生 (RFC 5869)</text>
+          <text x="840" y="178" text-anchor="middle" font-size="10" class="label-muted">extract + expand 两步</text>
+          <text x="840" y="196" text-anchor="middle" font-size="10" class="svg-mono label-violet">底层 = HMAC-SHA256</text>
+        </g>
+
+        <!-- Step 3: pattern formula bottom -->
+        <g data-step="3">
+          <rect x="200" y="290" width="700" height="80" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="550" y="318" text-anchor="middle" font-size="14" font-weight="700" class="label-amber">Noise 协议名 = Pattern _ DH _ Cipher _ Hash</text>
+          <text x="550" y="343" text-anchor="middle" font-size="13" class="svg-mono label-slate">XX  _  25519  _  ChaChaPoly  _  SHA256</text>
+          <text x="550" y="361" text-anchor="middle" font-size="10" class="label-muted">名字本身唯一确定握手流程，不需要协商</text>
+        </g>
+
+        <!-- Step 3: bitchat hint -->
+        <g data-step="3">
+          <text x="550" y="430" text-anchor="middle" font-size="11" class="label-cherry" font-weight="600">bitchat 全部由 Apple CryptoKit 拼出 — 没有第三方密码学依赖</text>
+        </g>
+
+        <!-- Step 4: Token dictionary card -->
+        <g data-step="4">
+          <rect x="200" y="100" width="700" height="320" rx="14" fill="#ffffff" stroke="#6d28d9" stroke-width="2"/>
+          <text x="550" y="128" text-anchor="middle" font-size="14" font-weight="700" class="label-violet">Noise 记号系统 · token 字典</text>
+          <line x1="220" y1="142" x2="880" y2="142" stroke="#ede9fe" stroke-width="1"/>
+
+          <!-- e -->
+          <text x="240" y="172" font-size="14" font-weight="700" class="svg-mono label-cherry">e</text>
+          <text x="280" y="172" font-size="11" class="label-slate">→ 发送方放<tspan font-weight="700"> ephemeral 公钥</tspan>（每会话新生成）</text>
+
+          <!-- s -->
+          <text x="240" y="200" font-size="14" font-weight="700" class="svg-mono label-cherry">s</text>
+          <text x="280" y="200" font-size="11" class="label-slate">→ 发送方放<tspan font-weight="700"> static 公钥</tspan>（长期身份；XX 中加密发送）</text>
+
+          <!-- ee -->
+          <text x="240" y="228" font-size="14" font-weight="700" class="svg-mono label-violet">ee</text>
+          <text x="280" y="228" font-size="11" class="label-slate">→ DH(发送方 ephemeral, 接收方 ephemeral)</text>
+
+          <!-- es -->
+          <text x="240" y="256" font-size="14" font-weight="700" class="svg-mono label-violet">es</text>
+          <text x="280" y="256" font-size="11" class="label-slate">→ DH(发送方 ephemeral, 接收方 static) · initiator 发起</text>
+
+          <!-- se -->
+          <text x="240" y="284" font-size="14" font-weight="700" class="svg-mono label-violet">se</text>
+          <text x="280" y="284" font-size="11" class="label-slate">→ DH(发送方 static, 接收方 ephemeral)</text>
+
+          <!-- ss -->
+          <text x="240" y="312" font-size="14" font-weight="700" class="svg-mono label-violet">ss</text>
+          <text x="280" y="312" font-size="11" class="label-slate">→ DH(发送方 static, 接收方 static) · 仅 KK/IK 等模式用</text>
+
+          <line x1="220" y1="332" x2="880" y2="332" stroke="#ede9fe" stroke-width="1"/>
+          <text x="240" y="356" font-size="12" font-weight="700" class="svg-mono label-amber">→</text>
+          <text x="280" y="356" font-size="11" class="label-slate">当前发送方是 <tspan class="label-cherry" font-weight="700">initiator</tspan>（发起握手的一方）</text>
+          <text x="240" y="380" font-size="12" font-weight="700" class="svg-mono label-amber">←</text>
+          <text x="280" y="380" font-size="11" class="label-slate">当前发送方是 <tspan class="label-teal" font-weight="700">responder</tspan>（应答的一方）</text>
+          <text x="280" y="404" font-size="10" class="label-muted">规则：小写=谁的公钥；两字母=做哪两把私公钥的 DH；箭头 = 当前 sender</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch3 — 状态机 (Step 5-7)
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="3" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-amber-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+          <marker id="arr-violet-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-cherry-3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+        </defs>
+
+        <!-- Hint -->
+        <g data-step="5" data-step-end="5">
+          <text x="550" y="50" text-anchor="middle" font-size="13" class="label-muted">SymmetricState · 双账本：ck 累加 DH 输出，h 累加所有公开数据</text>
+        </g>
+        <g data-step="6" data-step-end="6">
+          <text x="550" y="50" text-anchor="middle" font-size="13" class="label-muted">两条规则：发/收公开字节调 MixHash，完成 DH 调 MixKey</text>
+        </g>
+        <g data-step="7" data-step-end="7">
+          <text x="550" y="50" text-anchor="middle" font-size="13" class="label-muted">MixKey 之后内嵌 CipherState 就有 key，可做 AEAD 加密；nonce 永不复用</text>
+        </g>
+
+        <!-- Alice / Bob bases -->
+        <g data-step="5">
+          <circle cx="140" cy="380" r="36" class="actor-cherry" stroke-width="2"/>
+          <text x="140" y="386" text-anchor="middle" font-size="18" font-weight="700" class="label-cherry">A</text>
+          <text x="140" y="432" text-anchor="middle" font-size="12" font-weight="600" class="label-cherry">Alice · initiator</text>
+
+          <circle cx="960" cy="380" r="36" class="actor-teal" stroke-width="2"/>
+          <text x="960" y="386" text-anchor="middle" font-size="18" font-weight="700" class="label-teal">B</text>
+          <text x="960" y="432" text-anchor="middle" font-size="12" font-weight="600" class="label-teal">Bob · responder</text>
+        </g>
+
+        <!-- Alice's SymmetricState ledger -->
+        <g data-step="5">
+          <rect x="40" y="100" width="200" height="120" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="140" y="124" text-anchor="middle" font-size="12" font-weight="700" class="label-amber">Alice · SymmetricState</text>
+          <line x1="40" y1="138" x2="240" y2="138" stroke="#b45309" stroke-width="1"/>
+          <text x="50" y="160" font-size="12" font-weight="700" class="svg-mono label-amber">ck =</text>
+          <text x="100" y="160" font-size="10" class="svg-mono label-slate">protocol_name (32B)</text>
+          <line x1="40" y1="172" x2="240" y2="172" stroke="#fef3c7" stroke-width="1"/>
+          <text x="50" y="194" font-size="12" font-weight="700" class="svg-mono label-amber">h  =</text>
+          <text x="100" y="194" font-size="10" class="svg-mono label-slate">protocol_name (32B)</text>
+          <text x="140" y="212" text-anchor="middle" font-size="9" class="label-muted">初始时 ck = h = name</text>
+        </g>
+
+        <!-- Bob's SymmetricState ledger -->
+        <g data-step="5">
+          <rect x="860" y="100" width="200" height="120" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="960" y="124" text-anchor="middle" font-size="12" font-weight="700" class="label-amber">Bob · SymmetricState</text>
+          <line x1="860" y1="138" x2="1060" y2="138" stroke="#b45309" stroke-width="1"/>
+          <text x="870" y="160" font-size="12" font-weight="700" class="svg-mono label-amber">ck =</text>
+          <text x="920" y="160" font-size="10" class="svg-mono label-slate">protocol_name (32B)</text>
+          <line x1="860" y1="172" x2="1060" y2="172" stroke="#fef3c7" stroke-width="1"/>
+          <text x="870" y="194" font-size="12" font-weight="700" class="svg-mono label-amber">h  =</text>
+          <text x="920" y="194" font-size="10" class="svg-mono label-slate">protocol_name (32B)</text>
+          <text x="960" y="212" text-anchor="middle" font-size="9" class="label-muted">双方初始一致</text>
+        </g>
+
+        <!-- Step 5: protocol name annotation in middle -->
+        <g data-step="5">
+          <rect x="320" y="240" width="460" height="60" rx="8" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+          <text x="550" y="262" text-anchor="middle" font-size="11" class="label-muted">InitializeSymmetric(protocol_name)</text>
+          <text x="550" y="284" text-anchor="middle" font-size="12" class="svg-mono label-slate" font-weight="600">name ≤ 32B → h = name (右 pad 0); else h = SHA256(name); ck = h</text>
+        </g>
+
+        <!-- Step 6: MixKey + MixHash actions -->
+        <g data-step="6">
+          <rect x="280" y="160" width="200" height="80" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="380" y="186" text-anchor="middle" font-size="13" font-weight="700" class="label-violet">MixKey(dh_output)</text>
+          <text x="380" y="208" text-anchor="middle" font-size="10" class="label-slate">HKDF(ck, ikm) → 新 ck</text>
+          <text x="380" y="224" text-anchor="middle" font-size="10" class="label-slate">同时给出 cipher key</text>
+          <line x1="380" y1="240" x2="180" y2="160" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet-3)"/>
+
+          <rect x="620" y="160" width="200" height="80" rx="10" class="actor-cherry" stroke-width="2"/>
+          <text x="720" y="186" text-anchor="middle" font-size="13" font-weight="700" class="label-cherry">MixHash(data)</text>
+          <text x="720" y="208" text-anchor="middle" font-size="10" class="label-slate">h = SHA256(h ‖ data)</text>
+          <text x="720" y="224" text-anchor="middle" font-size="10" class="label-slate">累积 transcript</text>
+          <line x1="620" y1="240" x2="180" y2="190" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry-3)"/>
+        </g>
+
+        <!-- Step 6: rule strip -->
+        <g data-step="6">
+          <rect x="200" y="320" width="700" height="60" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="550" y="346" text-anchor="middle" font-size="12" font-weight="700" class="label-amber">规则：先 MixHash(公开字节)，后 MixKey(DH 输出)</text>
+          <text x="550" y="366" text-anchor="middle" font-size="10" class="label-muted">每个 token 都是这两个动作的组合</text>
+        </g>
+
+        <!-- Step 7: CipherState box arising from ck -->
+        <g data-step="7">
+          <rect x="280" y="160" width="220" height="100" rx="10" class="actor-teal" stroke-width="2"/>
+          <text x="390" y="186" text-anchor="middle" font-size="13" font-weight="700" class="label-teal">CipherState</text>
+          <line x1="290" y1="196" x2="490" y2="196" stroke="#0e7490" stroke-width="1"/>
+          <text x="300" y="218" font-size="11" font-weight="700" class="svg-mono label-teal">k =</text>
+          <text x="340" y="218" font-size="10" class="svg-mono label-slate">SymmetricKey (32B)</text>
+          <text x="300" y="240" font-size="11" font-weight="700" class="svg-mono label-teal">n =</text>
+          <text x="340" y="240" font-size="10" class="svg-mono label-slate">UInt64 nonce, 起始 0</text>
+          <text x="390" y="256" text-anchor="middle" font-size="9" class="label-muted">由 MixKey 派生，嵌在 SymmetricState 内</text>
+        </g>
+
+        <!-- Step 7: encrypt flow -->
+        <g data-step="7">
+          <rect x="540" y="160" width="240" height="100" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="660" y="184" text-anchor="middle" font-size="12" font-weight="700" class="label-green">ChaChaPoly.seal</text>
+          <text x="660" y="204" text-anchor="middle" font-size="10" class="label-slate">使用 (k, nonce=n, ad=h)</text>
+          <text x="660" y="222" text-anchor="middle" font-size="10" class="label-slate">输出 = ciphertext + 16B tag</text>
+          <text x="660" y="244" text-anchor="middle" font-size="11" font-weight="700" class="label-green svg-mono">n ← n + 1</text>
+          <line x1="500" y1="218" x2="540" y2="218" stroke="#15803d" stroke-width="2" marker-end="url(#arr-violet-3)"/>
+        </g>
+
+        <!-- Step 7: warning -->
+        <g data-step="7">
+          <rect x="200" y="320" width="700" height="60" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+          <text x="550" y="346" text-anchor="middle" font-size="12" font-weight="700" class="label-red">⚠️ 同一 k 上 nonce 复用 = 灾难（直接泄漏明文 XOR）</text>
+          <text x="550" y="366" text-anchor="middle" font-size="10" class="label-muted">CipherState 严格单调递增 nonce，永不回退</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch4 — XX 握手三轮 (Step 8-11)
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="4" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-cherry-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7490"/>
+          </marker>
+          <marker id="arr-violet-4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+        </defs>
+
+        <!-- Hints -->
+        <g data-step="8" data-step-end="8">
+          <text x="550" y="40" text-anchor="middle" font-size="13" class="label-muted">XX 第 1 条 → e · Alice 发临时公钥，明文（没 key 还没 MixKey）</text>
+        </g>
+        <g data-step="9" data-step-end="9">
+          <text x="550" y="40" text-anchor="middle" font-size="13" class="label-muted">XX 第 2 条上半 ← e, ee · Bob 回 ephemeral，第一次 MixKey 出 cipher key</text>
+        </g>
+        <g data-step="10" data-step-end="10">
+          <text x="550" y="40" text-anchor="middle" font-size="13" class="label-muted">XX 第 2 条下半 s, es · Bob 加密发 static 公钥；身份首次被保护</text>
+        </g>
+        <g data-step="11" data-step-end="11">
+          <text x="550" y="40" text-anchor="middle" font-size="13" class="label-muted">XX 第 3 条 → s, se · Alice 加密发 static；双向认证完成</text>
+        </g>
+
+        <!-- Alice -->
+        <g data-step="8">
+          <circle cx="120" cy="240" r="36" class="actor-cherry" stroke-width="2"/>
+          <text x="120" y="246" text-anchor="middle" font-size="18" font-weight="700" class="label-cherry">A</text>
+          <text x="120" y="290" text-anchor="middle" font-size="12" font-weight="600" class="label-cherry">Alice · initiator</text>
+        </g>
+        <g data-step="8">
+          <circle cx="980" cy="240" r="36" class="actor-teal" stroke-width="2"/>
+          <text x="980" y="246" text-anchor="middle" font-size="18" font-weight="700" class="label-teal">B</text>
+          <text x="980" y="290" text-anchor="middle" font-size="12" font-weight="600" class="label-teal">Bob · responder</text>
+        </g>
+
+        <!-- Alice ck/h ledger -->
+        <g data-step="8">
+          <rect x="40" y="80" width="180" height="80" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="130" y="100" text-anchor="middle" font-size="11" font-weight="700" class="label-amber">Alice ck / h</text>
+          <line x1="40" y1="110" x2="220" y2="110" stroke="#b45309" stroke-width="0.8"/>
+          <text x="50" y="128" font-size="10" class="svg-mono label-slate">ck: name…</text>
+          <text x="50" y="146" font-size="10" class="svg-mono label-slate">h:  name…</text>
+        </g>
+
+        <!-- Bob ck/h ledger -->
+        <g data-step="8">
+          <rect x="880" y="80" width="180" height="80" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="970" y="100" text-anchor="middle" font-size="11" font-weight="700" class="label-amber">Bob ck / h</text>
+          <line x1="880" y1="110" x2="1060" y2="110" stroke="#b45309" stroke-width="0.8"/>
+          <text x="890" y="128" font-size="10" class="svg-mono label-slate">ck: name…</text>
+          <text x="890" y="146" font-size="10" class="svg-mono label-slate">h:  name…</text>
+        </g>
+
+        <!-- ============== Step 8: -> e ============== -->
+        <g data-step="8" data-step-end="11">
+          <!-- Alice e_A ephemeral circle -->
+          <circle cx="180" cy="340" r="18" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+          <text x="180" y="345" text-anchor="middle" font-size="12" font-weight="700" class="svg-mono label-cherry">e_A</text>
+          <text x="180" y="378" text-anchor="middle" font-size="10" class="label-muted">ephemeral 公钥</text>
+
+          <!-- Arrow -> -->
+          <line x1="200" y1="340" x2="900" y2="340" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry-4)"/>
+          <text x="550" y="332" text-anchor="middle" font-size="11" class="label-cherry" font-weight="700">→ e_A_pub  (明文)</text>
+
+          <!-- Bob's view: empty payload box -->
+          <rect x="600" y="350" width="240" height="32" rx="6" fill="#ffffff" stroke="#9ca3af" stroke-dasharray="4 3" stroke-width="1.2"/>
+          <text x="720" y="370" text-anchor="middle" font-size="10" class="label-muted">空 payload（无 cipher key）</text>
+        </g>
+
+        <!-- Step 8 only: Bob ck/h annotation -->
+        <g data-step="8" data-step-end="8">
+          <text x="970" y="180" text-anchor="middle" font-size="10" class="label-amber" font-weight="600">+ MixHash(e_A_pub)</text>
+        </g>
+
+        <!-- ============== Step 9: <- e, ee ============== -->
+        <g data-step="9" data-step-end="11">
+          <!-- Bob e_B ephemeral -->
+          <circle cx="920" cy="340" r="18" fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
+          <text x="920" y="345" text-anchor="middle" font-size="12" font-weight="700" class="svg-mono label-teal">e_B</text>
+
+          <!-- Arrow back -->
+          <line x1="900" y1="380" x2="200" y2="380" stroke="#0e7490" stroke-width="2" marker-end="url(#arr-teal-4)"/>
+          <text x="550" y="376" text-anchor="middle" font-size="11" class="label-teal" font-weight="700">← e_B_pub</text>
+
+          <!-- ee DH violet diamond center -->
+          <rect x="520" y="395" width="60" height="32" rx="6" class="actor-violet" stroke-width="1.5" transform="rotate(-15 550 411)"/>
+          <text x="550" y="416" text-anchor="middle" font-size="11" font-weight="700" class="svg-mono label-violet" transform="rotate(-15 550 411)">ee</text>
+        </g>
+
+        <!-- Step 9 only: ee derivation lines -->
+        <g data-step="9" data-step-end="9">
+          <line x1="195" y1="350" x2="535" y2="405" stroke="#6d28d9" stroke-width="1" stroke-dasharray="3 2"/>
+          <line x1="905" y1="350" x2="565" y2="405" stroke="#6d28d9" stroke-width="1" stroke-dasharray="3 2"/>
+          <text x="380" y="430" text-anchor="middle" font-size="10" class="label-violet">DH(e_B_priv, e_A_pub)</text>
+        </g>
+
+        <!-- Step 9: cipher key k1 boxes on both sides -->
+        <g data-step="9" data-step-end="11">
+          <rect x="60" y="170" width="80" height="28" rx="6" class="actor-teal" stroke-width="1.5"/>
+          <text x="100" y="189" text-anchor="middle" font-size="11" font-weight="700" class="svg-mono label-teal">k₁</text>
+          <text x="100" y="205" text-anchor="middle" font-size="9" class="label-muted">cipher key</text>
+
+          <rect x="960" y="170" width="80" height="28" rx="6" class="actor-teal" stroke-width="1.5"/>
+          <text x="1000" y="189" text-anchor="middle" font-size="11" font-weight="700" class="svg-mono label-teal">k₁</text>
+        </g>
+
+        <!-- ============== Step 10: s, es ============== -->
+        <g data-step="10" data-step-end="11">
+          <!-- Bob's static key box wrapped in lock -->
+          <rect x="900" y="430" width="100" height="36" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
+          <text x="950" y="453" text-anchor="middle" font-size="12" font-weight="700" class="svg-mono label-teal">s_B</text>
+          <!-- amber lock ring -->
+          <rect x="892" y="424" width="116" height="48" rx="10" fill="none" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="1010" y="450" font-size="9" class="label-amber">🔒</text>
+
+          <!-- Arrow Bob -> Alice with encrypted s -->
+          <line x1="900" y1="448" x2="200" y2="448" stroke="#0e7490" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arr-teal-4)"/>
+          <text x="550" y="445" text-anchor="middle" font-size="11" class="label-teal" font-weight="700">← {s_B_pub}_k₁  (已加密)</text>
+
+          <!-- es token -->
+          <rect x="430" y="470" width="60" height="28" rx="6" class="actor-violet" stroke-width="1.5"/>
+          <text x="460" y="488" text-anchor="middle" font-size="11" font-weight="700" class="svg-mono label-violet">es</text>
+        </g>
+
+        <!-- Step 10 only: cipher key upgrade k2 -->
+        <g data-step="10" data-step-end="10">
+          <text x="100" y="220" text-anchor="middle" font-size="10" class="label-amber" font-weight="600">→ k₂ (MixKey es)</text>
+          <text x="1000" y="220" text-anchor="middle" font-size="10" class="label-amber" font-weight="600">→ k₂</text>
+        </g>
+
+        <!-- ============== Step 11: -> s, se ============== -->
+        <g data-step="11" data-step-end="11">
+          <!-- Alice's static key encrypted (mirrors Bob's s_B at y=430) -->
+          <rect x="120" y="400" width="100" height="36" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+          <text x="170" y="423" text-anchor="middle" font-size="12" font-weight="700" class="svg-mono label-cherry">s_A</text>
+          <rect x="112" y="394" width="116" height="48" rx="10" fill="none" stroke="#b45309" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="100" y="420" font-size="9" class="label-amber">🔒</text>
+
+          <!-- Arrow forward, encrypted s_A (between Bob's reverse arrow and bottom) -->
+          <line x1="230" y1="418" x2="900" y2="418" stroke="#aa1141" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arr-cherry-4)"/>
+          <text x="565" y="412" text-anchor="middle" font-size="11" class="label-cherry" font-weight="700">→ {s_A_pub}_k₂  (已加密)</text>
+
+          <!-- se token (mirrors es at x=430,y=470) -->
+          <rect x="610" y="470" width="60" height="28" rx="6" class="actor-violet" stroke-width="1.5"/>
+          <text x="640" y="488" text-anchor="middle" font-size="11" font-weight="700" class="svg-mono label-violet">se</text>
+
+          <!-- Auth stars: above actor circles, between ledger (y=160) and actor (y=204) -->
+          <text x="120" y="190" text-anchor="middle" font-size="20" class="label-amber">⭐</text>
+          <text x="980" y="190" text-anchor="middle" font-size="20" class="label-amber">⭐</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch5 — Transport (Step 12-13)
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="5" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-cherry-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-teal-5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7490"/>
+          </marker>
+        </defs>
+
+        <!-- Hints -->
+        <g data-step="12" data-step-end="12">
+          <text x="550" y="40" text-anchor="middle" font-size="13" class="label-muted">Split · 握手末尾把 ck 一分二，得到双方对调的 send/recv CipherState</text>
+        </g>
+        <g data-step="13" data-step-end="13">
+          <text x="550" y="40" text-anchor="middle" font-size="13" class="label-muted">Transport phase · 握手轮次淡出，每条消息只是 sendCipher.encrypt，nonce 自增</text>
+        </g>
+
+        <!-- Alice -->
+        <g data-step="12">
+          <circle cx="120" cy="260" r="36" class="actor-cherry" stroke-width="2"/>
+          <text x="120" y="266" text-anchor="middle" font-size="18" font-weight="700" class="label-cherry">A</text>
+          <text x="120" y="312" text-anchor="middle" font-size="12" font-weight="600" class="label-cherry">Alice</text>
+        </g>
+        <g data-step="12">
+          <circle cx="980" cy="260" r="36" class="actor-teal" stroke-width="2"/>
+          <text x="980" y="266" text-anchor="middle" font-size="18" font-weight="700" class="label-teal">B</text>
+          <text x="980" y="312" text-anchor="middle" font-size="12" font-weight="600" class="label-teal">Bob</text>
+        </g>
+
+        <!-- Faded handshake arrows behind (decoration) -->
+        <g data-step="12">
+          <line x1="160" y1="240" x2="940" y2="240" stroke="#e5e7eb" stroke-width="1.5"/>
+          <line x1="940" y1="265" x2="160" y2="265" stroke="#e5e7eb" stroke-width="1.5"/>
+          <line x1="160" y1="290" x2="940" y2="290" stroke="#e5e7eb" stroke-width="1.5"/>
+          <text x="550" y="225" text-anchor="middle" font-size="9" class="label-muted">— 三轮握手 (淡出) —</text>
+        </g>
+
+        <!-- ============== Step 12: Split ck -> c1 + c2 ============== -->
+        <g data-step="12" data-step-end="13">
+          <!-- ck box center -->
+          <rect x="460" y="120" width="180" height="50" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="550" y="142" text-anchor="middle" font-size="13" font-weight="700" class="label-amber">ck (终态)</text>
+          <text x="550" y="160" text-anchor="middle" font-size="10" class="label-muted">已累积 ee + es + se</text>
+
+          <!-- HKDF Split label -->
+          <text x="550" y="195" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">HKDF(ck, "")  →  Split</text>
+
+          <!-- c1 box (initiator → responder) -->
+          <rect x="240" y="220" width="200" height="60" rx="8" class="actor-teal" stroke-width="2"/>
+          <text x="340" y="244" text-anchor="middle" font-size="12" font-weight="700" class="label-teal svg-mono">c₁</text>
+          <text x="340" y="262" text-anchor="middle" font-size="10" class="label-slate">initiator → responder</text>
+          <text x="340" y="276" text-anchor="middle" font-size="9" class="label-muted">SymmetricKey(32B), n=0</text>
+
+          <!-- c2 box (responder → initiator) -->
+          <rect x="660" y="220" width="200" height="60" rx="8" class="actor-teal" stroke-width="2"/>
+          <text x="760" y="244" text-anchor="middle" font-size="12" font-weight="700" class="label-teal svg-mono">c₂</text>
+          <text x="760" y="262" text-anchor="middle" font-size="10" class="label-slate">responder → initiator</text>
+          <text x="760" y="276" text-anchor="middle" font-size="9" class="label-muted">SymmetricKey(32B), n=0</text>
+
+          <!-- Lines from ck to both -->
+          <line x1="500" y1="170" x2="380" y2="220" stroke="#b45309" stroke-width="2"/>
+          <line x1="600" y1="170" x2="720" y2="220" stroke="#b45309" stroke-width="2"/>
+        </g>
+
+        <!-- Step 12 only: assignment notes -->
+        <g data-step="12" data-step-end="12">
+          <text x="120" y="350" text-anchor="middle" font-size="10" class="label-cherry" font-weight="600">Alice: send=c₁, recv=c₂</text>
+          <text x="980" y="350" text-anchor="middle" font-size="10" class="label-teal" font-weight="600">Bob: send=c₂, recv=c₁</text>
+          <text x="550" y="380" text-anchor="middle" font-size="11" class="label-slate">handshake hash <tspan font-weight="700" class="svg-mono label-amber">h</tspan> 同时导出，可做 channel binding</text>
+        </g>
+
+        <!-- ============== Step 13: Transport messages ============== -->
+        <g data-step="13" data-step-end="13">
+          <!-- Alice's sendCipher cabinet -->
+          <rect x="40" y="370" width="160" height="80" rx="8" class="actor-teal" stroke-width="1.5"/>
+          <text x="120" y="394" text-anchor="middle" font-size="11" font-weight="700" class="label-teal">Alice.sendCipher</text>
+          <text x="120" y="412" text-anchor="middle" font-size="10" class="svg-mono label-slate">k = c₁.k</text>
+          <text x="120" y="430" text-anchor="middle" font-size="10" class="svg-mono label-slate">n = 0, 1, 2 ...</text>
+          <text x="120" y="446" text-anchor="middle" font-size="9" class="label-muted">每加密一条 n++</text>
+
+          <!-- Bob's recvCipher -->
+          <rect x="900" y="370" width="160" height="80" rx="8" class="actor-teal" stroke-width="1.5"/>
+          <text x="980" y="394" text-anchor="middle" font-size="11" font-weight="700" class="label-teal">Bob.recvCipher</text>
+          <text x="980" y="412" text-anchor="middle" font-size="10" class="svg-mono label-slate">k = c₁.k</text>
+          <text x="980" y="430" text-anchor="middle" font-size="10" class="svg-mono label-slate">n = 0, 1, 2 ...</text>
+          <text x="980" y="446" text-anchor="middle" font-size="9" class="label-muted">sliding-window 防 replay</text>
+
+          <!-- 3 transport messages with n -->
+          <line x1="220" y1="395" x2="880" y2="395" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry-5)"/>
+          <rect x="450" y="380" width="200" height="20" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+          <text x="550" y="395" text-anchor="middle" font-size="10" class="svg-mono label-cherry" font-weight="700">ct₀  (n=0)</text>
+
+          <line x1="220" y1="420" x2="880" y2="420" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry-5)"/>
+          <rect x="450" y="405" width="200" height="20" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+          <text x="550" y="420" text-anchor="middle" font-size="10" class="svg-mono label-cherry" font-weight="700">ct₁  (n=1)</text>
+
+          <line x1="220" y1="445" x2="880" y2="445" stroke="#aa1141" stroke-width="2" marker-end="url(#arr-cherry-5)"/>
+          <rect x="450" y="430" width="200" height="20" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+          <text x="550" y="445" text-anchor="middle" font-size="10" class="svg-mono label-cherry" font-weight="700">ct₂  (n=2)</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch6 — Bitchat 落地 (Step 14-16)
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="6" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-slate-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-cherry-6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+        </defs>
+
+        <!-- Hints -->
+        <g data-step="14" data-step-end="14">
+          <text x="550" y="36" text-anchor="middle" font-size="13" class="label-muted">握手包和密文包共享同一条 GATT characteristic，靠包类型字节区分</text>
+        </g>
+        <g data-step="15" data-step-end="15">
+          <text x="550" y="36" text-anchor="middle" font-size="13" class="label-muted">KCI 抗性 + PFS · static 私钥泄漏不能解过去，不能仿冒未来</text>
+        </g>
+        <g data-step="16" data-step-end="16">
+          <text x="550" y="36" text-anchor="middle" font-size="13" class="label-muted">peer ID 会变，fingerprint = SHA256(static_pub) 不变 — bitchat 跨 ID 复用 session</text>
+        </g>
+
+        <!-- ============== Step 14: BLE envelope (full canvas) ============== -->
+        <g data-step="14" data-step-end="15">
+          <rect x="60" y="70" width="980" height="380" rx="20" fill="#ffffff" stroke="#9ca3af" stroke-width="2"/>
+          <text x="550" y="100" text-anchor="middle" font-size="12" class="label-slate" font-weight="700">📡 BLE GATT Service</text>
+        </g>
+
+        <!-- Step 14 ONLY: full envelope contents (mass packet types) -->
+        <g data-step="14" data-step-end="14">
+          <text x="550" y="120" text-anchor="middle" font-size="10" class="svg-mono label-muted">serviceUUID = F47B…4B5C   ·   characteristicUUID = A1B2…4C5D</text>
+
+          <!-- 5 packet type blocks -->
+          <rect x="120" y="180" width="160" height="100" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="200" y="205" text-anchor="middle" font-size="12" font-weight="700" class="label-violet">announce</text>
+          <text x="200" y="225" text-anchor="middle" font-size="9" class="label-slate">peerID 广播</text>
+          <text x="200" y="245" text-anchor="middle" font-size="9" class="label-muted">type = 0x01</text>
+          <text x="200" y="265" text-anchor="middle" font-size="9" class="label-muted">"我在这"</text>
+
+          <rect x="290" y="180" width="160" height="100" rx="10" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="370" y="205" text-anchor="middle" font-size="12" font-weight="700" class="label-cherry">handshake-1</text>
+          <text x="370" y="225" text-anchor="middle" font-size="9" class="label-slate">→ e_A_pub</text>
+          <text x="370" y="245" text-anchor="middle" font-size="9" class="label-muted">明文 32B</text>
+
+          <rect x="460" y="180" width="160" height="100" rx="10" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="540" y="205" text-anchor="middle" font-size="12" font-weight="700" class="label-teal">handshake-2</text>
+          <text x="540" y="225" text-anchor="middle" font-size="9" class="label-slate">← e_B, ee, s, es</text>
+          <text x="540" y="245" text-anchor="middle" font-size="9" class="label-muted">含已加密 s_B</text>
+
+          <rect x="630" y="180" width="160" height="100" rx="10" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="710" y="205" text-anchor="middle" font-size="12" font-weight="700" class="label-cherry">handshake-3</text>
+          <text x="710" y="225" text-anchor="middle" font-size="9" class="label-slate">→ s, se</text>
+          <text x="710" y="245" text-anchor="middle" font-size="9" class="label-muted">含已加密 s_A</text>
+
+          <rect x="800" y="180" width="160" height="100" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="880" y="205" text-anchor="middle" font-size="12" font-weight="700" class="label-green">encrypted msg</text>
+          <text x="880" y="225" text-anchor="middle" font-size="9" class="label-slate">transport · sendCipher</text>
+          <text x="880" y="245" text-anchor="middle" font-size="9" class="label-muted">type = 0x10</text>
+
+          <!-- Flow arrow underneath -->
+          <line x1="120" y1="320" x2="960" y2="320" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate-6)"/>
+          <text x="540" y="340" text-anchor="middle" font-size="11" class="label-slate" font-weight="600">didDiscover → didConnect → 收 announce → initiateNoiseHandshake → 三轮 GATT write/notify → established</text>
+
+          <!-- Bottom: NoiseSession state row -->
+          <rect x="200" y="370" width="700" height="60" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="550" y="392" text-anchor="middle" font-size="11" font-weight="700" class="label-amber">NoiseSessionManager  ·  [peerID → NoiseSession]</text>
+          <text x="550" y="412" text-anchor="middle" font-size="10" class="label-slate">未建立时排队握手；established 后所有 user payload 走 transport 加密</text>
+        </g>
+
+        <!-- ============== Step 15: KCI + PFS ============== -->
+        <g data-step="15" data-step-end="15">
+          <text x="550" y="120" text-anchor="middle" font-size="10" class="svg-mono label-muted">假设场景：攻击者今天偷到了 Alice 的 static 私钥 s_A</text>
+
+          <!-- Alice avatar with leaked static -->
+          <circle cx="200" cy="220" r="36" class="actor-cherry" stroke-width="2"/>
+          <text x="200" y="226" text-anchor="middle" font-size="18" font-weight="700" class="label-cherry">A</text>
+          <text x="200" y="270" text-anchor="middle" font-size="11" font-weight="600" class="label-cherry">Alice</text>
+
+          <!-- Warning triangle -->
+          <polygon points="290,200 330,200 310,160" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
+          <text x="310" y="195" text-anchor="middle" font-size="20">⚠️</text>
+          <text x="310" y="220" text-anchor="middle" font-size="11" class="label-red svg-mono" font-weight="700">s_A leaked</text>
+
+          <!-- Past messages green shield -->
+          <rect x="380" y="180" width="280" height="100" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="520" y="206" text-anchor="middle" font-size="14">🛡️</text>
+          <text x="520" y="226" text-anchor="middle" font-size="12" font-weight="700" class="label-green">过去录的密文 still safe</text>
+          <text x="520" y="246" text-anchor="middle" font-size="10" class="label-slate">PFS：每会话 ephemeral key e</text>
+          <text x="520" y="262" text-anchor="middle" font-size="10" class="label-slate">e 早已 zeroize，无法重算 ck</text>
+
+          <!-- Future fake messages green shield -->
+          <rect x="700" y="180" width="280" height="100" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="840" y="206" text-anchor="middle" font-size="14">🛡️</text>
+          <text x="840" y="226" text-anchor="middle" font-size="12" font-weight="700" class="label-green">未来仿冒 still safe</text>
+          <text x="840" y="246" text-anchor="middle" font-size="10" class="label-slate">KCI 抗性：XX 既有 es 又有 se</text>
+          <text x="840" y="262" text-anchor="middle" font-size="10" class="label-slate">仅有 s_A 算不出 es (差 s_B)</text>
+
+          <!-- Comparison strip -->
+          <rect x="200" y="320" width="780" height="60" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="590" y="344" text-anchor="middle" font-size="11" font-weight="700" class="label-violet">和 TLS 1.3 PFS 类比 · TLS 仅靠 ephemeral 给 PFS；Noise XX 多一层 KCI 抗性</text>
+          <text x="590" y="364" text-anchor="middle" font-size="10" class="label-muted">关键：握手期 ephemeral 用完立即 clearSensitiveData()，进 Split 后清零</text>
+        </g>
+
+        <!-- ============== Step 16: BLE envelope shrink to legend + fingerprint timeline ============== -->
+        <g data-step="16" data-step-end="16">
+          <!-- Mini BLE legend top-right -->
+          <rect x="880" y="60" width="180" height="60" rx="10" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5"/>
+          <text x="970" y="82" text-anchor="middle" font-size="10" class="label-slate" font-weight="700">📡 BLE channel</text>
+          <text x="970" y="98" text-anchor="middle" font-size="9" class="svg-mono label-muted">F47B…4B5C</text>
+          <text x="970" y="112" text-anchor="middle" font-size="9" class="svg-mono label-muted">A1B2…4C5D</text>
+
+          <!-- Alice with fingerprint -->
+          <circle cx="160" cy="200" r="36" class="actor-cherry" stroke-width="2"/>
+          <text x="160" y="206" text-anchor="middle" font-size="18" font-weight="700" class="label-cherry">A</text>
+          <rect x="60" y="250" width="200" height="40" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="160" y="266" text-anchor="middle" font-size="9" class="label-amber" font-weight="700">fingerprint = SHA256(s_A_pub)[..8]</text>
+          <text x="160" y="282" text-anchor="middle" font-size="11" class="svg-mono label-cherry" font-weight="700">3f7a c9d2 …</text>
+
+          <!-- Bob with fingerprint -->
+          <circle cx="700" cy="200" r="36" class="actor-teal" stroke-width="2"/>
+          <text x="700" y="206" text-anchor="middle" font-size="18" font-weight="700" class="label-teal">B</text>
+          <rect x="600" y="250" width="200" height="40" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="700" y="266" text-anchor="middle" font-size="9" class="label-amber" font-weight="700">fingerprint = SHA256(s_B_pub)[..8]</text>
+          <text x="700" y="282" text-anchor="middle" font-size="11" class="svg-mono label-teal" font-weight="700">b1e4 5af0 …</text>
+
+          <!-- Two timelines below -->
+          <text x="430" y="324" text-anchor="middle" font-size="11" class="label-slate" font-weight="700">时间轴 · BLE 重连后 peerID 变了，但 fingerprint 不变</text>
+
+          <line x1="80" y1="380" x2="780" y2="380" stroke="#475569" stroke-width="1.5"/>
+          <circle cx="200" cy="380" r="6" fill="#aa1141"/>
+          <text x="200" y="402" text-anchor="middle" font-size="10" class="svg-mono label-cherry">peerID = X9k2</text>
+          <text x="200" y="416" text-anchor="middle" font-size="9" class="label-muted">第 1 次连</text>
+
+          <circle cx="450" cy="380" r="6" fill="#9ca3af"/>
+          <text x="450" y="402" text-anchor="middle" font-size="10" class="label-muted">断连</text>
+
+          <circle cx="700" cy="380" r="6" fill="#aa1141"/>
+          <text x="700" y="402" text-anchor="middle" font-size="10" class="svg-mono label-cherry">peerID = M7p4</text>
+          <text x="700" y="416" text-anchor="middle" font-size="9" class="label-muted">第 2 次连 (新 peerID)</text>
+
+          <!-- Persistent fingerprint line above -->
+          <line x1="80" y1="360" x2="780" y2="360" stroke="#b45309" stroke-width="2" stroke-dasharray="4 3"/>
+          <text x="430" y="354" text-anchor="middle" font-size="9" class="label-amber" font-weight="700">fingerprint 3f7a c9d2 … 持续不变 → bitchat 跨 ID 复用 NoiseSession</text>
+
+          <!-- Rekey footnote -->
+          <rect x="120" y="440" width="660" height="50" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="1"/>
+          <text x="450" y="460" text-anchor="middle" font-size="10" class="label-red" font-weight="700">rekey 策略：BRING_THE_NOISE.md 写 1h 或 10k 消息</text>
+          <text x="450" y="478" text-anchor="middle" font-size="9" class="label-muted">实现细节待确认 — 源码未见显式 rekey() 方法，可能由 NoiseSessionManager 重建 session 实现</text>
+        </g>
+      </svg>
+
+    </section>
+
+    <!-- Caption -->
+    <section class="caption">
+      <div class="caption-title" id="caption-title"></div>
+      <div class="caption-body" id="caption-body"></div>
+    </section>
+
+    <!-- Deep-dive: references + swift code -->
+    <section class="extras" id="extras"></section>
+
+    <!-- Controls -->
+    <nav class="controls">
+      <button id="btn-prev">◀ 上一步</button>
+      <button id="btn-next" class="primary">下一步 ▶</button>
+      <button id="btn-replay" class="ghost">↻ 重头来</button>
+      <span class="hint">键盘 ← / → 也能切；URL 自动保存当前步</span>
+    </nav>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Step controller
+   ============================================================ */
+const STEPS = [
+  // Ch1 · 动机
+  { ch: 1, title: '为什么 BLE 聊天用不了 TLS', body: 'bitchat 是一个跑在 BLE（蓝牙低功耗）p2p 通道上的离线聊天 app —— 没有中心 server，没有公网，没有 PKI / CA。<br>TLS 的整个信任模型建立在"先去 CA 验证 server 证书"之上，CA 不可达就直接报废。<br>但 Alice 和 Bob 仍然要 <strong>双向认证</strong>（确认对方是真人）+ <strong>前向保密</strong>（旧密钥被偷不回溯）+ <strong>身份不被旁观者识破</strong>。<br>这些需求都还在，只是 TLS 给不了 —— 需要换协议。' },
+  { ch: 1, title: 'Noise 的承诺', body: '<code>Noise Protocol Framework</code> 不是单一协议，是<strong>协议构建器</strong>。你按需挑选 Pattern + DH + Cipher + Hash 四个槽位，就拼出一个最小的、对得上需求的握手协议。<br>bitchat 选的是 <code>Noise_XX_25519_ChaChaPoly_SHA256</code>：<br>• <code>XX</code> = 双方都不预先知道对方 static 公钥的握手模式（最适合首次相见）<br>• <code>25519</code> = Curve25519 椭圆曲线 DH<br>• <code>ChaChaPoly</code> = ChaCha20-Poly1305 AEAD（移动端友好）<br>• <code>SHA256</code> = 哈希族<br>组合出来的协议天然带 mutual auth、identity hiding、PFS、KCI 抗性 —— 跟 Signal 的对比留给独立专题。' },
+
+  // Ch2 · 原语 + 记号
+  { ch: 2, title: '四件原语', body: '协议名 <code>XX_25519_ChaChaPoly_SHA256</code> 直接告诉你需要哪四件密码学原语：<br>① <strong>X25519 DH</strong>：椭圆曲线 Diffie-Hellman，两人在公开信道协商 32B 共享秘密。<br>② <strong>ChaCha20-Poly1305 AEAD</strong>：认证加密，同时保机密性 + 完整性。12B nonce + 16B tag。<br>③ <strong>SHA-256</strong>：单向哈希，用来累积握手 transcript 摘要。<br>④ <strong>HKDF</strong>：密钥派生（RFC 5869），底层就是 HMAC-SHA256，extract + expand 两步。<br>bitchat 的实现完全靠 Apple <code>CryptoKit</code> 拼出，没有第三方密码学依赖。' },
+  { ch: 2, title: '记号系统：e、s、ee、es、se、ss', body: 'Noise spec 用一套极简记号描述每条握手消息。读懂它就能读懂任何 Noise pattern。<br>• 单字母 <code>e</code> / <code>s</code>：当前发送方"放出公钥"。<code>e</code> = ephemeral（每会话新生成的临时公钥），<code>s</code> = static（长期身份公钥）。<br>• 双字母 <code>ee</code> / <code>es</code> / <code>se</code> / <code>ss</code>：做一次 DH。第一字母 = 当前 sender 的私钥，第二字母 = 对方对应公钥。<br>• 行首 <code>→</code> = 当前 sender 是 initiator；<code>←</code> = 当前 sender 是 responder。<br>XX 的完整 message pattern：<br><code>→ e</code><br><code>← e, ee, s, es</code><br><code>→ s, se</code>' },
+
+  // Ch3 · 状态机
+  { ch: 3, title: 'SymmetricState · ck 与 h 的双账本', body: '握手过程不是凭空发生 —— Noise 在两端各维护一个 <code>SymmetricState</code>，里面是两个 32B 字段：<br>• <code>ck</code> = chaining key · 累加所有 DH 输出的"密钥时间线"<br>• <code>h</code> = transcript hash · 累加所有公开数据（包括协议名、所有发出/收到的字节）的"摘要时间线"<br>初始化：<code>InitializeSymmetric(protocol_name)</code>。如果协议名 ≤ 32B（XX_25519_ChaChaPoly_SHA256 正好 33B → 走 SHA），否则 <code>h = SHA256(protocol_name)</code>，然后 <code>ck = h</code>。<br>整个握手 = 这俩账本不断演化的过程。' },
+  { ch: 3, title: 'MixKey 与 MixHash', body: 'SymmetricState 上只有两个核心动作：<br>• <code>MixHash(data)</code>：<code>h = SHA256(h ‖ data)</code>。每次发送或接收任何公开字节（公钥、密文、payload）都要调一次。<br>• <code>MixKey(ikm)</code>：<code>HKDF(ck, ikm)</code> → 出 64B，前 32B 当新 <code>ck</code>，后 32B 当新 cipher key 灌进内嵌的 CipherState。每完成一次 DH 就调一次。<br>规则：<strong>先 MixHash 公开字节，再 MixKey DH 输出</strong>。每个 token 都是这两个动作按规则的展开。<br>bitchat 把 "MixHash + 加密 + MixHash 密文" 打包成 <code>encryptAndHash(plaintext)</code>，对称解密叫 <code>decryptAndHash(ciphertext)</code>。' },
+  { ch: 3, title: 'CipherState · nonce 不复用', body: '一旦握手中出现第一次 MixKey，SymmetricState 内嵌的 <code>CipherState</code> 就有了 key，可以做 AEAD 加密。<br>CipherState 只有两个字段：<code>k</code>（32B SymmetricKey）+ <code>n</code>（UInt64 nonce，起始 0）。<br>每次 <code>encrypt</code> / <code>decrypt</code> 都用 <code>(k, n, ad=h)</code> 调 ChaChaPoly，<strong>之后 n 单调 +1</strong>。<br>关键约束：<strong>同一 k 上 nonce 永不复用</strong>。复用 = 直接泄漏明文 XOR，是 ChaCha 这类流密码的死刑。<br>n 是 64-bit，每条消息一格，远超任何会话寿命。' },
+
+  // Ch4 · XX 握手三轮
+  { ch: 4, title: 'XX 第 1 条 → e', body: 'Alice（initiator）发起握手第一条消息：只有一个 token <code>e</code>。<br>动作：<br>① 生成 ephemeral 密钥对 <code>(e_A_priv, e_A_pub)</code><br>② <code>MixHash(e_A_pub)</code>（双方都做）<br>③ 把 <code>e_A_pub</code> 32B 明文写出去 + 可选明文 payload<br>注意：此刻还<strong>没有任何 MixKey</strong>，CipherState 没 key，所以 payload 段无法加密 —— XX 第 1 条消息的 payload 永远是明文。<br>Alice 留住 <code>e_A_priv</code> 等下一步用。' },
+  { ch: 4, title: 'XX 第 2 条上半 ← e, ee', body: 'Bob 收到 Alice 的第一条消息后，开始构造回包。前两个 token：<br>• <code>e</code>：Bob 生成 <code>(e_B_priv, e_B_pub)</code>，写出 e_B_pub，并 <code>MixHash(e_B_pub)</code><br>• <code>ee</code>：算 <code>DH(e_B_priv, e_A_pub)</code> → 32B 共享秘密 → <code>MixKey(共享秘密)</code><br>关键时刻：<strong>第一次 MixKey 完成，CipherState 拿到 cipher key k₁</strong>。<br>从这条消息往后 <strong>所有 token 写出的明文段都被加密</strong>。<br>Alice 收到时，用自己留着的 <code>e_A_priv</code> 跟收到的 <code>e_B_pub</code> 算同一个 ee → 也得到同一个 k₁。' },
+  { ch: 4, title: 'XX 第 2 条下半 s, es', body: '回包继续，下两个 token：<br>• <code>s</code>：Bob 把自己的 static 公钥 <code>s_B_pub</code> 通过 <code>encryptAndHash</code> 写出去 —— <strong>已用 k₁ 加密</strong>。这就是 XX 提供 identity hiding 的关键：旁观者 Eve 看不到任何明文 static 公钥。<br>• <code>es</code>：算 <code>DH(s_B_priv, e_A_pub)</code> → <code>MixKey</code> → 升级到 cipher key k₂<br>最后 Bob 还可以把自己想发的 payload 通过 <code>encryptAndHash(payload)</code> 加在末尾，也是 k₂ 加密。<br>Alice 收到时反过来：<code>decryptAndHash</code> 还原 s_B_pub → 算 <code>DH(e_A_priv, s_B_pub)</code> → MixKey → 同步出 k₂。<br><em>"e_s" 含义：当前 sender (Bob) 的 ephemeral 跟对方 (Alice) 的 static 做 DH … 等等，这里 sender 是 responder Bob，记号约定是按"消息发出时的 sender 视角"，仔细对照 spec。</em>' },
+  { ch: 4, title: 'XX 第 3 条 → s, se', body: 'Alice 处理完 Bob 的回包，发出最后一条握手消息：<br>• <code>s</code>：Alice 把自己的 static 公钥 <code>s_A_pub</code> 用 <code>encryptAndHash</code> 写出去（k₂ 加密）<br>• <code>se</code>：算 <code>DH(s_A_priv, e_B_pub)</code> → MixKey → 升级到 cipher key k₃<br>最后 <code>encryptAndHash(payload)</code> 把 Alice 想搭这条发的 payload 加密附上。<br>到此 XX 三轮结束。<br>双方都看见过对方的 static 公钥，且各自跟它做了一次 DH（es + se）→ <strong>双向认证完成</strong>。<br>ck 累计了 ee + es + se 三次 DH 的随机性 —— 这是 XX 安全性的根。' },
+
+  // Ch5 · Transport
+  { ch: 5, title: 'Split · ck 切出 send/recv', body: '握手三轮跑完，<code>ck</code> 已经累积了所有 DH 的随机性。最后一步 <code>Split()</code> 把 ck 一分二：<br><code>HKDF(ck, "")</code> → 64B → 切成两把 32B SymmetricKey<br>• <code>c₁</code>：initiator → responder 方向用<br>• <code>c₂</code>：responder → initiator 方向用<br>双方都构造一对 CipherState：Alice 把 c₁ 当 <code>sendCipher</code>、c₂ 当 <code>recvCipher</code>；Bob 反过来。两边各自的 nonce 都从 0 开始独立计数。<br>同时握手 hash <code>h</code> 也作为副产品导出 —— 上层应用可以拿它做 channel binding（比如绑死签名/验证步骤）。<br>bitchat 把这俩 CipherState 存进 <code>NoiseSession.sendCipher / receiveCipher</code>。' },
+  { ch: 5, title: 'Transport phase · 日常消息', body: '握手结束，进入 transport 阶段。这时候每条业务消息只是一次简单的 AEAD：<br>• 发：<code>sendCipher.encrypt(plaintext, ad)</code>，nonce 用完自动 +1。<br>• 收：<code>receiveCipher.decrypt(ciphertext, ad)</code>，nonce 也对应递增。<br>没有握手头、没有公钥、没有任何复杂结构 —— 一个 12B nonce + 密文 + 16B tag 就是全部。<br>bitchat 的 <code>NoiseCipherState</code> 还自带 <strong>sliding-window replay detection</strong>：记录已收过的 nonce 窗口，重复 nonce 直接拒绝，应对 BLE 这种可能乱序/重传的链路。<br>nonce 是 UInt64，加密 1 万亿条消息也用不完，正常会话一辈子也不会溢出。' },
+
+  // Ch6 · Bitchat 落地
+  { ch: 6, title: 'BLE characteristic 上的 Noise', body: 'bitchat 把 Noise 跑在一条 GATT characteristic 上：<br>• Service UUID：<code>F47B…4B5C</code><br>• Characteristic UUID：<code>A1B2…4C5D</code><br>所有包类型 —— announce（peerID 广播）、3 条握手包、加密 transport 包 —— <strong>共用这同一条 characteristic</strong>，靠包头 1 字节 type 区分。<br>典型流程：<br>① <code>centralManager(_:didDiscover:)</code> 发现对端，连接<br>② 收到 <code>announce</code> 包 → 建立 peerID 映射<br>③ 若该 peer 没有 established session → <code>noiseService.initiateNoiseHandshake(with: peerID)</code><br>④ 三轮握手通过 GATT write/notify 来回穿梭<br>⑤ <code>NoiseSession.state == .established</code> 后所有用户消息都走 <code>encrypt(_:for:)</code> 加密<br>关键类：<code>NoiseCipherState</code> / <code>NoiseSymmetricState</code> / <code>NoiseHandshakeState</code> / <code>NoiseSession</code> / <code>NoiseSessionManager</code> / <code>NoiseEncryptionService</code>。' },
+  { ch: 6, title: 'KCI 抗性 + PFS', body: '假设有一天攻击者偷到了 Alice 的 static 私钥 <code>s_A</code>。能做什么？能不做什么？<br><strong>不能解过去录的会话密文</strong>（PFS · Forward Secrecy）：<br>• ck 的随机性来自 ee + es + se 三次 DH，其中 ee 用了双方的 ephemeral 私钥<br>• ephemeral 私钥每会话新生成，握手结束就 zeroize 销毁<br>• 攻击者拿到 s_A 也算不出当时的 ee，所以重算不出 ck → 解不开旧密文<br><strong>不能仿冒 Alice 跟 Bob 重新建立 session</strong>（KCI 抗性 · Key-Compromise Impersonation Resistance）：<br>• 仿冒需要算出 es = DH(e_A_priv, s_B_priv)<br>• 攻击者只有 s_A 没 s_B，也没 e_A 私钥（每会话新生成）→ 算不出 es → 握手过不去<br>这两条性质 XX pattern 直接送到位 —— TLS 1.3 的 ECDHE 套件给 PFS，但 KCI 抗性需要双向证书才能挣到。' },
+  { ch: 6, title: 'Session 生命周期 + fingerprint · 完成', body: 'BLE 的 peer ID 不稳定 —— 每次扫描可能换不同的临时 ID（隐私设计）。bitchat 用一个稳定的标识把 session 跨 ID 串起来：<br><code>fingerprint = SHA256(static_pub).prefix(8).hex</code><br>fingerprint 是 static 公钥的哈希，长期稳定，可以印在 UI 上让用户人眼比对（防 MITM 的最后一道防线，跟 Signal Safety Number 一回事）。<br>bitchat 的 <code>NoiseSessionManager</code> 内部维护 <code>[fingerprint: NoiseSession]</code> 映射 —— peerID 变了没关系，只要新连进来的对端 fingerprint 匹配，session 就接着用。<br>断连即清 session；rekey 策略 BRING_THE_NOISE.md 写"1h 或 10k 消息触发"，<strong>但源码未见显式 rekey() 方法 —— 实现细节待确认，可能是 NoiseSessionManager 层重建 session 实现的</strong>。<br>🎉 16 步走完，你已经掌握了 Noise XX 的全部核心 + bitchat 的落地方式。' },
+];
+
+const TOTAL = STEPS.length; // 16
+
+/* ============================================================
+   STEP_EXTRAS: 每步对应的『延伸阅读 + Swift 骨架』
+   refs: 权威外站索引 (Noise spec / RFC / Apple docs / bitchat repo)
+   code: Swift 实现骨架 (使用 Apple CryptoKit + bitchat 真实命名)
+   注意: 代码字符串中 < > 必须写成 &lt; &gt; (innerHTML 注入)
+   ============================================================ */
+const STEP_EXTRAS = {
+  1: {
+    refs: [
+      { url: 'https://github.com/permissionlesstech/bitchat', title: 'permissionlesstech/bitchat · GitHub', note: '本教程对照的源仓库' },
+      { url: 'https://datatracker.ietf.org/doc/html/rfc8446', title: 'RFC 8446 · TLS 1.3', note: '对照组：TLS 的 server-cert 信任模型' },
+      { url: 'https://en.wikipedia.org/wiki/Mesh_networking', title: 'Mesh networking · Wikipedia', note: 'BLE p2p 拓扑特点' },
+    ],
+    code: `<span class="cm">// bitchat BLE service / characteristic UUID 常量</span>
+<span class="kw">import</span> CoreBluetooth
+
+<span class="kw">enum</span> BLEConstants {
+    <span class="kw">static let</span> serviceUUID        = CBUUID(string: <span class="str">"F47B...4B5C"</span>)
+    <span class="kw">static let</span> characteristicUUID = CBUUID(string: <span class="str">"A1B2...4C5D"</span>)
+    <span class="cm">// 所有包类型（announce / handshake / encrypted msg）共用此 characteristic</span>
+    <span class="cm">// 包头 1 字节 type 区分</span>
+}`
+  },
+  2: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html', title: 'Noise Protocol Framework · 官方 spec', note: 'Trevor Perrin · revision 34' },
+      { url: 'https://noiseexplorer.com/patterns/XX/', title: 'NoiseExplorer · XX pattern 形式化分析' },
+      { url: 'https://github.com/permissionlesstech/bitchat/blob/main/BRING_THE_NOISE.md', title: 'bitchat · BRING_THE_NOISE.md', note: 'bitchat 自己对 Noise 选型的说明' },
+    ],
+    code: `<span class="cm">// Noise 协议名 = Pattern_DH_Cipher_Hash · 编译期常量</span>
+<span class="kw">enum</span> NoisePattern { <span class="kw">case</span> XX, IK, NK }
+<span class="kw">enum</span> NoiseRole    { <span class="kw">case</span> initiator, responder }
+
+<span class="kw">struct</span> NoiseConfig {
+    <span class="kw">let</span> pattern: NoisePattern
+    <span class="kw">let</span> role:    NoiseRole
+    <span class="kw">var</span> protocolName: <span class="ty">String</span> {
+        <span class="str">"Noise_\\(pattern)_25519_ChaChaPoly_SHA256"</span>
+    }
+}
+<span class="cm">// XX：双方都没预先知道对方 static 公钥，最适合首次相见</span>`
+  },
+  3: {
+    refs: [
+      { url: 'https://datatracker.ietf.org/doc/html/rfc7748', title: 'RFC 7748 · X25519 / X448 (ECDH on Curve25519)' },
+      { url: 'https://datatracker.ietf.org/doc/html/rfc8439', title: 'RFC 8439 · ChaCha20-Poly1305 AEAD' },
+      { url: 'https://datatracker.ietf.org/doc/html/rfc5869', title: 'RFC 5869 · HKDF (HMAC-based KDF)' },
+      { url: 'https://developer.apple.com/documentation/cryptokit', title: 'Apple CryptoKit · 官方文档', note: 'bitchat 唯一的密码学依赖' },
+    ],
+    code: `<span class="kw">import</span> CryptoKit
+
+<span class="cm">// ① X25519 DH</span>
+<span class="kw">let</span> e = Curve25519.KeyAgreement.PrivateKey()
+<span class="kw">let</span> shared = <span class="kw">try</span> e.sharedSecretFromKeyAgreement(with: peerPub)
+
+<span class="cm">// ② ChaChaPoly AEAD</span>
+<span class="kw">let</span> ct = <span class="kw">try</span> ChaChaPoly.seal(plaintext, using: key, nonce: nonce)
+
+<span class="cm">// ③ SHA-256</span>
+<span class="kw">let</span> digest = SHA256.hash(data: input)
+
+<span class="cm">// ④ HKDF (CryptoKit 自带 HMAC, HKDF 在 bitchat 里手拼)</span>
+<span class="kw">func</span> <span class="fn">hmac</span>(_ key: <span class="ty">Data</span>, _ data: <span class="ty">Data</span>) -&gt; <span class="ty">Data</span> {
+    <span class="kw">let</span> mac = HMAC&lt;SHA256&gt;.authenticationCode(
+        for: data, using: SymmetricKey(data: key))
+    <span class="kw">return</span> <span class="ty">Data</span>(mac)
+}`
+  },
+  4: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#message-patterns', title: 'Noise spec §7 · Message Patterns', note: '记号系统的权威定义' },
+      { url: 'https://noiseprotocol.org/noise.html#handshake-patterns', title: 'Noise spec §7.5 · 全部 11 种握手 pattern' },
+    ],
+    code: `<span class="cm">// XX message pattern · 用枚举字面量表达</span>
+<span class="kw">enum</span> NoiseToken { <span class="kw">case</span> e, s, ee, es, se, ss, psk }
+
+<span class="kw">let</span> xxPattern: [[NoiseToken]] = [
+    [.e],                  <span class="cm">// → e         (initiator 第 1 条)</span>
+    [.e, .ee, .s, .es],    <span class="cm">// ← e, ee, s, es  (responder)</span>
+    [.s, .se]              <span class="cm">// → s, se     (initiator 第 2 条)</span>
+]
+<span class="cm">// 对应 bitchat NoiseHandshakeState.messagePatterns</span>
+<span class="cm">// e/s = 写出公钥, 双字母 = 做 DH</span>`
+  },
+  5: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#the-symmetricstate-object', title: 'Noise spec §5.2 · SymmetricState 对象' },
+      { url: 'https://noiseprotocol.org/noise.html#the-handshakestate-object', title: 'Noise spec §5.3 · HandshakeState 对象' },
+    ],
+    code: `<span class="kw">import</span> CryptoKit
+<span class="kw">import</span> Foundation
+
+<span class="kw">final class</span> <span class="ty">NoiseSymmetricState</span> {
+    <span class="kw">var</span> ck: <span class="ty">Data</span>           <span class="cm">// chaining key  · 累积 DH</span>
+    <span class="kw">var</span> h:  <span class="ty">Data</span>           <span class="cm">// transcript hash · 累积公开数据</span>
+    <span class="kw">var</span> cipher: <span class="ty">NoiseCipherState</span>?  <span class="cm">// 内嵌 · MixKey 后才有 key</span>
+
+    <span class="kw">init</span>(protocolName: <span class="ty">String</span>) {
+        <span class="kw">let</span> nameData = <span class="ty">Data</span>(protocolName.utf8)
+        <span class="kw">if</span> nameData.count &lt;= 32 {
+            h = nameData + <span class="ty">Data</span>(repeating: 0, count: 32 - nameData.count)
+        } <span class="kw">else</span> {
+            h = <span class="ty">Data</span>(SHA256.hash(data: nameData))
+        }
+        ck = h
+        cipher = <span class="kw">nil</span>
+    }
+}`
+  },
+  6: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#the-symmetricstate-object', title: 'Noise spec §5.2 · MixKey / MixHash 定义', note: '官方伪代码与本步骨架对照' },
+      { url: 'https://datatracker.ietf.org/doc/html/rfc5869#section-2.2', title: 'RFC 5869 §2.2 · HKDF-Extract', note: 'MixKey 第一步用的就是它' },
+    ],
+    code: `<span class="kw">extension</span> <span class="ty">NoiseSymmetricState</span> {
+    <span class="kw">func</span> <span class="fn">mixHash</span>(_ data: <span class="ty">Data</span>) {
+        h = <span class="ty">Data</span>(SHA256.hash(data: h + data))
+    }
+
+    <span class="kw">func</span> <span class="fn">mixKey</span>(_ ikm: <span class="ty">Data</span>) {
+        <span class="cm">// HKDF(ck, ikm) → 64B  → 前 32 = 新 ck, 后 32 = 新 cipher key</span>
+        <span class="kw">let</span> okm = hkdf(salt: ck, ikm: ikm, info: <span class="ty">Data</span>(), length: 64)
+        ck = okm.prefix(32)
+        cipher = <span class="ty">NoiseCipherState</span>(key: <span class="ty">SymmetricKey</span>(data: okm.suffix(32)))
+    }
+    <span class="cm">// bitchat 真实 API：encryptAndHash / decryptAndHash 把</span>
+    <span class="cm">// "MixHash → encrypt → MixHash 密文" 三步打包</span>
+}`
+  },
+  7: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#the-cipherstate-object', title: 'Noise spec §5.1 · CipherState 对象' },
+      { url: 'https://developer.apple.com/documentation/cryptokit/chachapoly', title: 'Apple Docs · ChaChaPoly', note: 'CryptoKit 的 AEAD 接口' },
+    ],
+    code: `<span class="kw">final class</span> <span class="ty">NoiseCipherState</span> {
+    <span class="kw">let</span> k: <span class="ty">SymmetricKey</span>
+    <span class="kw">var</span> n: <span class="ty">UInt64</span> = 0          <span class="cm">// nonce · 严格单调递增</span>
+
+    <span class="kw">init</span>(key: <span class="ty">SymmetricKey</span>) { <span class="kw">self</span>.k = key }
+
+    <span class="kw">func</span> <span class="fn">encrypt</span>(plaintext: <span class="ty">Data</span>, ad: <span class="ty">Data</span>) <span class="kw">throws</span> -&gt; <span class="ty">Data</span> {
+        <span class="kw">defer</span> { n &amp;+= 1 }
+        <span class="kw">let</span> nonce = <span class="kw">try</span> ChaChaPoly.Nonce(data: nonceBytes(n))
+        <span class="kw">let</span> box = <span class="kw">try</span> ChaChaPoly.seal(plaintext, using: k,
+                                       nonce: nonce, authenticating: ad)
+        <span class="kw">return</span> box.ciphertext + box.tag
+    }
+    <span class="cm">// ad 在握手期 = 当前 h；transport 期默认空</span>
+}`
+  },
+  8: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#handshake-patterns', title: 'Noise spec §7.5 · XX pattern 文字定义' },
+      { url: 'https://developer.apple.com/documentation/cryptokit/curve25519/keyagreement', title: 'Curve25519.KeyAgreement · CryptoKit', note: '生成 ephemeral 用的 API' },
+    ],
+    code: `<span class="cm">// XX writeMessage 第 1 条 · token: [.e]</span>
+<span class="kw">extension</span> <span class="ty">NoiseHandshakeState</span> {
+    <span class="kw">func</span> <span class="fn">writeMessage1</span>() <span class="kw">throws</span> -&gt; <span class="ty">Data</span> {
+        <span class="cm">// ① 生 ephemeral</span>
+        eA = Curve25519.KeyAgreement.PrivateKey()
+        <span class="kw">let</span> eAPub = eA.publicKey.rawRepresentation
+        <span class="cm">// ② MixHash(e_pub) — 没 cipher key, 不加密</span>
+        symmetric.mixHash(eAPub)
+        <span class="cm">// ③ 写出去 · payload 段为空（第 1 条没法加密）</span>
+        <span class="kw">return</span> eAPub
+    }
+}
+<span class="cm">// 通过 GATT characteristic 写出 → Bob 端 readMessage1 反向同步 h</span>`
+  },
+  9: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#dh-functions', title: 'Noise spec §4.1 · DH(s, rs) 定义', note: 'sharedSecret 长度规范' },
+      { url: 'https://noiseprotocol.org/noise.html#processing-rules', title: 'Noise spec §7.4 · token 处理规则', note: 'ee/es/se/ss 的展开' },
+    ],
+    code: `<span class="cm">// XX writeMessage 第 2 条上半 · responder · token: [.e, .ee, ...]</span>
+<span class="kw">extension</span> <span class="ty">NoiseHandshakeState</span> {
+    <span class="kw">func</span> <span class="fn">writeMessage2_first_half</span>(remoteEAPub: <span class="ty">Data</span>) <span class="kw">throws</span> -&gt; <span class="ty">Data</span> {
+        <span class="cm">// .e</span>
+        eB = Curve25519.KeyAgreement.PrivateKey()
+        <span class="kw">let</span> eBPub = eB.publicKey.rawRepresentation
+        symmetric.mixHash(eBPub)
+
+        <span class="cm">// .ee  · 第一次 MixKey → cipher key k₁ 出现</span>
+        <span class="kw">let</span> peerEA = <span class="kw">try</span> Curve25519.KeyAgreement.PublicKey(
+            rawRepresentation: remoteEAPub)
+        <span class="kw">let</span> ee = <span class="kw">try</span> eB.sharedSecretFromKeyAgreement(with: peerEA)
+        symmetric.mixKey(ee.dataRepresentation)
+        <span class="kw">return</span> eBPub  <span class="cm">// 拼到回包前段</span>
+    }
+}`
+  },
+  10: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#payload-security-properties', title: 'Noise spec §9 · Payload 安全属性表' },
+      { url: 'https://noiseprotocol.org/noise.html#identity-hiding', title: 'Noise spec §9.5 · Identity Hiding', note: '为什么 XX 的 s 一定加密' },
+    ],
+    code: `<span class="cm">// XX writeMessage 第 2 条下半 · responder · token: [.s, .es]</span>
+<span class="kw">extension</span> <span class="ty">NoiseHandshakeState</span> {
+    <span class="kw">func</span> <span class="fn">writeMessage2_second_half</span>(payload: <span class="ty">Data</span>) <span class="kw">throws</span> -&gt; <span class="ty">Data</span> {
+        <span class="cm">// .s · 此刻 cipher key k₁ 已在, encryptAndHash 加密发出</span>
+        <span class="kw">let</span> sBPub = sB.publicKey.rawRepresentation
+        <span class="kw">let</span> sBEnc = <span class="kw">try</span> symmetric.encryptAndHash(sBPub)
+
+        <span class="cm">// .es · DH(s_B_priv, e_A_pub) → MixKey → 升级到 k₂</span>
+        <span class="kw">let</span> peerEA = <span class="kw">try</span> Curve25519.KeyAgreement.PublicKey(
+            rawRepresentation: remoteEAPub)
+        <span class="kw">let</span> es = <span class="kw">try</span> sB.sharedSecretFromKeyAgreement(with: peerEA)
+        symmetric.mixKey(es.dataRepresentation)
+
+        <span class="cm">// 末尾再附上 payload (k₂ 加密)</span>
+        <span class="kw">let</span> payloadEnc = <span class="kw">try</span> symmetric.encryptAndHash(payload)
+        <span class="kw">return</span> sBEnc + payloadEnc
+    }
+}`
+  },
+  11: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#authentication', title: 'Noise spec §9.1 · 双向认证保证' },
+      { url: 'https://github.com/permissionlesstech/bitchat/tree/main/bitchat/Noise', title: 'bitchat/Noise/ · 源码目录', note: 'NoiseHandshakeState 真实实现' },
+    ],
+    code: `<span class="cm">// XX writeMessage 第 3 条 · initiator · token: [.s, .se]</span>
+<span class="kw">extension</span> <span class="ty">NoiseHandshakeState</span> {
+    <span class="kw">func</span> <span class="fn">writeMessage3</span>(payload: <span class="ty">Data</span>) <span class="kw">throws</span> -&gt; <span class="ty">Data</span> {
+        <span class="cm">// .s · 加密发自己的 static 公钥</span>
+        <span class="kw">let</span> sAPub = sA.publicKey.rawRepresentation
+        <span class="kw">let</span> sAEnc = <span class="kw">try</span> symmetric.encryptAndHash(sAPub)
+
+        <span class="cm">// .se · DH(s_A_priv, e_B_pub) → MixKey → k₃</span>
+        <span class="kw">let</span> peerEB = <span class="kw">try</span> Curve25519.KeyAgreement.PublicKey(
+            rawRepresentation: remoteEBPub)
+        <span class="kw">let</span> se = <span class="kw">try</span> sA.sharedSecretFromKeyAgreement(with: peerEB)
+        symmetric.mixKey(se.dataRepresentation)
+
+        <span class="kw">let</span> payloadEnc = <span class="kw">try</span> symmetric.encryptAndHash(payload)
+        <span class="kw">return</span> sAEnc + payloadEnc
+        <span class="cm">// → 双向认证完成, 调 split() 进入 transport</span>
+    }
+}`
+  },
+  12: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#the-handshakestate-object', title: 'Noise spec §5.3 · Split() 定义' },
+      { url: 'https://noiseprotocol.org/noise.html#channel-binding', title: 'Noise spec §11.2 · Channel binding', note: '握手 hash h 的用途' },
+    ],
+    code: `<span class="kw">extension</span> <span class="ty">NoiseSymmetricState</span> {
+    <span class="cm">// 握手末尾调用 · 切出双方对调的 send/recv CipherState</span>
+    <span class="kw">func</span> <span class="fn">split</span>() -&gt; (<span class="ty">NoiseCipherState</span>, <span class="ty">NoiseCipherState</span>, <span class="ty">Data</span>) {
+        <span class="kw">let</span> okm = hkdf(salt: ck, ikm: <span class="ty">Data</span>(), info: <span class="ty">Data</span>(), length: 64)
+        <span class="kw">let</span> c1 = <span class="ty">NoiseCipherState</span>(key: <span class="ty">SymmetricKey</span>(data: okm.prefix(32)))
+        <span class="kw">let</span> c2 = <span class="ty">NoiseCipherState</span>(key: <span class="ty">SymmetricKey</span>(data: okm.suffix(32)))
+        <span class="kw">return</span> (c1, c2, h)   <span class="cm">// h 同时返回 → channel binding</span>
+    }
+}
+<span class="cm">// initiator: session.sendCipher = c1; session.receiveCipher = c2</span>
+<span class="cm">// responder: session.sendCipher = c2; session.receiveCipher = c1</span>`
+  },
+  13: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#message-format', title: 'Noise spec §3 · Transport message format', note: '只有 ciphertext + tag, 没 header' },
+      { url: 'https://en.wikipedia.org/wiki/Replay_attack', title: 'Replay attack · Wikipedia', note: 'sliding-window 防御的对象' },
+    ],
+    code: `<span class="kw">final class</span> <span class="ty">NoiseSession</span> {
+    <span class="kw">var</span> sendCipher:    <span class="ty">NoiseCipherState</span>
+    <span class="kw">var</span> receiveCipher: <span class="ty">NoiseCipherState</span>
+    <span class="kw">let</span> handshakeHash: <span class="ty">Data</span>
+
+    <span class="kw">func</span> <span class="fn">encrypt</span>(_ plaintext: <span class="ty">Data</span>) <span class="kw">throws</span> -&gt; <span class="ty">Data</span> {
+        <span class="kw">try</span> sendCipher.encrypt(plaintext: plaintext, ad: <span class="ty">Data</span>())
+    }
+    <span class="kw">func</span> <span class="fn">decrypt</span>(_ ciphertext: <span class="ty">Data</span>) <span class="kw">throws</span> -&gt; <span class="ty">Data</span> {
+        <span class="kw">try</span> receiveCipher.decrypt(ciphertext: ciphertext, ad: <span class="ty">Data</span>())
+        <span class="cm">// bitchat NoiseCipherState 内置 sliding-window:</span>
+        <span class="cm">// 收到 nonce 在窗口外 → 拒绝；窗口内重复 → 拒绝</span>
+    }
+}`
+  },
+  14: {
+    refs: [
+      { url: 'https://github.com/permissionlesstech/bitchat/blob/main/bitchat/Noise/NoiseEncryptionService.swift', title: 'NoiseEncryptionService.swift · bitchat 源码' },
+      { url: 'https://developer.apple.com/documentation/corebluetooth', title: 'Apple Docs · Core Bluetooth', note: 'GATT central / peripheral API' },
+    ],
+    code: `<span class="cm">// bitchat BLEService 调用片段（高度简化）</span>
+<span class="kw">extension</span> <span class="ty">BLEService</span> {
+    <span class="kw">func</span> <span class="fn">handleAnnounce</span>(from peerID: <span class="ty">String</span>) {
+        <span class="kw">if</span> noiseService.session(for: peerID) == <span class="kw">nil</span> {
+            <span class="kw">try</span>? noiseService.initiateNoiseHandshake(with: peerID)
+            <span class="cm">// → 触发三轮 GATT write/notify</span>
+        }
+    }
+
+    <span class="kw">func</span> <span class="fn">sendUserMessage</span>(_ text: <span class="ty">String</span>, to peerID: <span class="ty">String</span>) <span class="kw">throws</span> {
+        <span class="kw">let</span> ct = <span class="kw">try</span> noiseService.encrypt(<span class="ty">Data</span>(text.utf8), for: peerID)
+        writeOrEnqueue(packet: .encryptedMessage(ct), to: peerID)
+        <span class="cm">// 走同一条 characteristic, 包头 type=0x10 区分</span>
+    }
+}`
+  },
+  15: {
+    refs: [
+      { url: 'https://noiseprotocol.org/noise.html#payload-security-properties', title: 'Noise spec §9 · Payload Security Properties Table', note: 'XX 各阶段精确安全等级' },
+      { url: 'https://en.wikipedia.org/wiki/Forward_secrecy', title: 'Forward secrecy · Wikipedia' },
+      { url: 'https://en.wikipedia.org/wiki/Key-compromise_impersonation', title: 'Key-compromise impersonation · Wikipedia' },
+    ],
+    code: `<span class="cm">// 握手内 ephemeral 生命周期 · 用完即清</span>
+<span class="kw">extension</span> <span class="ty">NoiseHandshakeState</span> {
+    <span class="kw">func</span> <span class="fn">finalize</span>() -&gt; <span class="ty">NoiseSession</span> {
+        <span class="kw">defer</span> {
+            <span class="cm">// ephemeral 私钥置零 — PFS 的物理保证</span>
+            eA = <span class="kw">nil</span>
+            eB = <span class="kw">nil</span>
+            <span class="ty">Data</span>.clearSensitiveData(&amp;remoteEAPub)
+            <span class="ty">Data</span>.clearSensitiveData(&amp;remoteEBPub)
+        }
+        <span class="kw">let</span> (c1, c2, h) = symmetric.split()
+        <span class="kw">return</span> <span class="ty">NoiseSession</span>(role: role, c1: c1, c2: c2, hash: h)
+    }
+}
+<span class="cm">// static 私钥泄漏 → 算不出当时的 ee → 解不开旧 ck</span>
+<span class="cm">// 也算不出 es (差对端 s_priv) → 仿冒被挡</span>`
+  },
+  16: {
+    refs: [
+      { url: 'https://github.com/permissionlesstech/bitchat/blob/main/bitchat/Noise/NoiseSession.swift', title: 'NoiseSession.swift · bitchat 源码' },
+      { url: 'https://github.com/permissionlesstech/bitchat/blob/main/BRING_THE_NOISE.md', title: 'BRING_THE_NOISE.md · bitchat 安全文档', note: '提到 1h / 10k 消息 rekey 策略' },
+      { url: 'https://signal.org/blog/safety-number-updates/', title: 'Signal · Safety Number', note: '同样思路：用 fingerprint 防 MITM' },
+      { url: 'https://noiseprotocol.org/noise.html', title: 'Noise Protocol · 完整 spec (revision 34)', note: '想深入再读一遍权威文档' },
+    ],
+    code: `<span class="cm">// bitchat NoiseSessionManager 跨 peerID 复用 session 伪代码</span>
+<span class="kw">final class</span> <span class="ty">NoiseSessionManager</span> {
+    <span class="kw">private var</span> sessions: [<span class="ty">String</span>: <span class="ty">NoiseSession</span>] = [:]   <span class="cm">// fingerprint → session</span>
+    <span class="kw">private var</span> peerToFingerprint: [<span class="ty">String</span>: <span class="ty">String</span>] = [:]
+
+    <span class="kw">func</span> <span class="fn">fingerprint</span>(of staticPub: <span class="ty">Data</span>) -&gt; <span class="ty">String</span> {
+        <span class="ty">Data</span>(SHA256.hash(data: staticPub)).prefix(8)
+            .map { <span class="ty">String</span>(format: <span class="str">"%02x"</span>, $0) }.joined()
+    }
+
+    <span class="kw">func</span> <span class="fn">session</span>(for peerID: <span class="ty">String</span>) -&gt; <span class="ty">NoiseSession</span>? {
+        <span class="kw">guard let</span> fp = peerToFingerprint[peerID] <span class="kw">else</span> { <span class="kw">return nil</span> }
+        <span class="kw">return</span> sessions[fp]
+    }
+    <span class="cm">// rekey: BRING_THE_NOISE.md 提到 1h 或 10k 消息触发</span>
+    <span class="cm">// — 实现细节待确认, 源码未见显式 rekey() 方法</span>
+    <span class="cm">// — 推测由 NoiseSessionManager 层重建 NoiseSession 实现</span>
+}`
+  },
+};
+
+function renderExtras(step) {
+  const el = document.getElementById('extras');
+  const extra = STEP_EXTRAS[step] || {};
+  let html = '';
+
+  if (extra.refs && extra.refs.length) {
+    html += '<div class="extras-card refs"><h4>📚 延伸阅读 · 原理出处</h4><ul>';
+    for (const r of extra.refs) {
+      const note = r.note ? `<span class="ref-note">— ${r.note}</span>` : '';
+      html += `<li><a href="${r.url}" target="_blank" rel="noopener">${r.title}</a>${note}</li>`;
+    }
+    html += '</ul></div>';
+  }
+
+  if (extra.code) {
+    html += `<div class="extras-card code"><h4>🍎 Swift 骨架</h4><pre>${extra.code}</pre></div>`;
+  }
+
+  // Single-card → stretch full width; both cards → keep 2-col grid
+  el.classList.toggle('two-col', !!(extra.refs && extra.refs.length && extra.code));
+  el.innerHTML = html;
+}
+
+// Build dots in sidebar
+function buildDots() {
+  const groups = {};
+  STEPS.forEach((s, i) => {
+    (groups[s.ch] ||= []).push(i + 1);
+  });
+  Object.entries(groups).forEach(([ch, steps]) => {
+    const wrap = document.querySelector(`.dots[data-ch-dots="${ch}"]`);
+    if (!wrap) return;
+    steps.forEach(n => {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.dataset.step = n;
+      d.title = `Step ${n}`;
+      d.addEventListener('click', () => goTo(n));
+      wrap.appendChild(d);
+    });
+  });
+}
+
+let currentStep = 1;
+
+function goTo(step) {
+  step = Math.max(1, Math.min(TOTAL, step));
+  currentStep = step;
+  const cur = STEPS[step - 1];
+
+  // Activate the right chapter SVG
+  document.querySelectorAll('.chapter-svg').forEach(svg => {
+    svg.classList.toggle('active', +svg.dataset.ch === cur.ch);
+  });
+
+  // Apply visibility to all data-step elements
+  document.querySelectorAll('[data-step]').forEach(el => {
+    const start = +el.dataset.step;
+    const end = el.dataset.stepEnd ? +el.dataset.stepEnd : 999;
+    const visible = step >= start && step <= end;
+    // Defer to next frame so transition triggers
+    requestAnimationFrame(() => el.classList.toggle('visible', visible));
+  });
+
+  // Update header
+  document.getElementById('header-ch').textContent = 'CH' + cur.ch;
+  document.getElementById('header-title').textContent = cur.title;
+  document.getElementById('header-counter').textContent = `Step ${step} / ${TOTAL}`;
+
+  // Update caption
+  document.getElementById('caption-title').textContent = cur.title;
+  document.getElementById('caption-body').innerHTML = cur.body;
+
+  // Render references + swift code
+  renderExtras(step);
+
+  // Update dots (active / read)
+  document.querySelectorAll('.dot').forEach(d => {
+    const n = +d.dataset.step;
+    d.classList.toggle('active', n === step);
+    d.classList.toggle('read', n < step);
+  });
+
+  // Update controls
+  document.getElementById('btn-prev').disabled = step === 1;
+  document.getElementById('btn-next').disabled = step === TOTAL;
+
+  // Sync URL
+  if (history.replaceState) {
+    history.replaceState(null, '', '#step-' + step);
+  } else {
+    location.hash = 'step-' + step;
+  }
+}
+
+function initFromHash() {
+  const m = location.hash.match(/step-(\d+)/);
+  return m ? +m[1] : 1;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildDots();
+  goTo(initFromHash());
+
+  document.getElementById('btn-prev').addEventListener('click', () => goTo(currentStep - 1));
+  document.getElementById('btn-next').addEventListener('click', () => goTo(currentStep + 1));
+  document.getElementById('btn-replay').addEventListener('click', () => goTo(1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(currentStep - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(currentStep + 1); }
+    if (e.key === 'Home')       { e.preventDefault(); goTo(1); }
+    if (e.key === 'End')        { e.preventDefault(); goTo(TOTAL); }
+  });
+
+  window.addEventListener('hashchange', () => {
+    const n = initFromHash();
+    if (n !== currentStep) goTo(n);
+  });
+});
+</script>
+</body>
+</html>

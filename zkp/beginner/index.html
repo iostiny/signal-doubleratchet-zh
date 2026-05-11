@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zero-Knowledge Proof · 零基础渐进教程</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Phycat-Cherry 渐进教程主题
+   ============================================================ */
+:root {
+  --bg-page:        #fdfaf6;
+  --bg-card:        #ffffff;
+  --bg-soft-pink:   #fce4e4;
+
+  --text-primary:   #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted:     #9ca3af;
+
+  --cherry:         #aa1141;
+  --cherry-deep:    #9a0036;
+  --cherry-soft:    #ffa6a6;
+  --cherry-pink:    #ea68b6;
+  --cherry-glass:   #fce4e4;
+
+  --teal:           #0e7490;
+  --teal-soft:      #cffafe;
+  --amber:          #b45309;
+  --amber-soft:     #fef3c7;
+  --green:          #15803d;
+  --green-soft:     #dcfce7;
+  --violet:         #6d28d9;
+  --violet-soft:    #ede9fe;
+  --slate:          #475569;
+  --slate-soft:     #f1f5f9;
+  --red-deep:       #b91c1c;
+  --red-soft:       #fee2e2;
+
+  --rule:           #e5e7eb;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans SC', 'JetBrains Mono', -apple-system, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ============== App layout ============== */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* ============== Sidebar / stepper ============== */
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--rule);
+  padding: 1.6rem 1.2rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  align-self: start;
+}
+.brand {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.3rem;
+  letter-spacing: -0.01em;
+}
+.brand-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 1.6rem;
+}
+.chap {
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+.chap-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.45rem;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.chap-name .num {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--cherry);
+  font-size: 0.7rem;
+}
+.dots { display: flex; gap: 6px; }
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--rule);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dot:hover { transform: scale(1.25); }
+.dot.read { background: var(--cherry-soft); }
+.dot.active {
+  background: var(--cherry);
+  box-shadow: 0 0 0 3px var(--cherry-glass);
+}
+
+/* ============== Stage ============== */
+.stage {
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 2rem 2rem;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+.header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+}
+.header-ch {
+  padding: 3px 10px;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.header-counter {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* SVG stage */
+.svg-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(170,17,65,0.04);
+  padding: 1rem 1.2rem;
+  position: relative;
+}
+.chapter-svg {
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  display: none;
+}
+.chapter-svg.active { display: block; }
+
+/* SVG element visibility — controlled by data-step */
+[data-step] {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 320ms ease, transform 320ms ease;
+  pointer-events: none;
+}
+[data-step].visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Caption card */
+.caption {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--cherry);
+  border-radius: 10px;
+  padding: 0.85rem 1.1rem;
+  min-height: 78px;
+}
+.caption-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.25rem;
+}
+.caption-body {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+.caption-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.caption-body em {
+  font-style: normal;
+  color: var(--text-muted);
+  font-size: 0.78em;
+  margin-left: 0.3em;
+}
+.caption-body table {
+  border-collapse: collapse;
+  margin: 0.6rem 0;
+  font-size: 0.8rem;
+  width: 100%;
+}
+.caption-body th, .caption-body td {
+  border: 1px solid var(--rule);
+  padding: 5px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+.caption-body th {
+  background: var(--violet-soft);
+  color: var(--violet);
+  font-weight: 700;
+}
+
+/* Deep-dive: references + rust code */
+.extras {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.extras:empty { display: none; }
+.extras.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+}
+@media (max-width: 1100px) {
+  .extras.two-col { grid-template-columns: 1fr; }
+}
+.extras-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  font-size: 0.82rem;
+}
+.extras-card.refs { border-left: 3px solid var(--violet); }
+.extras-card.code { border-left: 3px solid var(--green); padding: 0; overflow: hidden; }
+.extras-card h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.extras-card.refs h4 { color: var(--violet); }
+.extras-card.code h4 {
+  color: var(--green);
+  padding: 0.7rem 1rem 0.4rem;
+  margin-bottom: 0;
+}
+.extras-card.refs ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.extras-card.refs li {
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.extras-card.refs a {
+  color: var(--cherry-deep);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--cherry-pink);
+}
+.extras-card.refs a:hover {
+  color: var(--cherry);
+  border-bottom-style: solid;
+}
+.extras-card.refs .ref-note {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin-left: 0.4em;
+}
+.extras-card.code pre {
+  margin: 0;
+  padding: 0.4rem 1rem 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: pre;
+  background: linear-gradient(to bottom, #ffffff, #fafff7);
+}
+.extras-card.code .kw { color: var(--violet); font-weight: 600; }
+.extras-card.code .ty { color: var(--teal); }
+.extras-card.code .fn { color: var(--cherry); }
+.extras-card.code .cm { color: var(--text-muted); font-style: italic; }
+.extras-card.code .str { color: var(--amber); }
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.controls button {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.controls button:hover:not(:disabled) {
+  border-color: var(--cherry);
+  color: var(--cherry-deep);
+  background: var(--cherry-glass);
+}
+.controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.controls button.primary {
+  background: var(--cherry);
+  color: white;
+  border-color: var(--cherry);
+}
+.controls button.primary:hover:not(:disabled) {
+  background: var(--cherry-deep);
+  color: white;
+}
+.controls button.ghost {
+  border: none;
+  color: var(--text-muted);
+}
+.controls .hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: 0.8rem;
+}
+
+/* ============== Common SVG styles ============== */
+.svg-text { font-family: 'Noto Sans SC', sans-serif; }
+.svg-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Reusable SVG classes */
+.actor-cherry { fill: var(--cherry-glass); stroke: var(--cherry); }
+.actor-teal   { fill: var(--teal-soft); stroke: var(--teal); }
+.actor-red    { fill: var(--red-soft); stroke: var(--red-deep); }
+.actor-violet { fill: var(--violet-soft); stroke: var(--violet); }
+.actor-amber  { fill: var(--amber-soft); stroke: var(--amber); }
+.actor-green  { fill: var(--green-soft); stroke: var(--green); }
+
+.label-cherry { fill: var(--cherry-deep); }
+.label-teal   { fill: var(--teal); }
+.label-red    { fill: var(--red-deep); }
+.label-violet { fill: var(--violet); }
+.label-amber  { fill: var(--amber); }
+.label-green  { fill: var(--green); }
+.label-slate  { fill: var(--slate); }
+.label-muted  { fill: var(--text-muted); }
+
+/* Sub-step animations: pulse for emphasis */
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 6px var(--cherry-soft)); }
+}
+.pulse { animation: pulse-glow 2.4s ease infinite; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .sidebar { display: none; }
+  .stage { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============== Sidebar ============== -->
+  <aside class="sidebar">
+    <div class="brand">🔐 ZKP · 渐进版本</div>
+    <div class="brand-sub">零基础渐进教程 · 17 步</div>
+
+    <div class="chap" data-ch="1">
+      <div class="chap-name"><span class="num">CH1</span> 直觉</div>
+      <div class="dots" data-ch-dots="1"></div>
+    </div>
+    <div class="chap" data-ch="2">
+      <div class="chap-name"><span class="num">CH2</span> 三大性质</div>
+      <div class="dots" data-ch-dots="2"></div>
+    </div>
+    <div class="chap" data-ch="3">
+      <div class="chap-name"><span class="num">CH3</span> Schnorr 协议</div>
+      <div class="dots" data-ch-dots="3"></div>
+    </div>
+    <div class="chap" data-ch="4">
+      <div class="chap-name"><span class="num">CH4</span> 算术化 + Commitment</div>
+      <div class="dots" data-ch-dots="4"></div>
+    </div>
+    <div class="chap" data-ch="5">
+      <div class="chap-name"><span class="num">CH5</span> SNARK / STARK</div>
+      <div class="dots" data-ch-dots="5"></div>
+    </div>
+    <div class="chap" data-ch="6">
+      <div class="chap-name"><span class="num">CH6</span> 应用与回望</div>
+      <div class="dots" data-ch-dots="6"></div>
+    </div>
+  </aside>
+
+  <!-- ============== Stage ============== -->
+  <main class="stage">
+    <header class="header">
+      <span class="header-ch" id="header-ch">CH1</span>
+      <h1 class="header-title" id="header-title">直觉</h1>
+      <span class="header-counter" id="header-counter">Step 1 / 17</span>
+    </header>
+
+    <section class="svg-wrap">
+
+      <!-- ============================================================
+           Ch1 — 直觉
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="1" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-green1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+          <marker id="arr-amber1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+        </defs>
+
+        <!-- Prover (violet stick figure) -->
+        <g data-step="1">
+          <circle cx="140" cy="240" r="44" class="actor-violet" stroke-width="2"/>
+          <text x="140" y="246" text-anchor="middle" font-size="22" font-weight="700" class="label-violet">P</text>
+          <text x="140" y="305" text-anchor="middle" font-size="14" font-weight="600" class="label-violet">Prover · 证明者</text>
+          <text x="140" y="324" text-anchor="middle" font-size="11" class="label-muted">"我知道某个秘密 X"</text>
+        </g>
+
+        <!-- Verifier (green) -->
+        <g data-step="1">
+          <circle cx="960" cy="240" r="44" class="actor-green" stroke-width="2"/>
+          <text x="960" y="246" text-anchor="middle" font-size="22" font-weight="700" class="label-green">V</text>
+          <text x="960" y="305" text-anchor="middle" font-size="14" font-weight="600" class="label-green">Verifier · 验证者</text>
+          <text x="960" y="324" text-anchor="middle" font-size="11" class="label-muted">"那你证明给我看"</text>
+        </g>
+
+        <!-- Big central question (Step 1 only) -->
+        <g data-step="1" data-step-end="1">
+          <rect x="240" y="180" width="620" height="120" rx="14" fill="#fff" stroke="#6d28d9" stroke-width="2"/>
+          <text x="550" y="218" text-anchor="middle" font-size="20" font-weight="700" class="label-violet">I know X.</text>
+          <text x="550" y="252" text-anchor="middle" font-size="20" font-weight="700" class="label-violet">How do I prove it</text>
+          <text x="550" y="282" text-anchor="middle" font-size="20" font-weight="700" class="label-violet">without telling you X?</text>
+        </g>
+
+        <!-- Step 2: Ali Baba cave -->
+        <g data-step="2">
+          <!-- Cave entrance -->
+          <ellipse cx="550" cy="290" rx="220" ry="40" fill="none" stroke="#475569" stroke-width="2"/>
+          <text x="550" y="252" text-anchor="middle" font-size="13" class="label-slate" font-weight="600">Ali Baba 洞穴</text>
+          <!-- Two paths A/B -->
+          <path d="M 380 300 Q 460 380 540 380" stroke="#6d28d9" stroke-width="2" fill="none"/>
+          <path d="M 720 300 Q 640 380 560 380" stroke="#6d28d9" stroke-width="2" fill="none"/>
+          <text x="380" y="320" text-anchor="middle" font-size="12" class="label-violet" font-weight="600">路径 A</text>
+          <text x="720" y="320" text-anchor="middle" font-size="12" class="label-violet" font-weight="600">路径 B</text>
+          <!-- Magic door (amber lock in middle) -->
+          <rect x="530" y="372" width="40" height="40" rx="6" class="actor-amber" stroke-width="2"/>
+          <text x="550" y="398" text-anchor="middle" font-size="20">🔒</text>
+          <text x="550" y="430" text-anchor="middle" font-size="11" class="label-amber" font-weight="600">魔法门 · 需要密码</text>
+          <text x="550" y="446" text-anchor="middle" font-size="10" class="label-muted">只有知道密码才能从一边穿到另一边</text>
+          <!-- Prover at entrance -->
+          <circle cx="550" cy="200" r="14" class="actor-violet" stroke-width="2"/>
+          <text x="550" y="205" text-anchor="middle" font-size="11" font-weight="700" class="label-violet">P</text>
+          <text x="550" y="180" text-anchor="middle" font-size="11" class="label-violet">入口</text>
+        </g>
+
+        <!-- Step 2: Verifier outside, calling out -->
+        <g data-step="2">
+          <line x1="916" y1="250" x2="780" y2="290" stroke="#15803d" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-green1)"/>
+          <text x="850" y="245" text-anchor="middle" font-size="11" class="label-green" font-weight="600">挑战: 从 X 路出来!</text>
+        </g>
+
+        <!-- Step 2 extra: round counter showing 2^-n cheating probability -->
+        <g data-step="2">
+          <rect x="80" y="430" width="200" height="60" rx="10" fill="#fff" stroke="#475569" stroke-width="1"/>
+          <text x="180" y="450" text-anchor="middle" font-size="11" class="label-slate" font-weight="600">骗子蒙混概率</text>
+          <text x="180" y="470" text-anchor="middle" font-size="12" class="svg-mono label-red">n 轮后 ≤ 2⁻ⁿ</text>
+          <text x="180" y="484" text-anchor="middle" font-size="9" class="label-muted">10 轮 ≈ 0.1%, 20 轮 ≈ 0.0001%</text>
+        </g>
+        <g data-step="2">
+          <rect x="820" y="430" width="200" height="60" rx="10" fill="#fff" stroke="#475569" stroke-width="1"/>
+          <text x="920" y="450" text-anchor="middle" font-size="11" class="label-slate" font-weight="600">Verifier 学到了什么?</text>
+          <text x="920" y="470" text-anchor="middle" font-size="12" class="label-green">仅: "P 知道密码"</text>
+          <text x="920" y="484" text-anchor="middle" font-size="9" class="label-muted">密码本身: 一无所知</text>
+        </g>
+
+        <!-- Hints on top -->
+        <g data-step="1" data-step-end="1">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">证明知识 vs 出示知识 —— 想个反直觉的中间路</text>
+        </g>
+        <g data-step="2" data-step-end="2">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Quisquater 1990 · Ali Baba 洞穴：用 challenge-response 把"知识"概率性地证明出来</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch2 — 三大性质
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="2" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-green2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+          <marker id="arr-amber2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+          <marker id="arr-violet2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+        </defs>
+
+        <!-- Property card 1: Completeness -->
+        <g data-step="3">
+          <rect x="80" y="120" width="320" height="170" rx="14" class="actor-green" stroke-width="2"/>
+          <text x="240" y="152" text-anchor="middle" font-size="22" font-weight="700" class="label-green">✓</text>
+          <text x="240" y="182" text-anchor="middle" font-size="16" font-weight="700" class="label-green">Completeness</text>
+          <text x="240" y="202" text-anchor="middle" font-size="11" class="label-muted">完备性 · 诚实者一定通过</text>
+          <rect x="100" y="218" width="280" height="28" rx="6" fill="#fff" stroke="#15803d" stroke-width="1"/>
+          <text x="240" y="237" text-anchor="middle" font-size="12" class="svg-mono label-green">Pr[V accepts | true stmt] ≥ 1 − ε</text>
+          <text x="240" y="266" text-anchor="middle" font-size="10" class="label-muted">真陈述 + 诚实 Prover → 几乎一定接受</text>
+        </g>
+
+        <!-- Property card 2: Soundness -->
+        <g data-step="4">
+          <rect x="400" y="120" width="320" height="170" rx="14" class="actor-amber" stroke-width="2"/>
+          <text x="560" y="152" text-anchor="middle" font-size="22" font-weight="700" class="label-amber">✗</text>
+          <text x="560" y="182" text-anchor="middle" font-size="16" font-weight="700" class="label-amber">Soundness</text>
+          <text x="560" y="202" text-anchor="middle" font-size="11" class="label-muted">可靠性 · 假陈述骗不过</text>
+          <rect x="420" y="218" width="280" height="28" rx="6" fill="#fff" stroke="#b45309" stroke-width="1"/>
+          <text x="560" y="237" text-anchor="middle" font-size="12" class="svg-mono label-amber">Pr[V accepts | false stmt] ≤ 2⁻ⁿ</text>
+          <text x="560" y="266" text-anchor="middle" font-size="10" class="label-muted">没 secret 的人 n 轮挑战通过率指数级衰减</text>
+        </g>
+
+        <!-- Step 4 challenge grid (10 boxes) -->
+        <g data-step="4">
+          <g font-size="10" class="label-amber" font-weight="600">
+            <rect x="400" y="320" width="22" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/><text x="411" y="335" text-anchor="middle">1</text>
+            <rect x="430" y="320" width="22" height="22" rx="3" fill="#fee2e2" stroke="#b91c1c" stroke-width="1"/><text x="441" y="335" text-anchor="middle" class="label-red">✗</text>
+            <rect x="460" y="320" width="22" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/><text x="471" y="335" text-anchor="middle">3</text>
+            <rect x="490" y="320" width="22" height="22" rx="3" fill="#fee2e2" stroke="#b91c1c" stroke-width="1"/><text x="501" y="335" text-anchor="middle" class="label-red">✗</text>
+            <rect x="520" y="320" width="22" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/><text x="531" y="335" text-anchor="middle">5</text>
+            <rect x="550" y="320" width="22" height="22" rx="3" fill="#fee2e2" stroke="#b91c1c" stroke-width="1"/><text x="561" y="335" text-anchor="middle" class="label-red">✗</text>
+            <rect x="580" y="320" width="22" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/><text x="591" y="335" text-anchor="middle">7</text>
+            <rect x="610" y="320" width="22" height="22" rx="3" fill="#fee2e2" stroke="#b91c1c" stroke-width="1"/><text x="621" y="335" text-anchor="middle" class="label-red">✗</text>
+            <rect x="640" y="320" width="22" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/><text x="651" y="335" text-anchor="middle">9</text>
+            <rect x="670" y="320" width="22" height="22" rx="3" fill="#fee2e2" stroke="#b91c1c" stroke-width="1"/><text x="681" y="335" text-anchor="middle" class="label-red">✗</text>
+          </g>
+          <text x="560" y="362" text-anchor="middle" font-size="11" class="label-muted">10 轮挑战，假 Prover 命中 ≈ 50%；100 轮后：2⁻¹⁰⁰ ≈ 不可能</text>
+        </g>
+
+        <!-- Property card 3: Zero-Knowledge -->
+        <g data-step="5">
+          <rect x="720" y="120" width="320" height="170" rx="14" class="actor-violet" stroke-width="2"/>
+          <text x="880" y="156" text-anchor="middle" font-size="20" font-weight="700" class="label-violet">🔒</text>
+          <text x="880" y="182" text-anchor="middle" font-size="16" font-weight="700" class="label-violet">Zero-Knowledge</text>
+          <text x="880" y="202" text-anchor="middle" font-size="11" class="label-muted">零知识 · 证完啥也没漏</text>
+          <rect x="740" y="218" width="280" height="28" rx="6" fill="#fff" stroke="#6d28d9" stroke-width="1"/>
+          <text x="880" y="237" text-anchor="middle" font-size="11" class="svg-mono label-violet">Verifier 视角 ≈ Simulator 视角</text>
+          <text x="880" y="266" text-anchor="middle" font-size="10" class="label-muted">无 witness 的 Simulator 也能造出"看似真的"对话</text>
+        </g>
+
+        <!-- Step 5 transcript + simulator ghost -->
+        <g data-step="5">
+          <g font-size="10">
+            <rect x="200" y="385" width="40" height="22" rx="3" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+            <text x="220" y="400" text-anchor="middle" class="label-violet">t₁</text>
+            <rect x="250" y="385" width="40" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <text x="270" y="400" text-anchor="middle" class="label-amber">c₁</text>
+            <rect x="300" y="385" width="40" height="22" rx="3" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+            <text x="320" y="400" text-anchor="middle" class="label-violet">s₁</text>
+            <rect x="360" y="385" width="40" height="22" rx="3" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+            <text x="380" y="400" text-anchor="middle" class="label-violet">t₂</text>
+            <rect x="410" y="385" width="40" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <text x="430" y="400" text-anchor="middle" class="label-amber">c₂</text>
+            <rect x="460" y="385" width="40" height="22" rx="3" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+            <text x="480" y="400" text-anchor="middle" class="label-violet">s₂</text>
+          </g>
+          <text x="350" y="375" text-anchor="middle" font-size="11" class="label-slate" font-weight="600">真实 transcript</text>
+
+          <text x="610" y="403" font-size="32">👻</text>
+          <text x="700" y="395" font-size="12" class="label-violet" font-weight="700">Simulator</text>
+          <text x="700" y="412" font-size="11" class="label-muted">无 witness 也能造出</text>
+          <text x="700" y="426" font-size="11" class="label-muted">分布相同的对话</text>
+        </g>
+
+        <!-- Step 3 extra: real-world example callout -->
+        <g data-step="3">
+          <rect x="80" y="380" width="320" height="60" rx="10" fill="#fff" stroke="#15803d" stroke-width="1"/>
+          <text x="240" y="400" text-anchor="middle" font-size="11" class="label-green" font-weight="600">反面教训</text>
+          <text x="240" y="418" text-anchor="middle" font-size="10" class="label-slate">某些 SNARK 实现因约束写漏</text>
+          <text x="240" y="432" text-anchor="middle" font-size="10" class="label-slate">→ 诚实 Prover 偶尔被拒 = 完备性挂掉</text>
+        </g>
+
+        <!-- Hints -->
+        <g data-step="3" data-step-end="3">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">第一根支柱：诚实证明者必须能通过</text>
+        </g>
+        <g data-step="4" data-step-end="4">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">第二根支柱：作弊者通过率指数级衰减</text>
+        </g>
+        <g data-step="5" data-step-end="5">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">第三根支柱：Verifier 一无所获 —— Simulator 范式</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch3 — Schnorr 协议
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="3" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-amber3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+          <marker id="arr-green3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+        </defs>
+
+        <!-- Prover & Verifier columns (always shown from Step 6) -->
+        <g data-step="6">
+          <circle cx="120" cy="260" r="40" class="actor-violet" stroke-width="2"/>
+          <text x="120" y="266" text-anchor="middle" font-size="20" font-weight="700" class="label-violet">P</text>
+          <text x="120" y="318" text-anchor="middle" font-size="13" font-weight="600" class="label-violet">Prover</text>
+          <text x="120" y="336" text-anchor="middle" font-size="11" class="svg-mono label-violet">witness x</text>
+
+          <circle cx="980" cy="260" r="40" class="actor-green" stroke-width="2"/>
+          <text x="980" y="266" text-anchor="middle" font-size="20" font-weight="700" class="label-green">V</text>
+          <text x="980" y="318" text-anchor="middle" font-size="13" font-weight="600" class="label-green">Verifier</text>
+          <text x="980" y="336" text-anchor="middle" font-size="11" class="svg-mono label-green">public h</text>
+
+          <!-- Public statement banner -->
+          <rect x="380" y="105" width="340" height="38" rx="8" fill="#f1f5f9" stroke="#475569" stroke-width="1"/>
+          <text x="550" y="129" text-anchor="middle" font-size="13" class="svg-mono label-slate" font-weight="600">公开陈述: h = g^x ∈ G</text>
+        </g>
+
+        <!-- Step 6: 3-step handshake -->
+        <g data-step="6">
+          <!-- Arrow 1: t = g^r -->
+          <line x1="170" y1="180" x2="930" y2="180" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet3)"/>
+          <rect x="430" y="160" width="240" height="34" rx="6" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="550" y="174" text-anchor="middle" font-size="10" class="label-violet">① commit</text>
+          <text x="550" y="188" text-anchor="middle" font-size="13" class="svg-mono label-violet" font-weight="700">t = g^r　(r 随机)</text>
+
+          <!-- Arrow 2: c (challenge, right→left) -->
+          <line x1="930" y1="240" x2="170" y2="240" stroke="#b45309" stroke-width="2" marker-end="url(#arr-amber3)"/>
+          <rect x="430" y="220" width="240" height="34" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+          <text x="550" y="234" text-anchor="middle" font-size="10" class="label-amber">② challenge</text>
+          <text x="550" y="248" text-anchor="middle" font-size="13" class="svg-mono label-amber" font-weight="700">c　(随机)</text>
+
+          <!-- Arrow 3: s = r + c·x -->
+          <line x1="170" y1="300" x2="930" y2="300" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet3)"/>
+          <rect x="430" y="280" width="240" height="34" rx="6" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="550" y="294" text-anchor="middle" font-size="10" class="label-violet">③ response</text>
+          <text x="550" y="308" text-anchor="middle" font-size="13" class="svg-mono label-violet" font-weight="700">s = r + c·x　(mod q)</text>
+
+          <text x="550" y="395" text-anchor="middle" font-size="12" class="label-muted">"我让你随便挑一个 c，我都能在不暴露 x 的前提下给出对应的 s"</text>
+        </g>
+
+        <!-- Step 7: verifier check equation (green box on right) -->
+        <g data-step="7">
+          <rect x="760" y="370" width="280" height="100" rx="12" class="actor-green" stroke-width="2"/>
+          <text x="900" y="395" text-anchor="middle" font-size="13" font-weight="700" class="label-green">Verifier 检查</text>
+          <text x="900" y="422" text-anchor="middle" font-size="15" class="svg-mono label-green" font-weight="700">g^s ?= t · h^c</text>
+          <text x="900" y="448" text-anchor="middle" font-size="22" class="label-green">✓ accept</text>
+          <text x="900" y="464" text-anchor="middle" font-size="10" class="label-muted">一次乘法 + 一次幂运算</text>
+        </g>
+
+        <!-- Step 8: Knowledge soundness (extract x from two transcripts) -->
+        <g data-step="8" data-step-end="8">
+          <!-- Same t, two challenges -->
+          <rect x="60" y="380" width="700" height="110" rx="12" fill="#fff" stroke="#6d28d9" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <text x="80" y="403" font-size="11" class="label-violet" font-weight="700">假设同一个 t 对应两个有效回答:</text>
+          <text x="100" y="425" font-size="12" class="svg-mono label-violet">(c₁, s₁): g^s₁ = t · h^c₁</text>
+          <text x="100" y="445" font-size="12" class="svg-mono label-violet">(c₂, s₂): g^s₂ = t · h^c₂</text>
+          <text x="100" y="475" font-size="13" class="svg-mono label-violet" font-weight="700">⟹ x = (s₁ − s₂) · (c₁ − c₂)⁻¹  (mod q)</text>
+          <text x="500" y="475" font-size="11" class="label-muted">→ Knowledge Extractor 拿到 witness</text>
+        </g>
+
+        <!-- Step 9: Fiat-Shamir hash box on challenge arrow -->
+        <g data-step="9">
+          <rect x="420" y="220" width="260" height="34" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+          <text x="550" y="234" text-anchor="middle" font-size="10" class="label-amber" font-weight="600">② challenge · 由 hash 取代</text>
+          <text x="550" y="248" text-anchor="middle" font-size="12" class="svg-mono label-amber" font-weight="700">c = H(g, h, t)</text>
+
+          <!-- Self-loop on Prover side, replacing right→left arrow -->
+          <path d="M 130 220 q -50 0 -50 -25 q 0 -25 30 -30 q 30 0 35 30" stroke="#b45309" stroke-width="2" fill="none" marker-end="url(#arr-amber3)"/>
+          <text x="50" y="200" font-size="10" class="label-amber" font-weight="600">本地 hash</text>
+
+          <!-- Verifier label change to "anyone, anytime" -->
+          <rect x="900" y="362" width="160" height="46" rx="8" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="980" y="382" text-anchor="middle" font-size="12" class="label-green" font-weight="700">anyone, anytime</text>
+          <text x="980" y="398" text-anchor="middle" font-size="10" class="label-muted">无需在线交互</text>
+
+          <!-- proof bundle bottom-left -->
+          <rect x="60" y="425" width="320" height="60" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="220" y="448" text-anchor="middle" font-size="11" class="label-violet" font-weight="600">非交互证明 π</text>
+          <text x="220" y="468" text-anchor="middle" font-size="13" class="svg-mono label-violet" font-weight="700">π = (t, s)</text>
+        </g>
+
+        <!-- Step 6 extra: nonce reuse warning (Step 6-8, freed at 9 for π proof) -->
+        <g data-step="6" data-step-end="8">
+          <rect x="60" y="425" width="320" height="60" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.2"/>
+          <text x="220" y="446" text-anchor="middle" font-size="11" class="label-red" font-weight="700">⚠️ r 必须每轮新鲜随机</text>
+          <text x="220" y="464" text-anchor="middle" font-size="10" class="label-slate">两次复用同 r → 立即解出 x</text>
+          <text x="220" y="478" text-anchor="middle" font-size="9" class="label-muted">真实事故: 2010 PS3 ECDSA</text>
+        </g>
+
+        <!-- Hints -->
+        <g data-step="6" data-step-end="6">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Schnorr 三步握手：commit → challenge → response，最经典 Σ-protocol</text>
+        </g>
+        <g data-step="7" data-step-end="7">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">一行等式同时蕴含 completeness + soundness</text>
+        </g>
+        <g data-step="8" data-step-end="8">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Special Soundness：两个不同 c 的合法回答 → 抽出 witness x</text>
+        </g>
+        <g data-step="9" data-step-end="9">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Fiat–Shamir：用 hash 当虚拟 Verifier，握手 → 单条非交互证明</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch4 — 算术化 + Commitment
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="4" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-green4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+          <marker id="arr-slate4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+        </defs>
+
+        <!-- Step 10: Pedersen Envelope -->
+        <g data-step="10">
+          <!-- Envelope shape -->
+          <rect x="380" y="140" width="340" height="160" rx="10" class="actor-violet" stroke-width="2"/>
+          <path d="M 380 140 L 550 250 L 720 140" fill="none" stroke="#6d28d9" stroke-width="2"/>
+          <text x="550" y="195" text-anchor="middle" font-size="14" font-weight="700" class="label-violet">Pedersen Commitment</text>
+          <text x="550" y="222" text-anchor="middle" font-size="15" class="svg-mono label-violet" font-weight="700">c = g^x · h^r</text>
+          <text x="550" y="252" text-anchor="middle" font-size="11" class="label-muted">x: 隐藏的值　·　r: 随机盲化因子</text>
+
+          <!-- Hiding label (left) -->
+          <rect x="100" y="180" width="240" height="60" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="220" y="202" text-anchor="middle" font-size="13" class="label-violet" font-weight="700">Hiding · 看不出 x</text>
+          <text x="220" y="222" text-anchor="middle" font-size="11" class="label-muted">r 均匀随机 →</text>
+          <text x="220" y="236" text-anchor="middle" font-size="11" class="label-muted">c 在群里也均匀随机</text>
+
+          <!-- Binding label (right) -->
+          <rect x="760" y="180" width="240" height="60" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="880" y="202" text-anchor="middle" font-size="13" class="label-green" font-weight="700">Binding · 改不了 x</text>
+          <text x="880" y="222" text-anchor="middle" font-size="11" class="label-muted">想换成 (x', r') 让 c 不变</text>
+          <text x="880" y="236" text-anchor="middle" font-size="11" class="label-muted">= 解 DLP，做不到</text>
+
+          <text x="550" y="330" text-anchor="middle" font-size="11" class="label-muted">所有 ZKP 系统的"信封"基石：先 commit，后 reveal / 后 prove</text>
+        </g>
+
+        <!-- Step 11: arithmetization first half - circuit → R1CS -->
+        <g data-step="11">
+          <!-- Pipeline: circuit -->
+          <rect x="60" y="370" width="160" height="100" rx="10" class="actor-violet" stroke-width="2"/>
+          <text x="140" y="395" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">① 算术电路</text>
+          <g font-size="10" class="label-violet">
+            <circle cx="100" cy="430" r="10" fill="#fff" stroke="#6d28d9" stroke-width="1.2"/><text x="100" y="434" text-anchor="middle">×</text>
+            <circle cx="140" cy="450" r="10" fill="#fff" stroke="#6d28d9" stroke-width="1.2"/><text x="140" y="454" text-anchor="middle">+</text>
+            <circle cx="180" cy="430" r="10" fill="#fff" stroke="#6d28d9" stroke-width="1.2"/><text x="180" y="434" text-anchor="middle">×</text>
+            <line x1="100" y1="440" x2="135" y2="445" stroke="#6d28d9" stroke-width="1"/>
+            <line x1="180" y1="440" x2="145" y2="445" stroke="#6d28d9" stroke-width="1"/>
+          </g>
+
+          <line x1="225" y1="420" x2="275" y2="420" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate4)"/>
+
+          <!-- R1CS matrices -->
+          <rect x="280" y="370" width="220" height="100" rx="10" class="actor-amber" stroke-width="2"/>
+          <text x="390" y="395" text-anchor="middle" font-size="12" class="label-amber" font-weight="700">② R1CS</text>
+          <g font-family="JetBrains Mono" font-size="11" class="label-amber">
+            <text x="305" y="425">A·s</text>
+            <text x="345" y="425">∘</text>
+            <text x="365" y="425">B·s</text>
+            <text x="405" y="425">=</text>
+            <text x="425" y="425">C·s</text>
+          </g>
+          <text x="390" y="450" text-anchor="middle" font-size="10" class="label-muted">三矩阵 A,B,C + 见证向量 s</text>
+          <text x="390" y="463" text-anchor="middle" font-size="9" class="label-muted">∘ 是逐元素积 (Hadamard)</text>
+        </g>
+
+        <!-- Step 12: arithmetization second half - R1CS → polynomial -->
+        <g data-step="12">
+          <line x1="505" y1="420" x2="555" y2="420" stroke="#475569" stroke-width="2" marker-end="url(#arr-slate4)"/>
+
+          <!-- Polynomial curve box -->
+          <rect x="560" y="370" width="280" height="100" rx="10" class="actor-green" stroke-width="2"/>
+          <text x="700" y="392" text-anchor="middle" font-size="12" class="label-green" font-weight="700">③ 多项式恒等式 P(x)</text>
+          <!-- mini sin curve -->
+          <path d="M 580 440 Q 620 410, 660 440 Q 700 470, 740 440 Q 780 410, 820 440" stroke="#15803d" stroke-width="1.6" fill="none"/>
+          <line x1="580" y1="440" x2="820" y2="440" stroke="#9ca3af" stroke-width="0.6" stroke-dasharray="2 3"/>
+          <circle cx="700" cy="440" r="3" fill="#b45309"/>
+          <text x="700" y="462" text-anchor="middle" font-size="10" class="label-amber">随机点 z 取值检零</text>
+
+          <!-- Schwartz-Zippel callout -->
+          <rect x="860" y="385" width="180" height="70" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="1.5"/>
+          <text x="950" y="405" text-anchor="middle" font-size="11" class="label-green" font-weight="700">Schwartz–Zippel</text>
+          <text x="950" y="425" text-anchor="middle" font-size="11" class="svg-mono label-green">Pr[err] ≤ d / |F|</text>
+          <text x="950" y="442" text-anchor="middle" font-size="9" class="label-muted">d=多项式度数</text>
+        </g>
+
+        <!-- Step 10 extra: homomorphism callout -->
+        <g data-step="10">
+          <rect x="380" y="380" width="340" height="80" rx="10" fill="#fff" stroke="#6d28d9" stroke-width="1"/>
+          <text x="550" y="402" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">额外彩蛋: 加法同态</text>
+          <text x="550" y="422" text-anchor="middle" font-size="11" class="svg-mono label-violet">commit(x₁,r₁) · commit(x₂,r₂) = commit(x₁+x₂, r₁+r₂)</text>
+          <text x="550" y="442" text-anchor="middle" font-size="10" class="label-muted">⟹ Bulletproofs / Groth16 范围证明的关键基石</text>
+        </g>
+
+        <!-- Hints -->
+        <g data-step="10" data-step-end="10">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">Pedersen Commitment：藏值 + 不可改 + 可后续打开 —— ZKP 的"信封"</text>
+        </g>
+        <g data-step="11" data-step-end="11">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">算术化第一步：把"我知道 x" 翻译成 R1CS 约束</text>
+        </g>
+        <g data-step="12" data-step-end="12">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">第二步：R1CS → 多项式恒等式，靠 Schwartz–Zippel 在随机点检验</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch5 — SNARK / STARK
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="5" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-green5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+          <marker id="arr-amber5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/>
+          </marker>
+        </defs>
+
+        <!-- Step 13: Trusted setup ceremony + tiny proof + verify timer -->
+        <g data-step="13">
+          <!-- Ceremony group -->
+          <rect x="80" y="130" width="380" height="200" rx="14" class="actor-violet" stroke-width="2"/>
+          <text x="270" y="158" text-anchor="middle" font-size="14" font-weight="700" class="label-violet">Trusted Setup · MPC ceremony</text>
+
+          <!-- 4 stick figures hand-in-hand -->
+          <g>
+            <circle cx="130" cy="220" r="18" class="actor-violet" stroke-width="1.5"/>
+            <circle cx="200" cy="220" r="18" class="actor-violet" stroke-width="1.5"/>
+            <circle cx="270" cy="220" r="18" class="actor-violet" stroke-width="1.5"/>
+            <circle cx="340" cy="220" r="18" class="actor-violet" stroke-width="1.5"/>
+            <circle cx="410" cy="220" r="18" class="actor-violet" stroke-width="1.5"/>
+            <line x1="148" y1="220" x2="182" y2="220" stroke="#6d28d9" stroke-width="2"/>
+            <line x1="218" y1="220" x2="252" y2="220" stroke="#6d28d9" stroke-width="2"/>
+            <line x1="288" y1="220" x2="322" y2="220" stroke="#6d28d9" stroke-width="2"/>
+            <line x1="358" y1="220" x2="392" y2="220" stroke="#6d28d9" stroke-width="2"/>
+          </g>
+          <text x="270" y="265" text-anchor="middle" font-size="11" class="label-muted">每人贡献随机性，最后销毁自己那份</text>
+
+          <!-- Toxic waste flame -->
+          <text x="270" y="305" text-anchor="middle" font-size="28">🔥</text>
+          <text x="270" y="324" text-anchor="middle" font-size="10" class="label-red">toxic waste 必须销毁</text>
+        </g>
+
+        <!-- Step 13: small proof π output -->
+        <g data-step="13">
+          <line x1="465" y1="230" x2="565" y2="230" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet5)"/>
+          <text x="515" y="220" text-anchor="middle" font-size="11" class="label-violet">prove</text>
+
+          <rect x="570" y="190" width="200" height="80" rx="10" fill="#fff" stroke="#6d28d9" stroke-width="2"/>
+          <text x="670" y="215" text-anchor="middle" font-size="12" class="label-violet" font-weight="700">π = (A, B, C)</text>
+          <text x="670" y="235" text-anchor="middle" font-size="11" class="svg-mono label-violet">3 群元素</text>
+          <text x="670" y="255" text-anchor="middle" font-size="10" class="label-muted">≈ 200 bytes</text>
+
+          <line x1="775" y1="230" x2="855" y2="230" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green5)"/>
+          <text x="815" y="220" text-anchor="middle" font-size="11" class="label-green">verify</text>
+
+          <!-- Stopwatch -->
+          <rect x="860" y="190" width="180" height="80" rx="10" class="actor-green" stroke-width="2"/>
+          <text x="950" y="216" text-anchor="middle" font-size="22">⏱️</text>
+          <text x="950" y="240" text-anchor="middle" font-size="13" class="label-green" font-weight="700">~5 ms</text>
+          <text x="950" y="258" text-anchor="middle" font-size="10" class="label-muted">Verifier 端验证耗时</text>
+        </g>
+
+        <!-- Step 14: STARK badge corner + arrow back to SNARK area -->
+        <g data-step="14">
+          <rect x="60" y="370" width="380" height="120" rx="14" class="actor-amber" stroke-width="2"/>
+          <text x="250" y="395" text-anchor="middle" font-size="14" font-weight="700" class="label-amber">zk-STARK</text>
+          <text x="250" y="416" text-anchor="middle" font-size="11" class="label-muted">Scalable · Transparent · No trusted setup</text>
+          <text x="250" y="436" text-anchor="middle" font-size="11" class="label-muted">仅依赖 hash + Reed-Solomon</text>
+          <text x="250" y="456" text-anchor="middle" font-size="11" class="label-muted">proof 大但 post-quantum 安全</text>
+          <text x="250" y="476" text-anchor="middle" font-size="10" class="label-amber" font-weight="600">↑ 详细对比见下方表格</text>
+
+          <!-- arrow back to SNARK -->
+          <line x1="445" y1="430" x2="565" y2="280" stroke="#b45309" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#arr-amber5)"/>
+          <text x="500" y="365" font-size="10" class="label-amber" font-weight="600">vs. SNARK</text>
+        </g>
+
+        <!-- Step 13 extra: stat callout -->
+        <g data-step="13">
+          <rect x="80" y="380" width="380" height="60" rx="10" fill="#fff" stroke="#6d28d9" stroke-width="1"/>
+          <text x="270" y="400" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">真实仪式实例</text>
+          <text x="270" y="418" text-anchor="middle" font-size="10" class="label-slate">Zcash Sapling: 90+ 人贡献</text>
+          <text x="270" y="432" text-anchor="middle" font-size="10" class="label-slate">Filecoin: 1000+ 人级别 MPC</text>
+        </g>
+
+        <!-- Hints -->
+        <g data-step="13" data-step-end="13">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">zk-SNARK · Groth16：trusted setup → 200 字节 proof + ms 级 verify</text>
+        </g>
+        <g data-step="14" data-step-end="14">
+          <text x="550" y="60" text-anchor="middle" font-size="13" class="label-muted">zk-STARK：transparent + post-quantum，但 proof 较大</text>
+        </g>
+      </svg>
+
+      <!-- ============================================================
+           Ch6 — 应用与回望
+           ============================================================ -->
+      <svg class="chapter-svg" data-ch="6" viewBox="0 0 1100 520" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr-violet6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="arr-green6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#15803d"/>
+          </marker>
+          <marker id="arr-slate6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+        </defs>
+
+        <!-- Step 15: Zcash shielded transaction -->
+        <g data-step="15" data-step-end="16">
+          <rect x="60" y="120" width="980" height="220" rx="14" fill="#fff" stroke="#475569" stroke-width="1"/>
+          <text x="550" y="148" text-anchor="middle" font-size="14" font-weight="700" class="label-slate">Zcash Shielded Transaction</text>
+
+          <!-- 3 fields covered with violet veil -->
+          <g font-size="12" class="label-slate">
+            <rect x="120" y="180" width="220" height="60" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+            <text x="230" y="200" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">from</text>
+            <text x="230" y="222" text-anchor="middle" font-size="14" class="svg-mono label-muted">▓▓▓▓▓▓▓▓</text>
+
+            <rect x="440" y="180" width="220" height="60" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+            <text x="550" y="200" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">to</text>
+            <text x="550" y="222" text-anchor="middle" font-size="14" class="svg-mono label-muted">▓▓▓▓▓▓▓▓</text>
+
+            <rect x="760" y="180" width="220" height="60" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+            <text x="870" y="200" text-anchor="middle" font-size="11" class="label-violet" font-weight="700">amount</text>
+            <text x="870" y="222" text-anchor="middle" font-size="14" class="svg-mono label-muted">▓▓▓▓▓▓▓▓</text>
+          </g>
+
+          <!-- Verifier sees green checks -->
+          <rect x="200" y="270" width="700" height="50" rx="10" class="actor-green" stroke-width="1.5"/>
+          <text x="550" y="290" text-anchor="middle" font-size="12" class="label-green" font-weight="700">Verifier 验账本仍能确认:</text>
+          <text x="550" y="308" text-anchor="middle" font-size="12" class="label-green">balance ✓　no double-spend ✓　ownership ✓　all without seeing the data</text>
+        </g>
+
+        <!-- Step 16: ZK-Rollup + DECO -->
+        <g data-step="16" data-step-end="16">
+          <!-- L2 rollup left half -->
+          <rect x="60" y="360" width="480" height="140" rx="12" fill="#fff" stroke="#6d28d9" stroke-width="1.5"/>
+          <text x="300" y="380" text-anchor="middle" font-size="12" font-weight="700" class="label-violet">ZK-Rollup (L2 → L1)</text>
+
+          <!-- 1000 small blocks -->
+          <g fill="#ede9fe" stroke="#6d28d9" stroke-width="0.6">
+            <rect x="80" y="400" width="8" height="8"/><rect x="92" y="400" width="8" height="8"/><rect x="104" y="400" width="8" height="8"/><rect x="116" y="400" width="8" height="8"/><rect x="128" y="400" width="8" height="8"/><rect x="140" y="400" width="8" height="8"/><rect x="152" y="400" width="8" height="8"/><rect x="164" y="400" width="8" height="8"/><rect x="176" y="400" width="8" height="8"/><rect x="188" y="400" width="8" height="8"/>
+            <rect x="80" y="412" width="8" height="8"/><rect x="92" y="412" width="8" height="8"/><rect x="104" y="412" width="8" height="8"/><rect x="116" y="412" width="8" height="8"/><rect x="128" y="412" width="8" height="8"/><rect x="140" y="412" width="8" height="8"/><rect x="152" y="412" width="8" height="8"/><rect x="164" y="412" width="8" height="8"/><rect x="176" y="412" width="8" height="8"/><rect x="188" y="412" width="8" height="8"/>
+            <rect x="80" y="424" width="8" height="8"/><rect x="92" y="424" width="8" height="8"/><rect x="104" y="424" width="8" height="8"/><rect x="116" y="424" width="8" height="8"/><rect x="128" y="424" width="8" height="8"/><rect x="140" y="424" width="8" height="8"/><rect x="152" y="424" width="8" height="8"/><rect x="164" y="424" width="8" height="8"/><rect x="176" y="424" width="8" height="8"/><rect x="188" y="424" width="8" height="8"/>
+          </g>
+          <text x="135" y="455" text-anchor="middle" font-size="10" class="label-muted">1000 笔 L2 交易</text>
+
+          <!-- Arrow merging into proof -->
+          <line x1="220" y1="425" x2="290" y2="425" stroke="#6d28d9" stroke-width="2" marker-end="url(#arr-violet6)"/>
+          <rect x="295" y="408" width="100" height="36" rx="6" class="actor-violet" stroke-width="1.5"/>
+          <text x="345" y="430" text-anchor="middle" font-size="12" class="svg-mono label-violet" font-weight="700">π</text>
+
+          <!-- Submit to L1 -->
+          <line x1="400" y1="425" x2="455" y2="425" stroke="#15803d" stroke-width="2" marker-end="url(#arr-green6)"/>
+          <rect x="460" y="395" width="70" height="60" rx="6" class="actor-green" stroke-width="1.5"/>
+          <text x="495" y="425" text-anchor="middle" font-size="11" class="label-green" font-weight="700">L1</text>
+          <text x="495" y="445" text-anchor="middle" font-size="9" class="label-muted">block</text>
+
+          <text x="300" y="488" text-anchor="middle" font-size="10" class="label-muted">把"算"留在 L2，把"证"提交到 L1</text>
+
+          <!-- DECO right half -->
+          <rect x="560" y="360" width="480" height="140" rx="12" fill="#fff" stroke="#475569" stroke-width="1.5"/>
+          <text x="800" y="380" text-anchor="middle" font-size="12" font-weight="700" class="label-slate">DECO · 隐私预言机 (Chainlink)</text>
+
+          <!-- HTTPS server -->
+          <rect x="580" y="400" width="80" height="50" rx="6" fill="#fff" stroke="#475569" stroke-width="1.2"/>
+          <text x="620" y="420" text-anchor="middle" font-size="10" class="label-slate">HTTPS</text>
+          <text x="620" y="436" text-anchor="middle" font-size="9" class="label-muted">原始数据</text>
+          <!-- veil over server data -->
+          <rect x="582" y="402" width="76" height="46" rx="5" fill="#ede9fe" opacity="0.7"/>
+
+          <!-- arrow oracle -->
+          <line x1="665" y1="425" x2="725" y2="425" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-slate6)"/>
+          <rect x="730" y="400" width="100" height="50" rx="6" class="actor-violet" stroke-width="1.5"/>
+          <text x="780" y="420" text-anchor="middle" font-size="10" class="label-violet" font-weight="700">DECO oracle</text>
+          <text x="780" y="436" text-anchor="middle" font-size="9" class="label-muted">本地生成证明</text>
+
+          <!-- arrow to chain -->
+          <line x1="835" y1="425" x2="905" y2="425" stroke="#15803d" stroke-width="1.5" marker-end="url(#arr-green6)"/>
+          <rect x="910" y="400" width="100" height="50" rx="6" class="actor-green" stroke-width="1.5"/>
+          <text x="960" y="420" text-anchor="middle" font-size="10" class="label-green" font-weight="700">on-chain π</text>
+          <text x="960" y="436" text-anchor="middle" font-size="9" class="label-muted">链上验证</text>
+
+          <text x="800" y="488" text-anchor="middle" font-size="10" class="label-muted">数据不上链，证明上链</text>
+        </g>
+
+        <!-- Step 17: clear & mind map of 6 chapter icons -->
+        <g data-step="17">
+          <text x="550" y="100" text-anchor="middle" font-size="15" font-weight="700" class="label-cherry">六章思维导图 · ZKP 拼图完整一览</text>
+
+          <!-- Center node -->
+          <circle cx="550" cy="280" r="60" class="actor-cherry" stroke-width="2"/>
+          <text x="550" y="276" text-anchor="middle" font-size="13" font-weight="700" class="label-cherry">ZKP</text>
+          <text x="550" y="293" text-anchor="middle" font-size="11" class="label-cherry">you are here</text>
+
+          <!-- 6 surrounding nodes (icons) -->
+          <!-- CH1: cave -->
+          <g>
+            <circle cx="200" cy="180" r="44" class="actor-violet" stroke-width="1.5"/>
+            <text x="200" y="180" text-anchor="middle" font-size="22">🕳️</text>
+            <text x="200" y="208" text-anchor="middle" font-size="10" class="label-violet" font-weight="700">CH1 直觉</text>
+            <text x="200" y="222" text-anchor="middle" font-size="9" class="label-muted">Ali Baba 洞穴</text>
+            <line x1="244" y1="195" x2="495" y2="270" stroke="#6d28d9" stroke-width="1" stroke-dasharray="3 3"/>
+          </g>
+          <!-- CH2: 三性质 -->
+          <g>
+            <circle cx="550" cy="140" r="44" class="actor-green" stroke-width="1.5"/>
+            <text x="550" y="140" text-anchor="middle" font-size="20">⚖️</text>
+            <text x="550" y="168" text-anchor="middle" font-size="10" class="label-green" font-weight="700">CH2 三性质</text>
+            <text x="550" y="182" text-anchor="middle" font-size="9" class="label-muted">C / S / ZK</text>
+            <line x1="550" y1="184" x2="550" y2="220" stroke="#15803d" stroke-width="1" stroke-dasharray="3 3"/>
+          </g>
+          <!-- CH3: Schnorr -->
+          <g>
+            <circle cx="900" cy="180" r="44" class="actor-violet" stroke-width="1.5"/>
+            <text x="900" y="180" text-anchor="middle" font-size="20">🤝</text>
+            <text x="900" y="208" text-anchor="middle" font-size="10" class="label-violet" font-weight="700">CH3 Schnorr</text>
+            <text x="900" y="222" text-anchor="middle" font-size="9" class="label-muted">Σ + Fiat-Shamir</text>
+            <line x1="856" y1="195" x2="605" y2="270" stroke="#6d28d9" stroke-width="1" stroke-dasharray="3 3"/>
+          </g>
+          <!-- CH4: 算术化 -->
+          <g>
+            <circle cx="200" cy="380" r="44" class="actor-amber" stroke-width="1.5"/>
+            <text x="200" y="380" text-anchor="middle" font-size="20">🔢</text>
+            <text x="200" y="408" text-anchor="middle" font-size="10" class="label-amber" font-weight="700">CH4 算术化</text>
+            <text x="200" y="422" text-anchor="middle" font-size="9" class="label-muted">R1CS + Pedersen</text>
+            <line x1="244" y1="365" x2="495" y2="290" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>
+          </g>
+          <!-- CH5: SNARK/STARK -->
+          <g>
+            <circle cx="900" cy="380" r="44" class="actor-violet" stroke-width="1.5"/>
+            <text x="900" y="380" text-anchor="middle" font-size="20">⚡</text>
+            <text x="900" y="408" text-anchor="middle" font-size="10" class="label-violet" font-weight="700">CH5 SNARK/STARK</text>
+            <text x="900" y="422" text-anchor="middle" font-size="9" class="label-muted">简洁 + 非交互</text>
+            <line x1="856" y1="365" x2="605" y2="290" stroke="#6d28d9" stroke-width="1" stroke-dasharray="3 3"/>
+          </g>
+          <!-- CH6: 应用 -->
+          <g>
+            <circle cx="550" cy="440" r="44" class="actor-cherry" stroke-width="1.5"/>
+            <text x="550" y="440" text-anchor="middle" font-size="20">🌍</text>
+            <text x="550" y="468" text-anchor="middle" font-size="10" class="label-cherry" font-weight="700">CH6 应用</text>
+            <text x="550" y="482" text-anchor="middle" font-size="9" class="label-muted">Zcash / Rollup / DECO</text>
+            <line x1="550" y1="396" x2="550" y2="340" stroke="#aa1141" stroke-width="1" stroke-dasharray="3 3"/>
+          </g>
+        </g>
+
+        <!-- Hints -->
+        <g data-step="15" data-step-end="15">
+          <text x="550" y="80" text-anchor="middle" font-size="13" class="label-muted">Zcash · 隐藏 from / to / amount，仍可证账本守恒</text>
+        </g>
+        <g data-step="16" data-step-end="16">
+          <text x="550" y="340" text-anchor="middle" font-size="13" class="label-muted">两大应用：ZK-Rollup 压缩 L2 + DECO 隐私预言机</text>
+        </g>
+      </svg>
+
+    </section>
+
+    <!-- Caption -->
+    <section class="caption">
+      <div class="caption-title" id="caption-title"></div>
+      <div class="caption-body" id="caption-body"></div>
+    </section>
+
+    <!-- Deep-dive: references + rust code -->
+    <section class="extras" id="extras"></section>
+
+    <!-- Controls -->
+    <nav class="controls">
+      <button id="btn-prev">◀ 上一步</button>
+      <button id="btn-next" class="primary">下一步 ▶</button>
+      <button id="btn-replay" class="ghost">↻ 重头来</button>
+      <span class="hint">键盘 ← / → 也能切；URL 自动保存当前步</span>
+      <span class="hint">完成本教程后建议进入 ../advanced/ 阅读更深入的工程实现章节</span>
+    </nav>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Step controller
+   ============================================================ */
+const STEPS = [
+  // Ch1
+  { ch: 1, title: '朴素问题：怎么证明"我知道"', body: '日常生活里有一类很奇怪的需求：<strong>我想让你相信我知道某件事，但我又不愿告诉你那件事本身</strong>。<br>例子：<br>• 我知道你账户的密码（其实是想证明我是合法的你）<br>• 我有数独的解（想证明谜题确实可解，但又不想白送答案）<br>• 我账上有 1 ETH（想证明能付款，但不想暴露余额）<br>• 我满 18 岁（想证明合法，但不想出示生日 / 身份证号）<br>密码学把这两个角色定下来：<code>Prover · 证明者</code>（紫色 P，知道某个秘密 X）和 <code>Verifier · 验证者</code>（绿色 V，要被说服 X 存在）。<br>难点是：直接交出秘密就违背了初心 —— 我们要的是一种<strong>"既能让对方相信，又什么都不告诉对方"</strong>的对话方式。<br>这个看似矛盾的目标，正是接下来 17 步要逐层拆解的全部内容。<em>反直觉吗？是的，这正是 ZKP 的魅力所在。</em>' },
+  { ch: 1, title: 'Ali Baba 洞穴 · 经典直觉', body: '1990 年 Quisquater 等人写了一篇专门面向小孩的论文 <em>How to Explain Zero-Knowledge Protocols to Your Children</em>，给出了沿用至今的"洞穴"模型。<br>洞穴有一条主道，进去后分叉成 A 路和 B 路；A 和 B 在底端被一道魔法门连通，知道密码的人才能穿门。<br>协议：① Prover 进洞，随便挑 A 或 B 走到底；② Verifier 站在洞口喊出"从 X 路出来"；③ Prover 必须从 X 路出来。<br>不知道密码的骗子有 1/2 几率走对路 —— 但反复 n 轮，骗子蒙过的概率 <code>2⁻ⁿ</code> 几何衰减。<br>关键洞察：Verifier 全程没看到密码本身，只看到"挑战 → 回应"的序列。这就是 ZKP 的雏形。' },
+  // Ch2
+  { ch: 2, title: 'Completeness · 诚实者一定通过', body: 'ZKP 的第一根支柱：<strong>如果陈述是真的、Prover 是诚实的，那么 Verifier 几乎一定接受</strong>。<br>形式化：<code>Pr[V accepts | true stmt and honest P] ≥ 1 − ε</code>。这里 ε 是允许的"协议错误"概率，常见取 <code>ε ≤ 2⁻¹²⁸</code>，工程上视同 0。<br>这条性质看似废话，其实约束了"协议正确性"：算法不能有 bug 让真陈述被拒。<br>反面教训：早期一些 SNARK 实现因为 hash 域选错、约束写漏，出现"诚实 Prover 偶尔被拒"的 bug —— 完备性挂掉，整套协议作废。' },
+  { ch: 2, title: 'Soundness · 假命题骗不过', body: '第二根支柱：<strong>没有 witness（秘密见证）的人，无论怎么努力，通过 Verifier 的概率都极低</strong>。<br>形式化：<code>Pr[V accepts | false stmt] ≤ 2⁻ⁿ</code>。每多一轮 challenge，骗子的逃脱概率减半。<br>右图：10 轮挑战中，假 Prover 平均一半失手；100 轮后通过率 ≈ 2⁻¹⁰⁰，比"宇宙中随便挑个原子"还稀有。<br>更细的分类：<br>• <code>Statistical soundness</code>：即使无限算力也骗不过<br>• <code>Computational soundness</code>：只针对有限算力的攻击者<br>SNARK 多是 computational（依赖 DLP / pairing 假设），STARK 是 statistical（仅依赖 hash）。' },
+  { ch: 2, title: 'Zero-Knowledge · 证完啥也没漏', body: '第三根支柱也是最难定义的：<strong>Verifier 在协议结束后，对 witness 一无所知</strong>。<br>怎么形式化"一无所知"？Goldwasser、Micali、Rackoff 1989 年提出 <code>Simulator paradigm · 模拟器范式</code>：<br>"如果存在一个不知道 witness 的算法 S（Simulator），它能造出一段对话，<strong>分布</strong>跟真实的 (P, V) 对话不可区分，那 Verifier 从真实对话里能学到的东西就 = 从 S 造的假对话里能学到的 = 0。"<br>三档严格度：<br>• <code>Perfect ZK</code>：分布完全相同<br>• <code>Statistical ZK</code>：分布统计不可区分<br>• <code>Computational ZK</code>：多项式时间区分不出（最常见）<br>另一个区分：<code>Honest-Verifier ZK</code>（HVZK，假设 V 守规矩）vs <code>Malicious-Verifier ZK</code>（即使 V 作弊也是 ZK）。' },
+  // Ch3
+  { ch: 3, title: 'Schnorr 三步握手', body: '现在把"诚实者通过 + 骗子通不过 + 不漏 witness"三件事在一个具体协议里实现 —— 这就是 1991 年 Schnorr 给出的原型，至今所有 ZKP 系统的基本构件。<br>设定：群 G 阶为素数 q，生成元 g。Prover 知道 witness <code>x</code>，公开陈述 <code>h = g^x</code>。<br>三步：<br>① <strong>commit</strong>：Prover 选随机 <code>r</code>，发出 <code>t = g^r</code>。<br>② <strong>challenge</strong>：Verifier 随机选 <code>c</code>，发回。<br>③ <strong>response</strong>：Prover 算 <code>s = r + c·x  (mod q)</code>，发出。<br>这种 "commit / challenge / response" 三段式叫 <code>Σ-protocol · Sigma 协议</code>，几乎所有现代 ZKP 都从它演化。<br><em>关键约束：随机数 r 必须每轮新鲜，重用会立刻泄漏 x（参见 PS3 ECDSA 事故）</em>' },
+  { ch: 3, title: 'Verifier 检查方程', body: 'Verifier 拿到 (t, c, s) 后只做一件事：检查等式 <code>g^s ?= t · h^c</code>。<br>一行公式同时蕴含两个性质：<br>• <strong>Completeness</strong>：诚实 Prover 算 <code>g^s = g^(r+cx) = g^r · g^(cx) = t · h^c</code>，必然成立。<br>• <strong>Soundness</strong>：没有 x 的骗子要在收到 c 之后伪造 s 满足等式 —— 等价于解离散对数，<strong>计算上不可行</strong>。<br>注意：在 Schnorr 用的群里（如 Ed25519 或 secp256k1），群操作是加法，所以代码里看到的是 <code>g·s == t + h·c</code>（标量乘法），数学上完全等价。<br>这一行检查在比特币、以太坊、Tor 等系统里被反复运行了上万亿次。' },
+  { ch: 3, title: 'Knowledge Soundness · 抽出 witness', body: 'Soundness 只保证"通过 = 知道"在概率上成立，更强的版本叫 <code>Knowledge Soundness · 知识可靠性</code>：存在一个 <code>Knowledge Extractor</code> 算法，能从一个能成功通过的 Prover 身上"撬出" witness。<br>Schnorr 的 extractor 极其优雅 —— 假设 Prover 用同一个 <code>t</code> 对两个不同 challenge <code>c₁, c₂</code> 都给出合法回答 <code>s₁, s₂</code>：<br><code>g^s₁ = t · h^c₁</code><br><code>g^s₂ = t · h^c₂</code><br>两式相除：<code>g^(s₁−s₂) = h^(c₁−c₂)</code>，即 <code>x = (s₁ − s₂) / (c₁ − c₂)  (mod q)</code>。<br>这叫 <code>Special Soundness · 特殊可靠性</code>：Σ-protocol 的标志性结构。它把"通过证明"等价于"真的拥有 witness"，于是协议变成 <code>PoK · Proof of Knowledge · 知识证明</code>，比单纯的语言成员关系强得多。' },
+  { ch: 3, title: 'Fiat–Shamir 拍扁', body: '前面三步握手要双方在线交互，挺烦。1986 年 Fiat 和 Shamir 提出一个石破天惊的简化：<strong>用 hash 函数模拟 Verifier</strong>。<br>原本 Verifier 在第二步随机抛硬币给出 c —— 现在 Prover 自己算 <code>c = H(g, h, t)</code>，因为 hash 输出"看起来"是均匀随机的。<br>这一改造叫 <code>Fiat-Shamir transform · Fiat-Shamir 变换</code>，安全性依赖 <code>Random Oracle Model · 随机预言机模型</code>（把 hash 理想化为真随机函数）。<br>结果：<br>• 三轮交互 → <strong>一条非交互证明 π = (t, s)</strong><br>• Verifier 可以是"任何人，任何时候"：把 π 贴到链上，所有人独立验证<br>• Schnorr signature、EdDSA、Bulletproofs、Groth16 全靠它<br><strong>陷阱</strong>：transcript 必须哈希进所有 public input（g, h, statement…），少哈一项就会出现"弱 Fiat-Shamir"漏洞 —— 2023 年 PlonK 系列就栽过几次。' },
+  // Ch4
+  { ch: 4, title: 'Pedersen Commitment · 信封', body: '在把"知道 x" 推广到"知道一段复杂计算的 witness"前，先认识所有 ZKP 系统都离不开的"信封" —— <code>Pedersen Commitment</code>（Pedersen 1991）。<br>定义：选两个生成元 g, h（h 的离散对数没人知道），承诺 <code>c = g^x · h^r</code>，其中 r 是均匀随机的盲化因子。<br>两个对偶性质：<br>• <strong>Hiding · 隐藏</strong>：r 是均匀随机的，所以 c 在群里也均匀随机 —— 看 c 推不出 x 的任何信息（信息论意义上，perfect hiding）。<br>• <strong>Binding · 绑定</strong>：想找另一对 (x′, r′) 使 c 不变，等价于解离散对数 —— 计算上做不到（computational binding）。<br>对比 hash commitment（c = H(x ‖ r)）：hash 是计算 hiding + 计算 binding；Pedersen 是 perfect hiding + 计算 binding，且支持<strong>同态加</strong>（c₁·c₂ 是 x₁+x₂ 的承诺）—— 这个加法同态是 Bulletproofs / Groth16 等的关键基石。<br>"先 commit、后 prove" 是 ZKP 的固定开场白。' },
+  { ch: 4, title: '算术化第一半 · 电路 → R1CS', body: '"我知道某个 x 满足复杂条件"该怎么转成 ZKP 能处理的语言？答案是 <code>arithmetization · 算术化</code>：把任意 NP 关系翻译成有限域 F 上的代数约束。<br>第一步：把程序拆成 <code>算术电路</code>，由 + × 门组成（其它运算如 AND、XOR、比较都可化为这两个）。<br>第二步：把电路打平成 <code>R1CS · Rank-1 Constraint System</code>（rank-1 约束系统）。每个乘法门写成一条形如 <code>(A·s) ∘ (B·s) = (C·s)</code> 的约束（∘ 是 Hadamard 逐元素积，s 是把 1、public input、witness 拼成的"完整赋值向量"）。<br>整个电路就是 <code>m</code> 条这样的约束。"知道 witness" ⟺ "能找到一个 s 让所有约束同时成立"。<br>arkworks 的 <code>ConstraintSystem</code> trait 是 Rust 生态的标准 API：你写 high-level 逻辑，框架自动产 R1CS 矩阵 A, B, C。<br>例子：要证 "我知道 y 的平方根 x"，约束是 <code>x · x = y</code>，向量 <code>s = [1, y, x]</code>，矩阵就一行。' },
+  { ch: 4, title: '算术化第二半 · R1CS → 多项式', body: '直接把 m 条 R1CS 约束扔给 Verifier 检查 —— 那他要做 m 次乘法，跟你重新跑电路一样慢，毫无收益。<br>关键技巧：<strong>把"全部约束都成立"打包成"一个多项式恒等式"</strong>。<br>对每条约束，用 Lagrange 插值在域 F 上构造多项式 A(X), B(X), C(X)（在第 i 个评估点 ω^i 处分别等于第 i 条约束的对应系数与 s 的内积）。<br>"所有约束都成立" ⟺ <code>A(X)·B(X) − C(X) ≡ 0  on {ω^0, …, ω^(m−1)}</code> ⟺ 这个差是 <code>vanishing polynomial Z(X) = ∏(X − ω^i)</code> 的倍数 ⟺ 存在商多项式 H(X) 使 <code>A(X)B(X) − C(X) = H(X)·Z(X)</code>。<br>检查一个多项式恒等式怎么做？Verifier 随机选一个点 z ∈ F，让 Prover 给出各多项式在 z 处的取值并验证等式。<br><code>Schwartz-Zippel lemma</code>：两个度数 ≤ d 的不同多项式在随机点取值相同的概率 ≤ d / |F|。当 |F| ≈ 2²⁵⁶ 时，错误概率小到可以忽略。<br>这就是 <code>polynomial IOP · 多项式交互预言机证明</code>思想 —— 现代 SNARK / STARK 的共同骨架。' },
+  // Ch5
+  { ch: 5, title: 'zk-SNARK · Groth16', body: '<code>SNARK = Succinct Non-interactive ARgument of Knowledge · 简洁非交互知识论证</code>。<br>四个字拆开：<br>• <strong>S·Succinct</strong>：proof 极小（数百字节），verify 极快（毫秒级），与 witness 大小无关<br>• <strong>N·Non-interactive</strong>：一条 proof，谁都能离线验证（靠 Fiat-Shamir 或 CRS）<br>• <strong>AR·ARgument</strong>：仅对计算受限攻击者可靠（vs Proof，对无限算力可靠）<br>• <strong>K·of Knowledge</strong>：通过证明 ⟹ 真的拥有 witness（特殊可靠性）<br>2016 年的 <code>Groth16</code> 是工业宠儿：3 个群元素 ≈ 200 bytes，验证只需 3 次 pairing。代价：每条电路要做一次 <code>Trusted Setup · 可信初始化</code> 仪式，产出 CRS（Common Reference String）；仪式中产生的"toxic waste"必须被销毁，否则持有者能凭空伪造证明。<br>解决办法：用 <code>MPC ceremony</code>（多方计算仪式），多人轮流贡献随机性，只要有一人诚实销毁自己那份，CRS 就安全 —— Zcash Sapling 和 Filecoin 都办过千人级的仪式。<br>下一代如 <code>PLONK</code>、<code>Marlin</code> 用 <code>universal setup</code>，一次仪式可被所有电路复用，避免每加新电路都重新办仪式。' },
+  { ch: 5, title: 'zk-STARK · 文字对比卡', body: '<code>STARK = Scalable Transparent ARgument of Knowledge · 可扩展透明知识论证</code>，2018 年 Ben-Sasson 等人推出，从设计上摆脱 trusted setup。<br>核心机制：<br>• <strong>FRI · Fast Reed-Solomon IOP of Proximity</strong>：用 Reed-Solomon 编码 + Merkle 树证明多项式低次性<br>• 仅依赖 hash 函数（SHA-256 / Blake3 / Rescue），不需要 pairing 或离散对数假设<br>• 因此 <strong>post-quantum 安全</strong>：量子计算机来了也不破<br><strong>SNARK vs STARK 详细对比：</strong><br><table><tr><th>维度</th><th>zk-SNARK (Groth16/PLONK)</th><th>zk-STARK</th></tr><tr><td>Trusted Setup</td><td>需要 (Groth16) 或 universal (PLONK)</td><td>无 · transparent</td></tr><tr><td>Proof 大小</td><td>~200 B – 几 KB</td><td>~50 KB – 几百 KB</td></tr><tr><td>Verifier 时间</td><td>~1–10 ms</td><td>~10–100 ms</td></tr><tr><td>Prover 时间</td><td>较快</td><td>稍慢</td></tr><tr><td>密码学假设</td><td>pairing / DLP</td><td>仅 hash</td></tr><tr><td>Post-quantum</td><td>否</td><td>是</td></tr><tr><td>主流实现</td><td>arkworks · circom · snarkjs · Halo2</td><td>Winterfell · StarkWare · RISC Zero · Plonky2</td></tr></table>选型直觉：链上空间紧 → SNARK；要无 setup / 抗量子 / 大电路 → STARK。' },
+  // Ch6
+  { ch: 6, title: 'Zcash 隐私交易', body: '2016 年上线的 Zcash 是 ZKP 在公链落地的第一个杀手级应用。<br>问题：比特币所有交易（from / to / amount）全公开，链上分析公司能轻易推断地址画像。<br>Zcash 的 <code>shielded transaction</code> 把这三个字段全部加密，但仍允许公网验证：<br>• <strong>余额守恒</strong>：input 总额 = output 总额（不能凭空印钱）<br>• <strong>没有双花</strong>：每个 input 用一次性 <code>nullifier</code> 标记，重用立刻被链拒绝<br>• <strong>所有权</strong>：Spender 真的持有那笔 note 的私钥<br>实现：每笔 input 是一个 <code>note commitment</code>（Pedersen-style），存进一棵全网共识的 <code>note commitment tree</code>（增量 Merkle 树）；交易里附一个 zk-SNARK 证明"我知道某棵树叶子的 opening + 满足上述约束"。<br>升级路线：Sprout（BCTV14） → Sapling（Groth16 + Jubjub 曲线，proof 200B、prove 几秒） → Orchard（Halo2，无 trusted setup）。<br>设计教训：第一代 Sprout 因 BCTV14 论文里一个细节漏洞，导致 2018 年发现了"无限通胀"漏洞 —— ZKP 工程对实现细节极度敏感。' },
+  { ch: 6, title: 'ZK-Rollup + DECO', body: '两个最近五年最吃香的 ZKP 工业应用：<br><br><strong>ZK-Rollup（L2 扩容）</strong><br>以太坊主网每秒只能处理 ~15 笔交易、gas 贵。L2 方案把 1000 笔交易在链下批量执行，只把 (旧状态根, 新状态根, zk-SNARK 证明) 上交 L1。L1 一次 verify 就确认整批合法。<br>对比 <code>optimistic rollup</code>（先信后挑战，要等 7 天 challenge window），<code>validity rollup</code>（= ZK-Rollup）即时 finality，且天然抗 censorship。<br>代表：zkSync · StarkNet · Polygon zkEVM · Scroll · Linea。Vitalik 称之为以太坊扩容的"endgame"。<br><br><strong>DECO（隐私预言机，Chainlink）</strong><br>区块链合约想用链下数据（"老王银行账户余额 ≥ 100 万"），但又不想公开余额。DECO 让 user 和 oracle 节点跑一段三方 TLS 改造协议：oracle 拿到来自 HTTPS 服务器的<strong>响应密文 + 一个零知识证明"该响应满足某条件"</strong>，原始数据不上链，证明上链。<br>这把 ZKP 的应用从纯加密货币延展到 DeFi 信用、去中心化身份、合规、保险定价等场景。论文出处：Ari Juels et al. 2020；产品集成在 Chainlink 数据预言机网络。' },
+  { ch: 6, title: '🎉 回望与下一步', body: '走完 17 步，你手里已经握着一张完整的 ZKP 拼图：<br>① 直觉（Ali Baba 洞穴）<br>② 三大性质（Completeness / Soundness / Zero-Knowledge）<br>③ Schnorr 协议（commit-challenge-response + Special Soundness + 抽 witness）<br>④ Fiat–Shamir 变换（交互 → 非交互）<br>⑤ Pedersen Commitment（hiding + binding 信封）<br>⑥ 算术化（电路 → R1CS → 多项式 + Schwartz-Zippel）<br>⑦ SNARK（Groth16，trusted setup，~200 B proof） vs STARK（FRI，transparent，post-quantum）<br>⑧ 应用（Zcash 隐私交易 / ZK-Rollup 扩容 / DECO 隐私预言机）<br><br><strong>继续学习路线：</strong><br>• 教科书：Justin Thaler 《Proofs, Arguments, and Zero-Knowledge》（免费 PDF，公认最完整入门）<br>• 实战：arkworks 教程、circom + snarkjs、Plonky2 / Halo2 demo<br>• 社群：ZK Hack、ZK Whiteboard Sessions、IACR ePrint<br>• 项目：跟一个 zkVM（RISC Zero / SP1 / Jolt）跑通"hello, ZK"<br><br>想分享某一步给朋友？直接复制当前 URL，对方打开就停在同一步。' },
+];
+
+const TOTAL = STEPS.length; // 17
+
+/* ============================================================
+   STEP_EXTRAS: 每步对应的『延伸阅读 + Rust 骨架』
+   refs: 权威外站索引 (论文 / Wikipedia / RFC / Chainlink)
+   code: Rust 实现骨架 (使用 arkworks / RustCrypto 生态)
+   注意: 代码字符串中 < > 必须写成 &lt; &gt; (innerHTML 注入)
+   ============================================================ */
+const STEP_EXTRAS = {
+  1: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Zero-knowledge_proof', title: 'Zero-knowledge proof · Wikipedia', note: '一句话定义 + 历史脉络' },
+      { url: 'https://chain.link/education/zero-knowledge-proof-zkp', title: 'Chainlink · ZKP 教育页', note: '面向开发者的直观介绍' },
+      { url: 'https://en.wikipedia.org/wiki/Interactive_proof_system', title: 'Interactive Proof System · Wikipedia', note: 'Prover / Verifier 的形式化框架' },
+    ],
+    code: `<span class="cm">// Cargo.toml:</span>
+<span class="cm">// ark-bn254  = "0.4"</span>
+<span class="cm">// ark-ff     = "0.4"</span>
+<span class="cm">// ark-ec     = "0.4"</span>
+<span class="cm">// sha2       = "0.10"</span>
+<span class="cm">// hkdf       = "0.12"</span>
+<span class="cm">// rand_core  = { version = "0.6", features = ["std"] }</span>
+
+<span class="cm">// 角色雏形 —— 接下来 17 步会逐步填实</span>
+<span class="kw">struct</span> <span class="ty">Prover</span>;
+<span class="kw">struct</span> <span class="ty">Verifier</span>;`
+  },
+  2: {
+    refs: [
+      { url: 'https://link.springer.com/chapter/10.1007/0-387-34805-0_60', title: 'Quisquater 1990 · Ali Baba 论文', note: 'How to Explain ZKP to Your Children' },
+      { url: 'https://en.wikipedia.org/wiki/Zero-knowledge_proof#The_Ali_Baba_cave', title: 'Ali Baba cave · Wikipedia 章节' },
+      { url: 'https://www.youtube.com/watch?v=OcmvMs4AMbM', title: 'Ali Baba 洞穴动画讲解', note: '3 分钟入门' },
+    ],
+    code: `<span class="cm">// 用 OsRng 模拟 Verifier 的硬币</span>
+<span class="kw">use</span> rand_core::{OsRng, RngCore};
+
+<span class="kw">enum</span> <span class="ty">Path</span> { A, B }
+
+<span class="kw">fn</span> <span class="fn">random_path</span>() -&gt; <span class="ty">Path</span> {
+    <span class="kw">if</span> OsRng.next_u32() &amp; 1 == 0 { <span class="ty">Path</span>::A } <span class="kw">else</span> { <span class="ty">Path</span>::B }
+}
+
+<span class="cm">// 一轮挑战：返回 Prover 是否走对</span>
+<span class="kw">fn</span> <span class="fn">one_round</span>(knows_password: <span class="ty">bool</span>) -&gt; <span class="ty">bool</span> {
+    <span class="kw">let</span> challenge = random_path();
+    <span class="kw">let</span> entered  = random_path();
+    knows_password || matches!((entered, challenge),
+        (<span class="ty">Path</span>::A, <span class="ty">Path</span>::A) | (<span class="ty">Path</span>::B, <span class="ty">Path</span>::B))
+}`
+  },
+  3: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Proof_of_knowledge#Completeness', title: 'Completeness · Wikipedia' },
+      { url: 'https://crypto.stanford.edu/cs355/19sp/lec5.pdf', title: 'Stanford CS355 · ZK 形式化定义', note: 'lecture notes，含 ε 取值讨论' },
+    ]
+  },
+  4: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Soundness', title: 'Soundness · Wikipedia' },
+      { url: 'https://en.wikipedia.org/wiki/Statistical_distance', title: 'Statistical vs Computational Soundness', note: '两种可靠性的差别' },
+    ],
+    code: `<span class="cm">// 模拟"作弊 Prover" —— 每轮蒙对的概率 = 1/2^bits</span>
+<span class="kw">use</span> rand_core::{OsRng, RngCore};
+
+<span class="kw">fn</span> <span class="fn">cheating_prover_run</span>(rounds: <span class="ty">u32</span>, bits: <span class="ty">u32</span>) -&gt; <span class="ty">f64</span> {
+    <span class="kw">let</span> trials = 10_000<span class="ty">u32</span>;
+    <span class="kw">let</span> <span class="kw">mut</span> wins = 0<span class="ty">u32</span>;
+    <span class="kw">for</span> _ <span class="kw">in</span> 0..trials {
+        <span class="kw">let</span> <span class="kw">mut</span> ok = <span class="kw">true</span>;
+        <span class="kw">for</span> _ <span class="kw">in</span> 0..rounds {
+            <span class="kw">let</span> mask = (1<span class="ty">u32</span> &lt;&lt; bits) - 1;
+            <span class="kw">if</span> OsRng.next_u32() &amp; mask != 0 { ok = <span class="kw">false</span>; <span class="kw">break</span>; }
+        }
+        <span class="kw">if</span> ok { wins += 1; }
+    }
+    wins <span class="kw">as</span> <span class="ty">f64</span> / trials <span class="kw">as</span> <span class="ty">f64</span>
+    <span class="cm">// rounds=10, bits=1 → ≈ 0.001 ≈ 2^-10</span>
+}`
+  },
+  5: {
+    refs: [
+      { url: 'https://groups.csail.mit.edu/cis/pubs/shafi/1985-stoc.pdf', title: 'Goldwasser–Micali–Rackoff 1985 原始论文', note: 'ZK / IP 的奠基之作' },
+      { url: 'https://en.wikipedia.org/wiki/Zero-knowledge_proof#Definition', title: 'ZK 形式化定义 · Wikipedia' },
+      { url: 'https://www.wisdom.weizmann.ac.il/~oded/PSX/zk-tut02v4.pdf', title: 'Goldreich · ZK 教程', note: 'Simulator paradigm 完整讲法' },
+    ],
+    code: `<span class="cm">// Simulator 接口：不知道 witness 也能造出"看似真"的 transcript</span>
+<span class="kw">struct</span> <span class="ty">Transcript</span> {
+    commit:   <span class="ty">Vec</span>&lt;<span class="ty">u8</span>&gt;,
+    challenge: <span class="ty">Vec</span>&lt;<span class="ty">u8</span>&gt;,
+    response:  <span class="ty">Vec</span>&lt;<span class="ty">u8</span>&gt;,
+}
+
+<span class="kw">trait</span> <span class="ty">Simulator</span> {
+    <span class="cm">// 输出与真实 Prover-Verifier 对话分布不可区分</span>
+    <span class="kw">fn</span> <span class="fn">fake_transcript</span>(&amp;<span class="kw">self</span>, public_input: &amp;[<span class="ty">u8</span>]) -&gt; <span class="ty">Transcript</span>;
+}
+
+<span class="cm">// 存在这样的 S → Verifier 从真对话能学到的 = 从假对话能学到的 = 0</span>`
+  },
+  6: {
+    refs: [
+      { url: 'https://link.springer.com/chapter/10.1007/0-387-34805-0_22', title: 'Schnorr 1989 原始论文', note: 'Efficient Identification and Signatures for Smart Cards' },
+      { url: 'https://en.wikipedia.org/wiki/Schnorr_signature', title: 'Schnorr 签名 · Wikipedia' },
+      { url: 'https://en.wikipedia.org/wiki/Discrete_logarithm', title: '离散对数问题 (DLP) · Wikipedia' },
+      { url: 'https://docs.rs/ark-bn254/', title: 'ark-bn254 crate · pairing-friendly 曲线' },
+    ],
+    code: `<span class="cm">// Cargo.toml: ark-bn254 = "0.4", ark-ff = "0.4", ark-ec = "0.4"</span>
+<span class="kw">use</span> ark_bn254::{G1Projective, Fr};
+<span class="kw">use</span> ark_ec::Group;
+<span class="kw">use</span> ark_ff::UniformRand;
+<span class="kw">use</span> rand_core::OsRng;
+
+<span class="cm">// Step 1: Prover 选随机 r，发出 t = g^r</span>
+<span class="kw">fn</span> <span class="fn">commit</span>(g: <span class="ty">G1Projective</span>) -&gt; (<span class="ty">Fr</span>, <span class="ty">G1Projective</span>) {
+    <span class="kw">let</span> r = <span class="ty">Fr</span>::rand(&amp;<span class="kw">mut</span> OsRng);
+    (r, g * r)   <span class="cm">// (witness 用 r, 公开 t = g^r)</span>
+}
+
+<span class="cm">// Step 3: Prover 算 s = r + c·x</span>
+<span class="kw">fn</span> <span class="fn">response</span>(r: <span class="ty">Fr</span>, c: <span class="ty">Fr</span>, x: <span class="ty">Fr</span>) -&gt; <span class="ty">Fr</span> {
+    r + c * x
+}`
+  },
+  7: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Sigma_protocol', title: 'Σ-protocol · Wikipedia', note: '通用三步握手框架' },
+      { url: 'https://crypto.stanford.edu/cs355/19sp/lec5.pdf', title: 'Stanford · Schnorr 安全归约', note: '一行 verify 等式怎么蕴含 soundness' },
+    ],
+    code: `<span class="kw">use</span> ark_bn254::{G1Projective, Fr};
+<span class="kw">use</span> ark_ec::Group;
+
+<span class="cm">// Verifier 的全部工作：检查 g^s ?= t · h^c</span>
+<span class="cm">// 在加法群里写作 g·s == t + h·c</span>
+<span class="kw">fn</span> <span class="fn">verify</span>(g: <span class="ty">G1Projective</span>,
+              h: <span class="ty">G1Projective</span>,
+              t: <span class="ty">G1Projective</span>,
+              c: <span class="ty">Fr</span>,
+              s: <span class="ty">Fr</span>) -&gt; <span class="ty">bool</span>
+{
+    g * s == t + h * c
+}
+
+<span class="cm">// 一行公式同时蕴含 completeness 与 (computational) soundness</span>`
+  },
+  8: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Proof_of_knowledge', title: 'Proof of Knowledge · Wikipedia' },
+      { url: 'https://www.iacr.org/archive/crypto2006/41170016/41170016.pdf', title: 'Special Soundness 形式化', note: 'Bellare–Goldreich' },
+    ],
+    code: `<span class="kw">use</span> ark_bn254::Fr;
+<span class="kw">use</span> ark_ff::Field;
+
+<span class="cm">// Knowledge Extractor：拿同一个 t 对应的两组 (c, s) 抽出 witness x</span>
+<span class="kw">fn</span> <span class="fn">extract</span>(c1: <span class="ty">Fr</span>, s1: <span class="ty">Fr</span>,
+               c2: <span class="ty">Fr</span>, s2: <span class="ty">Fr</span>) -&gt; <span class="ty">Fr</span>
+{
+    <span class="kw">let</span> ds = s1 - s2;
+    <span class="kw">let</span> dc = c1 - c2;
+    ds * dc.inverse().unwrap()    <span class="cm">// = x  (mod q)</span>
+}
+
+<span class="cm">// 这是 Σ-protocol 的"特殊可靠性"：</span>
+<span class="cm">// 能成功通过两次的 Prover ⟹ 真的拥有 x</span>`
+  },
+  9: {
+    refs: [
+      { url: 'https://link.springer.com/chapter/10.1007/3-540-47721-7_12', title: 'Fiat–Shamir 1986 原始论文', note: 'How to prove yourself' },
+      { url: 'https://en.wikipedia.org/wiki/Fiat%E2%80%93Shamir_heuristic', title: 'Fiat-Shamir heuristic · Wikipedia' },
+      { url: 'https://en.wikipedia.org/wiki/Random_oracle', title: 'Random Oracle Model · Wikipedia' },
+      { url: 'https://eprint.iacr.org/2023/691.pdf', title: 'Weak Fiat-Shamir 攻击综述', note: '少 hash 一项的真实漏洞案例' },
+    ],
+    code: `<span class="cm">// Cargo.toml: sha2 = "0.10", ark-serialize = "0.4"</span>
+<span class="kw">use</span> sha2::{Sha256, Digest};
+<span class="kw">use</span> ark_bn254::{G1Projective, Fr};
+<span class="kw">use</span> ark_ff::PrimeField;
+<span class="kw">use</span> ark_serialize::CanonicalSerialize;
+
+<span class="cm">// Fiat-Shamir: c = H(g, h, t)  —— transcript 必须包含全部 public input</span>
+<span class="kw">fn</span> <span class="fn">challenge</span>(g: &amp;<span class="ty">G1Projective</span>,
+                 h: &amp;<span class="ty">G1Projective</span>,
+                 t: &amp;<span class="ty">G1Projective</span>) -&gt; <span class="ty">Fr</span>
+{
+    <span class="kw">let</span> <span class="kw">mut</span> hasher = Sha256::new();
+    <span class="kw">let</span> <span class="kw">mut</span> buf = <span class="ty">Vec</span>::&lt;<span class="ty">u8</span>&gt;::new();
+    g.serialize_compressed(&amp;<span class="kw">mut</span> buf).unwrap(); hasher.update(&amp;buf);
+    buf.clear();
+    h.serialize_compressed(&amp;<span class="kw">mut</span> buf).unwrap(); hasher.update(&amp;buf);
+    buf.clear();
+    t.serialize_compressed(&amp;<span class="kw">mut</span> buf).unwrap(); hasher.update(&amp;buf);
+    <span class="ty">Fr</span>::from_le_bytes_mod_order(&amp;hasher.finalize())
+}`
+  },
+  10: {
+    refs: [
+      { url: 'https://link.springer.com/chapter/10.1007/3-540-46766-1_9', title: 'Pedersen 1991 原始论文', note: 'Non-Interactive and Information-Theoretic Secure VSS' },
+      { url: 'https://en.wikipedia.org/wiki/Commitment_scheme', title: 'Commitment Scheme · Wikipedia' },
+      { url: 'https://crypto.stanford.edu/~dabo/cryptobook/BonehShoup_0_5.pdf', title: 'Boneh–Shoup 教科书 §8 · Commitments' },
+    ],
+    code: `<span class="kw">use</span> ark_bn254::{G1Projective, Fr};
+<span class="kw">use</span> ark_ec::Group;
+
+<span class="kw">struct</span> <span class="ty">Pedersen</span> {
+    g: <span class="ty">G1Projective</span>,
+    h: <span class="ty">G1Projective</span>,    <span class="cm">// h 的离散对数 log_g(h) 没人知道</span>
+}
+
+<span class="kw">impl</span> <span class="ty">Pedersen</span> {
+    <span class="cm">// 隐藏 x，盲化因子 r</span>
+    <span class="kw">fn</span> <span class="fn">commit</span>(&amp;<span class="kw">self</span>, x: <span class="ty">Fr</span>, r: <span class="ty">Fr</span>) -&gt; <span class="ty">G1Projective</span> {
+        <span class="kw">self</span>.g * x + <span class="kw">self</span>.h * r    <span class="cm">// = g^x · h^r (加法群表示)</span>
+    }
+
+    <span class="cm">// 公开 (x, r)，让 Verifier 重算并比对</span>
+    <span class="kw">fn</span> <span class="fn">open</span>(&amp;<span class="kw">self</span>, c: <span class="ty">G1Projective</span>, x: <span class="ty">Fr</span>, r: <span class="ty">Fr</span>) -&gt; <span class="ty">bool</span> {
+        <span class="kw">self</span>.commit(x, r) == c
+    }
+}`
+  },
+  11: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/NP_(complexity)', title: 'NP 类与 witness · Wikipedia' },
+      { url: 'https://eprint.iacr.org/2013/879.pdf', title: 'GGPR13 · QAP / R1CS 原论文', note: 'Quadratic Arithmetic Programs' },
+      { url: 'https://docs.rs/ark-relations/', title: 'ark-relations crate · ConstraintSystem trait' },
+    ],
+    code: `<span class="cm">// Cargo.toml: ark-relations = "0.4", ark-r1cs-std = "0.4"</span>
+<span class="kw">use</span> ark_bn254::Fr;
+<span class="kw">use</span> ark_relations::r1cs::{ConstraintSystem, ConstraintSystemRef, SynthesisError};
+<span class="kw">use</span> ark_r1cs_std::{alloc::AllocVar, fields::fp::FpVar, eq::EqGadget};
+
+<span class="cm">// Toy 电路：证明"我知道 x 满足 x*x = y"</span>
+<span class="kw">fn</span> <span class="fn">build</span>(cs: <span class="ty">ConstraintSystemRef</span>&lt;<span class="ty">Fr</span>&gt;,
+             x: <span class="ty">Fr</span>, y: <span class="ty">Fr</span>) -&gt; <span class="ty">Result</span>&lt;(), <span class="ty">SynthesisError</span>&gt;
+{
+    <span class="kw">let</span> x_var = <span class="ty">FpVar</span>::new_witness(cs.clone(), || <span class="kw">Ok</span>(x))?;
+    <span class="kw">let</span> y_var = <span class="ty">FpVar</span>::new_input(cs.clone(),  || <span class="kw">Ok</span>(y))?;
+    (&amp;x_var * &amp;x_var).enforce_equal(&amp;y_var)?;   <span class="cm">// 一条 R1CS 约束</span>
+    <span class="kw">Ok</span>(())
+}`
+  },
+  12: {
+    refs: [
+      { url: 'https://en.wikipedia.org/wiki/Schwartz%E2%80%93Zippel_lemma', title: 'Schwartz–Zippel lemma · Wikipedia' },
+      { url: 'https://en.wikipedia.org/wiki/Lagrange_polynomial', title: 'Lagrange 插值 · Wikipedia' },
+      { url: 'https://eprint.iacr.org/2019/1021.pdf', title: 'PLONK · polynomial IOP 现代化', note: 'Gabizon–Williamson–Ciobotaru' },
+    ],
+    code: `<span class="cm">// Cargo.toml: ark-poly = "0.4"</span>
+<span class="kw">use</span> ark_bn254::Fr;
+<span class="kw">use</span> ark_ff::UniformRand;
+<span class="kw">use</span> ark_poly::{DenseUVPolynomial, polynomial::univariate::DensePolynomial,
+                Polynomial};
+<span class="kw">use</span> rand_core::OsRng;
+
+<span class="kw">fn</span> <span class="fn">spot_check</span>(p: &amp;<span class="ty">DensePolynomial</span>&lt;<span class="ty">Fr</span>&gt;) -&gt; <span class="ty">bool</span> {
+    <span class="kw">let</span> z = <span class="ty">Fr</span>::rand(&amp;<span class="kw">mut</span> OsRng);    <span class="cm">// Verifier 抽随机点 z</span>
+    p.evaluate(&amp;z) == <span class="ty">Fr</span>::from(0<span class="ty">u64</span>)
+    <span class="cm">// Schwartz–Zippel: P 是真零点 ⟹ 必通过</span>
+    <span class="cm">//                 P 不是零 ⟹ 误判概率 ≤ deg(P) / |Fr|</span>
+}`
+  },
+  13: {
+    refs: [
+      { url: 'https://eprint.iacr.org/2016/260.pdf', title: 'Groth 2016 原始论文', note: 'On the Size of Pairing-based Non-Interactive Arguments' },
+      { url: 'https://en.wikipedia.org/wiki/Non-interactive_zero-knowledge_proof', title: 'NIZK / SNARK · Wikipedia' },
+      { url: 'https://z.cash/technology/paramgen/', title: 'Zcash Sapling MPC ceremony 实录', note: 'trusted setup 现实操作' },
+      { url: 'https://eprint.iacr.org/2019/953.pdf', title: 'Marlin · universal setup', note: '一次仪式所有电路复用' },
+    ],
+    code: `<span class="cm">// Cargo.toml: ark-groth16 = "0.4", ark-snark = "0.4"</span>
+<span class="kw">use</span> ark_bn254::Bn254;
+<span class="kw">use</span> ark_groth16::Groth16;
+<span class="kw">use</span> ark_snark::SNARK;
+<span class="kw">use</span> rand_core::OsRng;
+
+<span class="cm">// 三步 API:</span>
+<span class="cm">// 1. setup → (proving_key, verifying_key)，是 trusted setup 的产物</span>
+<span class="kw">let</span> (pk, vk) = Groth16::&lt;Bn254&gt;::circuit_specific_setup(circuit.clone(), &amp;<span class="kw">mut</span> OsRng)?;
+
+<span class="cm">// 2. prove → 200 字节的 π = (A, B, C)</span>
+<span class="kw">let</span> proof = Groth16::&lt;Bn254&gt;::prove(&amp;pk, circuit, &amp;<span class="kw">mut</span> OsRng)?;
+
+<span class="cm">// 3. verify → 3 次 pairing，几毫秒</span>
+<span class="kw">let</span> ok = Groth16::&lt;Bn254&gt;::verify(&amp;vk, &amp;public_inputs, &amp;proof)?;
+
+<span class="cm">// proof.serialize_compressed(&amp;mut buf)?; → buf.len() ≈ 200</span>`
+  },
+  14: {
+    refs: [
+      { url: 'https://eprint.iacr.org/2018/046.pdf', title: 'Ben-Sasson 2018 · STARK 原论文', note: 'Scalable Transparent Arguments' },
+      { url: 'https://eprint.iacr.org/2017/134.pdf', title: 'FRI 协议原论文', note: 'Fast Reed-Solomon IOP of Proximity' },
+      { url: 'https://github.com/facebook/winterfell', title: 'Winterfell · 纯 Rust STARK 框架' },
+      { url: 'https://www.risczero.com/', title: 'RISC Zero · 通用 zkVM' },
+      { url: 'https://starkware.co/', title: 'StarkWare · STARK 商业化' },
+    ],
+    code: `<span class="cm">// Cargo.toml: winterfell = "0.8"</span>
+<span class="cm">// 仅依赖 hash 函数 (Blake3 / SHA-256)，不需要 pairing</span>
+<span class="kw">use</span> winterfell::{Air, AirContext, ProofOptions,
+                  StarkProof, FieldExtension, Prover, Trace};
+
+<span class="cm">// 1. 定义 AIR (Algebraic Intermediate Representation)</span>
+<span class="kw">struct</span> <span class="ty">MyAir</span> { context: <span class="ty">AirContext</span>&lt;<span class="ty">Self::BaseField</span>&gt; }
+
+<span class="kw">impl</span> <span class="ty">Air</span> <span class="kw">for</span> <span class="ty">MyAir</span> {
+    <span class="cm">// transition_constraints / boundary_constraints</span>
+    <span class="cm">// fn evaluate_transition&lt;E: FieldElement&gt;(...)</span>
+}
+
+<span class="cm">// 2. Prover 生成 trace + proof</span>
+<span class="cm">// let proof: StarkProof = prover.prove(trace)?;</span>
+
+<span class="cm">// 3. Verifier 端只需要相同的 hash 函数即可验证</span>
+<span class="cm">// winterfell::verify::&lt;MyAir, Blake3_256&gt;(proof, pub_inputs, opts)?;</span>`
+  },
+  15: {
+    refs: [
+      { url: 'https://z.cash/technology/zksnarks/', title: 'Zcash · zk-SNARK 技术页' },
+      { url: 'https://zips.z.cash/protocol/protocol.pdf', title: 'Zcash Protocol Specification (PDF)', note: 'Sapling / Orchard 完整规范' },
+      { url: 'https://eprint.iacr.org/2018/962.pdf', title: 'Sapling · Bowe et al.', note: 'Groth16 + Jubjub 曲线' },
+      { url: 'https://en.wikipedia.org/wiki/Zcash', title: 'Zcash · Wikipedia' },
+    ],
+    code: `<span class="cm">// 简化的 shielded transaction 结构</span>
+<span class="kw">use</span> ark_groth16::Proof;
+<span class="kw">use</span> ark_bn254::Bn254;
+
+<span class="kw">struct</span> <span class="ty">ShieldedTx</span> {
+    nullifier:  [<span class="ty">u8</span>; 32],     <span class="cm">// 防双花标记</span>
+    commitment: [<span class="ty">u8</span>; 32],     <span class="cm">// 新 note 的 Pedersen commitment</span>
+    proof:      <span class="ty">Proof</span>&lt;<span class="ty">Bn254</span>&gt;,
+}
+
+<span class="kw">impl</span> <span class="ty">ShieldedTx</span> {
+    <span class="cm">// anchor = 当前 note commitment tree 的根</span>
+    <span class="kw">fn</span> <span class="fn">verify</span>(&amp;<span class="kw">self</span>, anchor: [<span class="ty">u8</span>; 32]) -&gt; <span class="ty">bool</span> {
+        <span class="cm">// proof 证明: 我知道某叶子的 opening + balance + ownership</span>
+        <span class="cm">// nullifier 没在已用集合里 → 节点级查重</span>
+        <span class="kw">true</span> <span class="cm">// 占位</span>
+    }
+}`
+  },
+  16: {
+    refs: [
+      { url: 'https://vitalik.eth.limo/general/2021/01/05/rollup.html', title: 'Vitalik · An Incomplete Guide to Rollups', note: 'ZK vs Optimistic 详解' },
+      { url: 'https://ethereum.org/en/developers/docs/scaling/zk-rollups/', title: 'Ethereum · ZK-Rollups 官方文档' },
+      { url: 'https://chain.link/', title: 'Chainlink · 数据预言机网络主页' },
+      { url: 'https://research.chain.link/deco.pdf', title: 'DECO 原论文 · Juels et al. 2020', note: 'Liberating Web Data Using Decentralized Oracles' },
+    ],
+    code: `<span class="kw">use</span> ark_groth16::Proof;
+<span class="kw">use</span> ark_bn254::Bn254;
+
+<span class="cm">// === ZK-Rollup 侧 ===</span>
+<span class="kw">type</span> <span class="ty">StateRoot</span> = [<span class="ty">u8</span>; 32];
+
+<span class="kw">fn</span> <span class="fn">submit_batch</span>(prev_root: <span class="ty">StateRoot</span>,
+                    new_root:  <span class="ty">StateRoot</span>,
+                    proof:     <span class="ty">Proof</span>&lt;<span class="ty">Bn254</span>&gt;)
+    -&gt; <span class="ty">Result</span>&lt;(), <span class="ty">String</span>&gt;
+{
+    <span class="cm">// L1 合约 verify(proof, [prev_root, new_root]) 通过即接受</span>
+    <span class="kw">Ok</span>(())
+}
+
+<span class="cm">// === DECO 侧 ===</span>
+<span class="kw">struct</span> <span class="ty">Claim</span> { url: <span class="ty">String</span>, predicate: <span class="ty">String</span> }
+
+<span class="kw">fn</span> <span class="fn">deco_attest</span>(claim: &amp;<span class="ty">Claim</span>) -&gt; <span class="ty">Proof</span>&lt;<span class="ty">Bn254</span>&gt; {
+    <span class="cm">// 三方 TLS + ZKP：oracle 看不到原始数据，只输出 proof</span>
+    <span class="kw">unimplemented</span>!()
+}`
+  },
+  17: {
+    refs: [
+      { url: 'https://people.cs.georgetown.edu/jthaler/ProofsArgsAndZK.pdf', title: 'Justin Thaler · Proofs, Arguments, and Zero-Knowledge', note: '免费 PDF · 公认最完整入门书' },
+      { url: 'https://docs.rs/ark-relations', title: 'arkworks tutorials · ark-relations 文档' },
+      { url: 'https://github.com/arkworks-rs', title: 'arkworks · Rust ZKP 生态总入口' },
+      { url: 'https://zkhack.dev/', title: 'ZK Hack · 系列谜题 + workshop' },
+      { url: 'https://chain.link/education/zero-knowledge-proof-zkp', title: 'Chainlink · ZKP 教育页 (本教程出处)' },
+      { url: 'https://zkresear.ch/', title: 'ZK Research · 论文与社区导航' },
+    ],
+    code: `<span class="cm"># Cargo.toml · 本教程 17 步用到的全部 crate</span>
+[dependencies]
+<span class="cm"># —— 椭圆曲线 + 配对 ——</span>
+ark-bn254       = <span class="str">"0.4"</span>      <span class="cm"># pairing-friendly 曲线 BN254</span>
+ark-ec          = <span class="str">"0.4"</span>      <span class="cm"># 群运算抽象</span>
+ark-ff          = <span class="str">"0.4"</span>      <span class="cm"># 有限域元素</span>
+ark-serialize   = <span class="str">"0.4"</span>      <span class="cm"># 标准序列化 (Fiat-Shamir 用)</span>
+
+<span class="cm"># —— R1CS / 算术化 ——</span>
+ark-relations   = <span class="str">"0.4"</span>      <span class="cm"># ConstraintSystem trait</span>
+ark-r1cs-std    = <span class="str">"0.4"</span>      <span class="cm"># 高层 gadget (FpVar 等)</span>
+ark-poly        = <span class="str">"0.4"</span>      <span class="cm"># DensePolynomial + 求值</span>
+
+<span class="cm"># —— SNARK 框架 ——</span>
+ark-groth16     = <span class="str">"0.4"</span>      <span class="cm"># Groth16 SNARK</span>
+ark-snark       = <span class="str">"0.4"</span>      <span class="cm"># SNARK trait</span>
+
+<span class="cm"># —— STARK 框架 ——</span>
+winterfell      = <span class="str">"0.8"</span>      <span class="cm"># 纯 Rust STARK 实现</span>
+
+<span class="cm"># —— 通用密码学工具 ——</span>
+sha2            = <span class="str">"0.10"</span>     <span class="cm"># Fiat-Shamir 哈希</span>
+hkdf            = <span class="str">"0.12"</span>     <span class="cm"># 派生确定性挑战</span>
+rand_core       = { version = <span class="str">"0.6"</span>, features = [<span class="str">"std"</span>] }`
+  },
+};
+
+function renderExtras(step) {
+  const el = document.getElementById('extras');
+  const extra = STEP_EXTRAS[step] || {};
+  let html = '';
+
+  if (extra.refs && extra.refs.length) {
+    html += '<div class="extras-card refs"><h4>📚 延伸阅读 · 原理出处</h4><ul>';
+    for (const r of extra.refs) {
+      const note = r.note ? `<span class="ref-note">— ${r.note}</span>` : '';
+      html += `<li><a href="${r.url}" target="_blank" rel="noopener">${r.title}</a>${note}</li>`;
+    }
+    html += '</ul></div>';
+  }
+
+  if (extra.code) {
+    html += `<div class="extras-card code"><h4>🦀 Rust 骨架</h4><pre>${extra.code}</pre></div>`;
+  }
+
+  // Single-card → stretch full width; both cards → keep 2-col grid
+  el.classList.toggle('two-col', !!(extra.refs && extra.refs.length && extra.code));
+  el.innerHTML = html;
+}
+
+// Build dots in sidebar
+function buildDots() {
+  const groups = {};
+  STEPS.forEach((s, i) => {
+    (groups[s.ch] ||= []).push(i + 1);
+  });
+  Object.entries(groups).forEach(([ch, steps]) => {
+    const wrap = document.querySelector(`.dots[data-ch-dots="${ch}"]`);
+    if (!wrap) return;
+    steps.forEach(n => {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.dataset.step = n;
+      d.title = `Step ${n}`;
+      d.addEventListener('click', () => goTo(n));
+      wrap.appendChild(d);
+    });
+  });
+}
+
+let currentStep = 1;
+
+function goTo(step) {
+  step = Math.max(1, Math.min(TOTAL, step));
+  currentStep = step;
+  const cur = STEPS[step - 1];
+
+  // Activate the right chapter SVG
+  document.querySelectorAll('.chapter-svg').forEach(svg => {
+    svg.classList.toggle('active', +svg.dataset.ch === cur.ch);
+  });
+
+  // Apply visibility to all data-step elements
+  document.querySelectorAll('[data-step]').forEach(el => {
+    const start = +el.dataset.step;
+    const end = el.dataset.stepEnd ? +el.dataset.stepEnd : 999;
+    const visible = step >= start && step <= end;
+    // Defer to next frame so transition triggers
+    requestAnimationFrame(() => el.classList.toggle('visible', visible));
+  });
+
+  // Update header
+  document.getElementById('header-ch').textContent = 'CH' + cur.ch;
+  document.getElementById('header-title').textContent = cur.title;
+  document.getElementById('header-counter').textContent = `Step ${step} / ${TOTAL}`;
+
+  // Update caption
+  document.getElementById('caption-title').textContent = cur.title;
+  document.getElementById('caption-body').innerHTML = cur.body;
+
+  // Render references + rust code
+  renderExtras(step);
+
+  // Update dots (active / read)
+  document.querySelectorAll('.dot').forEach(d => {
+    const n = +d.dataset.step;
+    d.classList.toggle('active', n === step);
+    d.classList.toggle('read', n < step);
+  });
+
+  // Update controls
+  document.getElementById('btn-prev').disabled = step === 1;
+  document.getElementById('btn-next').disabled = step === TOTAL;
+
+  // Sync URL
+  if (history.replaceState) {
+    history.replaceState(null, '', '#step-' + step);
+  } else {
+    location.hash = 'step-' + step;
+  }
+}
+
+function initFromHash() {
+  const m = location.hash.match(/step-(\d+)/);
+  return m ? +m[1] : 1;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildDots();
+  goTo(initFromHash());
+
+  document.getElementById('btn-prev').addEventListener('click', () => goTo(currentStep - 1));
+  document.getElementById('btn-next').addEventListener('click', () => goTo(currentStep + 1));
+  document.getElementById('btn-replay').addEventListener('click', () => goTo(1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo(currentStep - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(currentStep + 1); }
+    if (e.key === 'Home')       { e.preventDefault(); goTo(1); }
+    if (e.key === 'End')        { e.preventDefault(); goTo(TOTAL); }
+  });
+
+  window.addEventListener('hashchange', () => {
+    const n = initFromHash();
+    if (n !== currentStep) goTo(n);
+  });
+});
+</script>
+</body>
+</html>
