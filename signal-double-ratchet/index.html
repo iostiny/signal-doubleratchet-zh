@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Double Ratchet · 双视角图谱</title>
+<meta name="description" content="Signal Double Ratchet 协议的两种讲法：零基础渐进 25 步交互教程，与老手深度 12 张架构图谱。">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page:        #fdfaf6;
+  --bg-card:        #ffffff;
+  --text-primary:   #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted:     #9ca3af;
+  --cherry:         #aa1141;
+  --cherry-deep:    #9a0036;
+  --cherry-pink:    #ea68b6;
+  --cherry-glass:   #fce4e4;
+  --cherry-soft:    #ffa6a6;
+  --teal:           #0e7490;
+  --teal-soft:      #cffafe;
+  --amber:          #b45309;
+  --amber-soft:     #fef3c7;
+  --green:          #15803d;
+  --violet:         #6d28d9;
+  --rule:           #e5e7eb;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans SC', 'JetBrains Mono', -apple-system, sans-serif;
+  background: var(--bg-page);
+  min-height: 100vh;
+  padding: 3rem 2rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+.container { max-width: 1100px; margin: 0 auto; }
+
+.hero {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid var(--cherry);
+}
+.hero-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.02em;
+}
+.hero-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.4rem;
+}
+.hero-meta {
+  display: inline-flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.hero-meta span {
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.intro {
+  max-width: 820px;
+  margin: 0 auto 3rem;
+  padding: 1.5rem 1.8rem;
+  background: linear-gradient(to right, #fff5f7, #ffffff, #fff5f7);
+  border-left: 4px solid var(--cherry);
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+.intro p { margin-bottom: 0.6rem; }
+.intro p:last-child { margin-bottom: 0; }
+.intro strong { color: var(--cherry); }
+.intro code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
+  margin-bottom: 3rem;
+}
+@media (max-width: 760px) {
+  .choice-grid { grid-template-columns: 1fr; }
+}
+.choice {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--bg-card);
+  border: 2px solid var(--rule);
+  border-radius: 16px;
+  padding: 1.8rem 1.8rem 1.6rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.choice:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(170, 17, 65, 0.10);
+}
+.choice.beginner { border-color: var(--cherry); }
+.choice.beginner:hover { border-color: var(--cherry-deep); }
+.choice.advanced { border-color: var(--teal); }
+.choice.advanced:hover { border-color: #0a5e76; }
+
+.choice-icon {
+  font-size: 2.6rem;
+  margin-bottom: 0.6rem;
+  line-height: 1;
+}
+.choice-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.02em;
+}
+.choice.beginner .choice-tag {
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+}
+.choice.advanced .choice-tag {
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+.choice-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.choice.beginner .choice-title { color: var(--cherry-deep); }
+.choice.advanced .choice-title { color: var(--teal); }
+
+.choice-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 0.9rem;
+}
+.choice-bullets {
+  list-style: none;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  margin-bottom: 1.1rem;
+}
+.choice-bullets li::before {
+  content: '·';
+  color: var(--cherry);
+  font-weight: 700;
+  margin-right: 0.5em;
+}
+.choice.advanced .choice-bullets li::before { color: var(--teal); }
+
+.choice-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+}
+.choice.beginner .choice-cta {
+  background: var(--cherry);
+  color: white;
+}
+.choice.advanced .choice-cta {
+  background: var(--teal);
+  color: white;
+}
+.choice:hover .choice-cta { transform: translateX(4px); }
+
+.lower-tips {
+  max-width: 820px;
+  margin: 0 auto 2rem;
+  padding: 1.2rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.lower-tips h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.5rem;
+}
+.lower-tips ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.lower-tips li::before {
+  content: '→';
+  color: var(--cherry);
+  margin-right: 0.5em;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+.footer a { color: var(--cherry); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="hero">
+    <h1 class="hero-title">Signal Double Ratchet</h1>
+    <p class="hero-subtitle">双棘轮加密协议 · 中文图谱与渐进教程</p>
+    <div class="hero-meta">
+      <span>双视角呈现</span>
+      <span>新手 → 老手</span>
+      <span>含 Rust 骨架</span>
+      <span>零依赖 · self-contained</span>
+    </div>
+  </div>
+
+  <div class="intro">
+    <p>
+      <strong>Signal Double Ratchet</strong> 是当今主流 E2E 加密通信协议（Signal、WhatsApp、Matrix、iMessage 等）的核心。
+      官方规范严谨但门槛较高；本仓库提供两套独立讲法，按读者水平挑一条路径。
+    </p>
+    <p>
+      两套图谱都是 <strong>self-contained HTML + SVG</strong>，无依赖、无构建，浏览器双击即看；
+      浅色主题（cream + cherry red），适合长时间阅读。
+    </p>
+  </div>
+
+  <div class="choice-grid">
+
+    <a class="choice beginner" href="./beginner/">
+      <div class="choice-icon">🐣</div>
+      <span class="choice-tag">FOR BEGINNERS · 零基础</span>
+      <h2 class="choice-title">渐进版 · 25 步交互教程</h2>
+      <p class="choice-desc">
+        每一步只引入一个新概念。从「明文裸奔」到「Double Ratchet 全景」，按 Next 按钮一步步推进，配键盘 ← / → 导航和 URL hash 同步。
+      </p>
+      <ul class="choice-bullets">
+        <li>6 章 25 步，约 30 分钟读完</li>
+        <li>每步附 📚 延伸阅读 + 🦀 Rust 骨架</li>
+        <li>完全不需要密码学背景</li>
+        <li>底部解说卡用大白话</li>
+      </ul>
+      <span class="choice-cta">从第 1 步开始 →</span>
+    </a>
+
+    <a class="choice advanced" href="./advanced/">
+      <div class="choice-icon">🎯</div>
+      <span class="choice-tag">FOR ENGINEERS · 已熟悉</span>
+      <h2 class="choice-title">深度版 · 11 张架构图谱</h2>
+      <p class="choice-desc">
+        面向已经熟悉 Signal 协议的工程师做 recall。一张图一个角度：全景、KDF 链、DH ping-pong、Double Ratchet FSM、乱序处理、X3DH、服务端契约。
+      </p>
+      <ul class="choice-bullets">
+        <li>11 张独立图谱，可按需跳读</li>
+        <li>含服务端视角与原子性契约</li>
+        <li>每张图配 takeaway 一句话结论</li>
+        <li>底部附 30 秒回顾 Reference 卡</li>
+      </ul>
+      <span class="choice-cta">浏览图谱总览 →</span>
+    </a>
+
+  </div>
+
+  <div class="lower-tips">
+    <h3>不确定该选哪一个？</h3>
+    <ul>
+      <li>没听过 ECDH / KDF / 棘轮 → 选 <strong>渐进版</strong></li>
+      <li>看过 Signal 论文或写过 X3DH 实现 → 选 <strong>深度版</strong></li>
+      <li>分享给同事 → 两个版本都可以；URL 后加 <code>#step-N</code> 可定位到具体步</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    Signal Protocol © Open Whisper Systems · 本仓库内容用 CC-BY 4.0 自由分享
+    · <a href="https://signal.org/docs/" target="_blank">官方规范</a>
+    · <a href="https://github.com/iostiny/signal-doubleratchet-zh" target="_blank">GitHub 源码</a>
+  </div>
+
+</div>
+</body>
+</html>

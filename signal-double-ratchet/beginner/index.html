@@ -1448,7 +1448,7 @@ body {
           <text x="550" y="362" text-anchor="middle" font-size="16" font-weight="700" fill="#9a0036">🎉 恭喜走完 25 步！</text>
           <text x="550" y="385" text-anchor="middle" font-size="12" class="label-slate">你已经理解了 Signal 协议的全部核心：对称加密 · ECDH · KDF · Symmetric ratchet · DH ratchet · X3DH</text>
           <text x="550" y="405" text-anchor="middle" font-size="11" class="label-muted">想要回顾任何一步？点左侧章节的圆点直接跳转。</text>
-          <text x="550" y="420" text-anchor="middle" font-size="11" class="label-muted">想看更深入的细节图谱？回到 ../diagrams/index.html 探索老手版 12 张图。</text>
+          <text x="550" y="420" text-anchor="middle" font-size="11" class="label-muted">想看更深入的细节图谱？回到 ../advanced/index.html 探索老手版 12 张图。</text>
         </g>
 
         <!-- Step headers -->
@@ -1513,7 +1513,7 @@ const STEPS = [
   { ch: 6, title: '全景时序', body: '把整个故事压缩成一张时序图：<br>① Bob 注册时上传 IK + SPK + OPK 池<br>② Alice 想发消息 → 向 Server 请求 Bob 的密钥包<br>③ Server 返回三件套（OPK 出队）<br>④ Alice 在本地做 X3DH → 得到 SharedSecret = RK₀<br>⑤ Alice 用 RK₀ 派生 CK 加密第 1 条，连同自己的公钥一起发<br>⑥ Server 暂存，等 Bob 上线后转发<br>⑦ Bob 上线后做镜像 X3DH 推出同一个 RK₀，解密；回复时 Double Ratchet ping-pong 启动' },
   { ch: 6, title: '数据可见性边界', body: 'Server 在整个流程中能看到什么？<br>• ✓ 公钥（IK、SPK、OPK 都是设计上公开的）<br>• ✓ 密文（要转发啊）<br>• ✓ 元数据：谁在跟谁聊、什么时候<br>• ✗ 任何私钥<br>• ✗ SharedSecret / RK / CK / MK<br>• ✗ 任何明文<br>这就是端到端加密的边界。元数据隐私是另一个问题，需要 <code>Sealed Sender</code> 等额外机制。' },
   { ch: 6, title: 'FS 和 PCS', body: 'Signal 提供的两个核心安全保证：<br>① <strong>Forward Secrecy (前向保密)</strong>：现在被入侵，<strong>过去</strong>的消息仍安全。来自 KDF 链的单向性（Ch3）。<br>② <strong>Post-Compromise Security (后向恢复)</strong>：现在被入侵，<strong>未来</strong>过几次 DH 后重新安全。来自 DH ratchet 注入的新鲜性（Ch4）。<br>这两个性质是 Signal 区别于一般加密通信的关键 —— 即使长期密钥泄漏，损失也是有边界的。' },
-  { ch: 6, title: '🎉 关键密钥速查 · 完成', body: '8 个关键密钥的语义和生命周期。<br>看到这一步，你已经掌握了 Signal Double Ratchet 的全部核心思想。<br>想深入到具体的乱序消息处理、CK/MK 内部细节、Server 的原子性实现？<br>👉 回到 <code>../diagrams/index.html</code> 探索老手版 12 张深度图。<br>想分享某一步给朋友？直接复制当前 URL，对方打开就停在同一步。' },
+  { ch: 6, title: '🎉 关键密钥速查 · 完成', body: '8 个关键密钥的语义和生命周期。<br>看到这一步，你已经掌握了 Signal Double Ratchet 的全部核心思想。<br>想深入到具体的乱序消息处理、CK/MK 内部细节、Server 的原子性实现？<br>👉 回到 <code>../advanced/index.html</code> 探索老手版 12 张深度图。<br>想分享某一步给朋友？直接复制当前 URL，对方打开就停在同一步。' },
 ];
 
 const TOTAL = STEPS.length; // 25
