@@ -8,25 +8,47 @@
 
 ## 当前专题
 
-### 🔐 [Signal Double Ratchet · 双视角图谱](./signal-double-ratchet/)
+主入口 `index.html` 按三个分组组织：
 
-当今主流 E2E 加密协议的核心。两套讲法：
+### 01 · IM 安全通信
 
-- **🐣 [渐进版 · 25 步交互教程](./signal-double-ratchet/beginner/)** — 完全零基础，按 Next 一步一步推进，每步附 Rust 骨架代码与权威外链。
-- **🎯 [深度版 · 11 张架构图谱](./signal-double-ratchet/advanced/)** — 面向已熟悉 Signal 协议的工程师做 recall，含服务端契约。
+- 🔐 [**Signal Protocol · 中文图谱**](./signal-protocol/) — 三套讲法
+  - [渐进版 · 25 步交互教程](./signal-protocol/beginner/)：零基础推进 Double Ratchet，每步附 Rust 骨架与权威外链
+  - [深度版 · 11 张架构图谱](./signal-protocol/advanced/)：面向已熟悉 Signal 的工程师做 recall，含服务端契约
+  - [Sesame · 多设备会话管理](./signal-protocol/sesame/)：Signal 多设备分发模型
+- 🌀 [**Noise Protocol · 中文渐进图谱（Bitchat 视角）**](./noise-protocol/) — 以 Bitchat 实战切入 Noise Framework
+  - [渐进版教程](./noise-protocol/beginner/)
 
-涵盖：ECDH on Curve25519、KDF 链、Symmetric Ratchet、DH Ratchet、Double Ratchet FSM、乱序处理、X3DH 异步握手、OPK 生命周期、Forward Secrecy + Post-Compromise Security。
+### 02 · 区块链密码学
+
+- 🧮 [**Zero-Knowledge Proofs · 中文渐进图谱**](./zkp/) — 零知识证明、承诺方案、Schnorr 等
+  - [渐进版教程](./zkp/beginner/)
+
+### 03 · AGENT / LLM
+
+- 📄 [**AGENT 时代，Markdown 已死，HTML 当立**](./html-over-markdown/) — Thariq《Unreasonable Effectiveness of HTML》原文图谱与中文解读
 
 ## 仓库结构
 
 ```
 doc/
-├── index.html                 ← 主入口 (所有专题导航)
-├── signal-double-ratchet/     ← Signal 专题
-│   ├── index.html             ← 专题 landing
-│   ├── beginner/              ← 25 步渐进教程
-│   └── advanced/              ← 11 张架构图
-└── (future) more-topics/      ← 未来扩展
+├── index.html              ← 主入口 hub（三组导航）
+├── signal-protocol/        ← IM 安全通信 · Signal
+│   ├── index.html          ← 专题 landing
+│   ├── beginner/           ← 25 步渐进教程
+│   ├── advanced/           ← 11 张架构图
+│   └── sesame/             ← 多设备会话
+├── noise-protocol/         ← IM 安全通信 · Noise
+│   ├── index.html
+│   └── beginner/
+├── zkp/                    ← 区块链密码学
+│   ├── index.html
+│   └── beginner/
+├── html-over-markdown/     ← AGENT / LLM
+│   └── index.html
+├── docs/                   ← 仓库内部 playbook（不部署给读者）
+├── AGENTS.md               ← 给 AI 编码代理的项目指南
+└── CNAME                   ← doc.iottiny.top
 ```
 
 每个专题独立 self-contained，可单独下载离线查看。
@@ -36,6 +58,12 @@ doc/
 纯静态 HTML + SVG + 原生 JS + CSS Custom Properties。
 不引入 npm、构建链、SPA 框架。
 Google Fonts 是唯一外链。
+
+视觉基线：cream 底（`#fdfaf6`）+ cherry red 主调（`#aa1141`）。字体 Noto Sans SC + JetBrains Mono。
+
+## 贡献 / 二次创作
+
+新增专题、修订内容前请先读 [`AGENTS.md`](./AGENTS.md)，其中包含分组规则、主 hub 的 `.topic-card` 模板、专题内容设计原则（slider / details / mobile）以及已知陷阱。
 
 ## License
 
