@@ -12,14 +12,14 @@
 
 ### 01 · IM 安全通信
 
-- 🔐 [**Signal Protocol · 中文图谱**](./signal-protocol/) — 四套讲法
-  - [渐进版 · 25 步交互教程](./signal-protocol/beginner/)：零基础推进 Double Ratchet，每步附 Rust 骨架与权威外链
-  - [深度版 · 11 张架构图谱](./signal-protocol/advanced/)：面向已熟悉 Signal 的工程师做 recall，含服务端契约
-  - [Sesame · 多设备会话管理](./signal-protocol/sesame/)：Signal 多设备分发模型
-  - [PQXDH · 后量子演进图谱](./signal-protocol/pqxdh/)：从 X3DH 到 PQXDH (2023) 再到 SPQR / Triple Ratchet (2025)，含 harvest-now-decrypt-later 威胁模型、KEM ≠ DH 心智迁移、hybrid 安全论证
+- 🔐 [**E2EE 协议图谱 · Signal + Matrix**](./e2ee/) — 端到端加密协议族中文图谱（旧路径 `signal-protocol/` 已重命名）
+  - [渐进版 · 25 步交互教程](./e2ee/beginner/)：零基础推进 Double Ratchet，每步附 Rust 骨架与权威外链
+  - [深度版 · 11 张架构图谱](./e2ee/advanced/)：面向已熟悉 Signal 的工程师做 recall，含服务端契约
+  - [Sesame · 多设备会话管理](./e2ee/sesame/)：Signal 多设备分发模型
+  - [PQXDH · 后量子演进图谱](./e2ee/pqxdh/)：从 X3DH 到 PQXDH (2023) 再到 SPQR / Triple Ratchet (2025)，含 harvest-now-decrypt-later 威胁模型、KEM ≠ DH 心智迁移、hybrid 安全论证
+  - [Matrix · vodozemac 对照 Signal](./e2ee/matrix/)：以 vodozemac 0.10.0 源码为切入点的 Matrix 加密栈（Olm + Megolm）与 Signal 对照图谱——3DH vs X3DH（含 fallback key 修正）、Megolm vs Sender Keys、联邦威胁面、2.5 年 PQ 差距、"PQ-Olm" 推演设计
 - 🌀 [**Noise Protocol · 中文渐进图谱（Bitchat 视角）**](./noise-protocol/) — 以 Bitchat 实战切入 Noise Framework
   - [渐进版教程](./noise-protocol/beginner/)
-- 🟢 [**Matrix · vodozemac 对照 Signal**](./matrix-protocol/) — 以 vodozemac 0.10.0 源码为切入点的 Matrix 加密栈（Olm + Megolm）与 Signal 对照图谱：3DH vs X3DH（含 fallback key 修正）、Megolm vs Sender Keys、联邦威胁面、2.5 年 PQ 差距、"PQ-Olm" 推演设计
 
 ### 02 · 区块链密码学
 
@@ -35,17 +35,16 @@
 ```
 doc/
 ├── index.html              ← 主入口 hub（三组导航）
-├── signal-protocol/        ← IM 安全通信 · Signal
+├── e2ee/                   ← IM 安全通信 · E2EE 协议族 (Signal + Matrix)
 │   ├── index.html          ← 专题 landing
-│   ├── beginner/           ← 25 步渐进教程
+│   ├── beginner/           ← 25 步 DR 渐进教程
 │   ├── advanced/           ← 11 张架构图
-│   ├── sesame/             ← 多设备会话
-│   └── pqxdh/              ← 后量子演进 (PQXDH + SPQR)
+│   ├── sesame/             ← Signal 多设备会话
+│   ├── pqxdh/              ← Signal 后量子演进 (PQXDH + SPQR)
+│   └── matrix/             ← Matrix vodozemac 对照 Signal
 ├── noise-protocol/         ← IM 安全通信 · Noise
 │   ├── index.html
 │   └── beginner/
-├── matrix-protocol/        ← IM 安全通信 · Matrix (vodozemac 对照 Signal)
-│   └── index.html
 ├── zkp/                    ← 区块链密码学
 │   ├── index.html
 │   └── beginner/

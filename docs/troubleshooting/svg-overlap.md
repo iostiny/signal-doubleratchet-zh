@@ -1,7 +1,7 @@
 # SVG 撞图 / 覆盖问题排查
 
 > **何时翻这篇**：在浏览器里跑某个专题，发现 SVG 元素相互叠在一起 / 上一 step 的内容没消失 / 清屏后还有残留 / 跨 step 标签语义不符。
-> **不适用**：JS 控制器本身坏了（goTo 不响应、键盘失效、URL hash 没同步）—— 那是 controller bug，直接读 `signal-protocol/beginner/index.html` 末段 JS 对照。
+> **不适用**：JS 控制器本身坏了（goTo 不响应、键盘失效、URL hash 没同步）—— 那是 controller bug，直接读 `e2ee/beginner/index.html` 末段 JS 对照。
 
 ## 背景假设
 

@@ -10,7 +10,7 @@
 doc/
 ├── index.html                 ← 主入口 hub：按三组列出所有专题卡
 ├── README.md / AGENTS.md / CLAUDE.md / CNAME / .gitignore
-├── signal-protocol/           ← IM 安全通信组
+├── e2ee/                      ← IM 安全通信组（Signal 主线 + Matrix 对照）
 ├── noise-protocol/            ← IM 安全通信组
 ├── zkp/                       ← 区块链密码学组
 └── html-over-markdown/        ← AGENT / LLM 组
@@ -123,7 +123,7 @@ doc/
 
 ### README.md 必须随内容同步
 
-任何对外可见的新增内容——**新专题**、**既有专题下的新子页**（如 `signal-protocol/sesame/`）、**专题改名 / 移动 / 删除**——都必须**同一次提交**里同步更新仓库根 `README.md` 的「当前专题」列表与「仓库结构」目录树。判断标准：用户从 GitHub 看 README 时能否准确找到所有可读内容。允许仅修内文（错别字、措辞、Rust 骨架等）不动 README；只要目录结构 / 可见入口变了就必须改。
+任何对外可见的新增内容——**新专题**、**既有专题下的新子页**（如 `e2ee/sesame/`）、**专题改名 / 移动 / 删除**——都必须**同一次提交**里同步更新仓库根 `README.md` 的「当前专题」列表与「仓库结构」目录树。判断标准：用户从 GitHub 看 README 时能否准确找到所有可读内容。允许仅修内文（错别字、措辞、Rust 骨架等）不动 README；只要目录结构 / 可见入口变了就必须改。
 
 ## 专题内容设计原则（基于"HTML 之力"对照自审）
 
@@ -196,12 +196,16 @@ Thariq 文中的 5 大用例（spec / code review / design / report / custom edi
 - [ ] mobile：除主断点外，主 SVG 在 ≤600px 可读
 - [ ] 视觉一致：cherry + cream 主调、JetBrains Mono 代码、cherry-glass 卡片底色
 
-## Signal Protocol 专题（`signal-protocol/`）
+## E2EE 协议专题（`e2ee/`）
 
-当前唯一专题。Signal Protocol 的中文渐进图谱。两个子目录：
+主力专题。原 `signal-protocol/` 因纳入 Matrix 对照内容已重命名为 `e2ee/`（2026-05）。
+五个子目录：
 
-- `signal-protocol/beginner/index.html` — 单页 25 步交互教程
-- `signal-protocol/advanced/index.html` — 11 张独立架构图的总览 + `01..11-*.html` 11 个文件
+- `e2ee/beginner/index.html` — Signal DR 单页 25 步交互教程
+- `e2ee/advanced/index.html` — Signal 11 张独立架构图总览 + `01..11-*.html`
+- `e2ee/sesame/index.html` — Signal 多设备 13 步渐进教程
+- `e2ee/pqxdh/index.html` — Signal 后量子演进 (PQXDH + SPQR) 单页 5 章节
+- `e2ee/matrix/index.html` — Matrix vodozemac 对照 Signal 单页 5 章节
 
 ### 累积演进机制（`beginner/index.html` 的核心）
 
