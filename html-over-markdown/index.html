@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGENT 时代，Markdown 已死，HTML 当立 · 原文图谱</title>
+<meta name="description" content="Thariq《Using Claude Code: The Unreasonable Effectiveness of HTML》中文图谱化解读：Agent 时代输出格式从文本到 HTML 的转移、6 大优势、5 大用例、6 条 FAQ。">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page:        #fdfaf6;
+  --bg-card:        #ffffff;
+  --bg-soft:        #fffaf2;
+  --text-primary:   #1f2937;
+  --text-secondary: #4b5563;
+  --text-muted:     #9ca3af;
+  --cherry:         #aa1141;
+  --cherry-deep:    #9a0036;
+  --cherry-pink:    #ea68b6;
+  --cherry-glass:   #fce4e4;
+  --cherry-soft:    #ffd6df;
+  --slate:          #475569;
+  --slate-deep:     #334155;
+  --slate-soft:     #e2e8f0;
+  --slate-glass:    #f1f5f9;
+  --amber:          #b45309;
+  --amber-soft:     #fef3c7;
+  --teal:           #0e7490;
+  --teal-soft:      #cffafe;
+  --green:          #15803d;
+  --green-soft:     #dcfce7;
+  --violet:         #6d28d9;
+  --violet-soft:    #ede9fe;
+  --rule:           #e5e7eb;
+  --rule-soft:      #f1eee8;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.7;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 3rem 1.6rem 2rem;
+}
+
+/* ============ Top nav (返回链接) ============ */
+.topnav {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 2.2rem;
+}
+.topnav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--rule);
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.topnav a:hover { color: var(--cherry); border-bottom-color: var(--cherry); }
+.topnav .crumb { color: var(--cherry-pink); margin: 0 0.4em; }
+
+/* ============ Hero ============ */
+.hero {
+  text-align: center;
+  padding: 0.4rem 0 2rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 2.6rem;
+}
+.hero-tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  margin-bottom: 1.1rem;
+}
+.hero-title {
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+  margin-bottom: 0.7rem;
+  line-height: 1.25;
+}
+.hero-title .dead {
+  color: var(--slate);
+  text-decoration: line-through;
+  text-decoration-color: var(--slate-soft);
+  text-decoration-thickness: 2px;
+}
+.hero-title .rise { color: var(--cherry-deep); }
+.hero-subtitle {
+  font-size: 1.02rem;
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto 1.2rem;
+  line-height: 1.65;
+}
+.hero-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.hero-meta a {
+  color: var(--cherry);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+.hero-meta a:hover { border-bottom-color: var(--cherry); }
+.hero-meta .sep { color: var(--rule); margin: 0 0.5em; }
+
+/* ============ Intro 引子 ============ */
+.intro {
+  background: linear-gradient(to right, #fff5ea, #ffffff, #fff5ea);
+  border-left: 3px solid var(--amber);
+  border-radius: 8px;
+  padding: 1.3rem 1.6rem;
+  margin-bottom: 3rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+.intro p { margin-bottom: 0.6rem; }
+.intro p:last-child { margin-bottom: 0; }
+.intro strong { color: var(--amber); font-weight: 600; }
+.intro code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.86em;
+  background: var(--amber-soft);
+  color: var(--amber);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ============ Section ============ */
+.section { margin-bottom: 3.4rem; }
+.section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--cherry-pink);
+  margin-bottom: 0.3rem;
+}
+.section-h2 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.005em;
+}
+.section-lead {
+  font-size: 0.96rem;
+  color: var(--text-secondary);
+  max-width: 760px;
+  margin-bottom: 1.6rem;
+  line-height: 1.72;
+}
+.section-lead strong { color: var(--cherry-deep); font-weight: 600; }
+
+/* ============ Core split (核心命题分屏) ============ */
+.core-split {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 1.6rem 1.4rem 1.4rem;
+  box-shadow: 0 1px 3px rgba(170, 17, 65, 0.04);
+}
+.core-split svg { display: block; width: 100%; height: auto; }
+.core-split .caption {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 0.8rem;
+  letter-spacing: 0.03em;
+}
+
+/* ============ Advantage grid (6 大优势) ============ */
+.adv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 1.1rem;
+}
+.adv-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 1.2rem 1.2rem 1.1rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  display: flex;
+  flex-direction: column;
+}
+.adv-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(170, 17, 65, 0.08);
+  border-color: var(--cherry-soft);
+}
+.adv-card .adv-svg {
+  background: var(--bg-soft);
+  border-radius: 8px;
+  padding: 0.6rem;
+  margin-bottom: 0.9rem;
+  border: 1px solid var(--rule-soft);
+}
+.adv-card .adv-svg svg { display: block; width: 100%; height: auto; max-height: 110px; }
+.adv-card .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--cherry-pink);
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+.adv-card h3 {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.5rem;
+}
+.adv-card p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+/* ============ Use case list (5 大用例) ============ */
+.uc-list { display: flex; flex-direction: column; gap: 1.3rem; }
+.uc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+}
+.uc-svg {
+  background: linear-gradient(135deg, #fff5ea 0%, #ffffff 100%);
+  border-right: 1px solid var(--rule-soft);
+  padding: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.uc-svg svg { display: block; width: 100%; height: auto; }
+.uc-body { padding: 1.2rem 1.4rem 1.3rem; }
+.uc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--cherry-pink);
+  letter-spacing: 0.06em;
+}
+.uc-en {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  margin-left: 0.6rem;
+}
+.uc-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin: 0.15rem 0 0.55rem;
+}
+.uc-desc {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 0.9rem;
+}
+.uc-prompt {
+  background: var(--cherry-glass);
+  border-left: 3px solid var(--cherry);
+  padding: 0.75rem 0.9rem;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 0.65rem;
+}
+.uc-prompt .prompt-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.3rem;
+}
+.uc-prompt .prompt-body {
+  font-size: 0.86rem;
+  color: var(--text-primary);
+  line-height: 1.65;
+}
+.uc-original {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+}
+.uc-original summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  user-select: none;
+  padding: 2px 0;
+  transition: color 0.15s ease;
+}
+.uc-original summary:hover { color: var(--cherry); }
+.uc-original[open] summary { color: var(--cherry-deep); }
+.uc-original .orig-body {
+  margin-top: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  background: var(--slate-glass);
+  border-left: 3px solid var(--slate);
+  border-radius: 0 6px 6px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  color: var(--slate-deep);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+.uc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.uc-tags span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  letter-spacing: 0.02em;
+}
+
+/* ============ FAQ ============ */
+.faq-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 1rem;
+}
+.faq-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 1.05rem 1.15rem 1rem;
+}
+.faq-q {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  margin-bottom: 0.55rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+.faq-q .q-mark {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--cherry-pink);
+  flex-shrink: 0;
+}
+.faq-a {
+  font-size: 0.87rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.faq-a strong { color: var(--cherry-deep); font-weight: 600; }
+.faq-a code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: var(--amber-soft);
+  color: var(--amber);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============ Stay in loop (结尾) ============ */
+.stay-loop {
+  background: linear-gradient(135deg, #fff5ea 0%, #fce4e4 100%);
+  border-radius: 14px;
+  padding: 1.8rem 1.8rem;
+  margin-bottom: 2.6rem;
+  text-align: center;
+}
+.stay-loop .stay-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--cherry-deep);
+  margin-bottom: 0.7rem;
+}
+.stay-loop blockquote {
+  font-size: 1.02rem;
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-style: italic;
+  max-width: 720px;
+  margin: 0 auto 0.9rem;
+}
+.stay-loop blockquote::before { content: '"'; color: var(--cherry-pink); margin-right: 0.2em; }
+.stay-loop blockquote::after { content: '"'; color: var(--cherry-pink); margin-left: 0.2em; }
+.stay-loop .stay-cite {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+/* ============ Footer ============ */
+footer {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.5rem;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 0.85rem;
+}
+footer a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+footer a:hover {
+  color: var(--cherry);
+  border-bottom-color: var(--cherry);
+}
+footer .sep { color: var(--rule); user-select: none; }
+
+/* ============ Mobile ============ */
+@media (max-width: 720px) {
+  .container { padding: 2rem 1rem 1.5rem; }
+  .hero-title { font-size: 1.7rem; }
+  .hero-subtitle { font-size: 0.94rem; }
+  .section-h2 { font-size: 1.3rem; }
+  .uc-card { grid-template-columns: 1fr; }
+  .uc-svg { border-right: none; border-bottom: 1px solid var(--rule-soft); padding: 0.9rem; }
+  .stay-loop { padding: 1.4rem 1.1rem; }
+  .stay-loop blockquote { font-size: 0.96rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <nav class="topnav">
+    <a href="../index.html">← iostiny / doc</a>
+    <span class="crumb">/</span>
+    <span>AGENT / LLM</span>
+    <span class="crumb">/</span>
+    <span>html-over-markdown</span>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-tag">AGENT · HTML · 工作流转移</div>
+    <h1 class="hero-title">
+      AGENT 时代，<span class="dead">Markdown 已死</span>，<span class="rise">HTML 当立</span>
+    </h1>
+    <p class="hero-subtitle">
+      Thariq 原文《Using Claude Code: The Unreasonable Effectiveness of HTML》图谱化解读 · Anthropic Claude Code 团队的工作流转移
+    </p>
+    <p class="hero-meta">
+      原文 · <a href="https://x.com/trq212/status/2052809885763747935" target="_blank" rel="noopener">@trq212 · 2026-05-08</a>
+      <span class="sep">·</span>
+      10.9M 阅读
+      <span class="sep">·</span>
+      29.7K 收藏
+      <span class="sep">·</span>
+      示例库 <a href="https://thariqs.github.io/html-effectiveness/" target="_blank" rel="noopener">html-effectiveness</a>
+    </p>
+  </header>
+
+  <!-- ============================================================
+       Intro 引子
+       ============================================================ -->
+  <section class="intro">
+    <p><strong>原文背景</strong>：Thariq 是 Anthropic / Claude Code 团队成员。他观察到自己已经几乎不再亲自编辑 Markdown 文件——所有 spec / plan / review / report 都让 Claude 生成，自己只读和讨论。这一改变让 Markdown 失去了"易编辑"的核心优势，反而暴露出"信息密度低、不易分享、ASCII 画图丑陋"等结构性短板。</p>
+    <p>他给出的替代是 <code>HTML</code>——不是作为"网站源代码"，而是作为<strong>人机协作的中间媒介</strong>。本图谱按"命题 → 六大优势 → 五大用例 → FAQ → 结语"五段提炼原文核心，并对每个用例配上原文 prompt 的中文意译与英文原版（可折叠对照）。</p>
+  </section>
+
+  <!-- ============================================================
+       Section 1: 核心命题
+       ============================================================ -->
+  <section class="section">
+    <p class="section-title">① 命题</p>
+    <h2 class="section-h2">Agent 时代，输出格式从"易编辑"转向"易消费"</h2>
+    <p class="section-lead">
+      Markdown 是为<strong>人写人读</strong>设计的；现在文档是<strong>Agent 写、人读</strong>。"易编辑"已是被牺牲的优势，"信息密度 + 易消费 + 易分享 + 可交互"成为新的核心需求。下图沿四个维度对比两个时代下"Agent ↔ Human"通道的形态变化：
+    </p>
+
+    <div class="core-split">
+      <svg viewBox="0 0 1100 500" preserveAspectRatio="xMidYMid meet" aria-label="Markdown 时代 vs HTML 时代 Agent-Human 通道对比">
+        <defs>
+          <marker id="arr-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="arr-cherry" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+          <marker id="arr-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+        </defs>
+
+        <!-- 顶部 title -->
+        <text x="550" y="28" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="13" font-weight="600" fill="#4b5563">
+          MARKDOWN 旧时代 &nbsp;←&nbsp; AGENT ↔ HUMAN 通道 &nbsp;→&nbsp; HTML 新时代
+        </text>
+
+        <!-- 中央 AGENT 节点 -->
+        <circle cx="550" cy="250" r="48" fill="#ede9fe" stroke="#6d28d9" stroke-width="2.5"/>
+        <text x="550" y="246" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="15" fill="#6d28d9">AGENT</text>
+        <text x="550" y="266" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#6d28d9">Claude Code</text>
+
+        <!-- 左侧：Markdown 时代 (slate) -->
+        <g>
+          <!-- 大背景 -->
+          <rect x="60" y="65" width="380" height="380" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+          <text x="250" y="92" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#475569" letter-spacing="0.08em">MARKDOWN 时代</text>
+          <text x="250" y="108" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#64748b">人写 · 人读 · 易编辑</text>
+
+          <!-- .md 文档 icon -->
+          <rect x="170" y="130" width="160" height="115" rx="6" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
+          <rect x="170" y="130" width="160" height="22" rx="6" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+          <text x="183" y="146" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#475569"># plan.md</text>
+          <!-- 文档内容行 -->
+          <line x1="180" y1="167" x2="320" y2="167" stroke="#cbd5e1" stroke-width="1.5"/>
+          <line x1="180" y1="178" x2="300" y2="178" stroke="#cbd5e1" stroke-width="1.5"/>
+          <line x1="180" y1="189" x2="310" y2="189" stroke="#cbd5e1" stroke-width="1.5"/>
+          <!-- ASCII art 痕迹 -->
+          <text x="180" y="208" font-family="'JetBrains Mono', monospace" font-size="9" fill="#94a3b8">+----+    +----+</text>
+          <text x="180" y="220" font-family="'JetBrains Mono', monospace" font-size="9" fill="#94a3b8">| A  |--->| B  |</text>
+          <text x="180" y="232" font-family="'JetBrains Mono', monospace" font-size="9" fill="#94a3b8">+----+    +----+</text>
+
+          <!-- 标签：限制 -->
+          <g font-family="'Noto Sans SC', sans-serif" font-size="11" fill="#64748b">
+            <rect x="100" y="275" width="300" height="28" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="250" y="293" text-anchor="middle" font-weight="500" fill="#475569">📑 &gt; 100 行 → 没人会读</text>
+
+            <rect x="100" y="312" width="300" height="28" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="250" y="330" text-anchor="middle" font-weight="500" fill="#475569">🎨 表达力：文本 + ASCII + unicode 估色</text>
+
+            <rect x="100" y="349" width="300" height="28" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="250" y="367" text-anchor="middle" font-weight="500" fill="#475569">📎 分享：附件 / 浏览器不原生渲染</text>
+
+            <rect x="100" y="386" width="300" height="28" rx="5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="250" y="404" text-anchor="middle" font-weight="500" fill="#475569">✏️ 易编辑：但人已不再亲自编辑</text>
+          </g>
+
+          <!-- agent ↔ md 通道 (灰虚线) -->
+          <line x1="440" y1="250" x2="500" y2="250" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arr-slate)" marker-start="url(#arr-slate)"/>
+        </g>
+
+        <!-- 右侧：HTML 时代 (cherry) -->
+        <g>
+          <!-- 大背景 -->
+          <rect x="660" y="65" width="380" height="380" rx="14" fill="#fff5ea" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="850" y="92" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#9a0036" letter-spacing="0.08em">HTML 新时代</text>
+          <text x="850" y="108" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#aa1141">Agent 写 · 人读 · 易消费 / 易分享 / 可交互</text>
+
+          <!-- .html 文档 icon with rich content -->
+          <rect x="770" y="130" width="160" height="115" rx="6" fill="#ffffff" stroke="#aa1141" stroke-width="1.5"/>
+          <rect x="770" y="130" width="160" height="22" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="783" y="146" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#9a0036">⚡ plan.html</text>
+          <!-- 富内容：SVG 图 + table + slider -->
+          <!-- mini chart bars -->
+          <rect x="782" y="170" width="10" height="20" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+          <rect x="795" y="162" width="10" height="28" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+          <rect x="808" y="156" width="10" height="34" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+          <rect x="821" y="172" width="10" height="18" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+          <!-- mini table -->
+          <rect x="845" y="160" width="78" height="30" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+          <line x1="845" y1="170" x2="923" y2="170" stroke="#b45309" stroke-width="0.7"/>
+          <line x1="845" y1="180" x2="923" y2="180" stroke="#b45309" stroke-width="0.7"/>
+          <line x1="870" y1="160" x2="870" y2="190" stroke="#b45309" stroke-width="0.7"/>
+          <line x1="897" y1="160" x2="897" y2="190" stroke="#b45309" stroke-width="0.7"/>
+          <!-- slider -->
+          <line x1="782" y1="210" x2="923" y2="210" stroke="#aa1141" stroke-width="2"/>
+          <circle cx="838" cy="210" r="6" fill="#aa1141"/>
+          <text x="782" y="232" font-family="'JetBrains Mono', monospace" font-size="9" fill="#aa1141">interactive · responsive</text>
+
+          <!-- 标签：优势 -->
+          <g font-family="'Noto Sans SC', sans-serif" font-size="11" fill="#9a0036">
+            <rect x="700" y="275" width="300" height="28" rx="5" fill="#ffffff" stroke="#aa1141" stroke-width="1"/>
+            <text x="850" y="293" text-anchor="middle" font-weight="500">📊 信息密度：表格 / SVG / canvas / interaction</text>
+
+            <rect x="700" y="312" width="300" height="28" rx="5" fill="#ffffff" stroke="#aa1141" stroke-width="1"/>
+            <text x="850" y="330" text-anchor="middle" font-weight="500">📱 mobile responsive · 可读性 ≫ Markdown</text>
+
+            <rect x="700" y="349" width="300" height="28" rx="5" fill="#ffffff" stroke="#aa1141" stroke-width="1"/>
+            <text x="850" y="367" text-anchor="middle" font-weight="500">🔗 分享：上传 S3 / 直接发链接</text>
+
+            <rect x="700" y="386" width="300" height="28" rx="5" fill="#ffffff" stroke="#aa1141" stroke-width="1"/>
+            <text x="850" y="404" text-anchor="middle" font-weight="500">↔️ 双向交互：slider 调参 → copy 回 prompt</text>
+          </g>
+
+          <!-- agent ↔ html 通道 (cherry 实线) -->
+          <line x1="600" y1="250" x2="660" y2="250" stroke="#aa1141" stroke-width="2.5" marker-end="url(#arr-cherry)" marker-start="url(#arr-cherry)"/>
+        </g>
+
+        <!-- 底部维度对比表 -->
+        <g font-family="'JetBrains Mono', monospace" font-size="10">
+          <text x="550" y="475" text-anchor="middle" font-size="9.5" fill="#9ca3af" letter-spacing="0.08em">FOUR-DIMENSION SHIFT</text>
+          <text x="550" y="492" text-anchor="middle" font-weight="600" fill="#4b5563">编辑权 人 → AGENT &nbsp;·&nbsp; 容量 100 行 → 任意大小 &nbsp;·&nbsp; 表达力 文本 → 视觉/交互 &nbsp;·&nbsp; 分享 附件 → URL</text>
+        </g>
+      </svg>
+      <p class="caption">FIG 1 &nbsp;·&nbsp; AGENT ↔ HUMAN 通道：MARKDOWN → HTML 四维转移</p>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Section 2: HTML 六大优势
+       ============================================================ -->
+  <section class="section">
+    <p class="section-title">② 优势</p>
+    <h2 class="section-h2">为什么 HTML：六个具体的"赢点"</h2>
+    <p class="section-lead">
+      原文从六个角度给出 HTML 的优势——前四个是<strong>能力维度</strong>（密度、清晰、分享、交互），第五个是<strong>生态维度</strong>（Claude Code 能吸收的上下文足够多），最后一个是<strong>体验维度</strong>（"joyful"，让人重新感到投入）。
+    </p>
+
+    <div class="adv-grid">
+
+      <!-- 1. 信息密度 -->
+      <article class="adv-card">
+        <div class="adv-svg">
+          <svg viewBox="0 0 260 110" aria-label="信息密度">
+            <!-- 表格 -->
+            <rect x="10" y="14" width="58" height="40" fill="#fef3c7" stroke="#b45309" stroke-width="1.3"/>
+            <line x1="10" y1="26" x2="68" y2="26" stroke="#b45309" stroke-width="0.8"/>
+            <line x1="29" y1="14" x2="29" y2="54" stroke="#b45309" stroke-width="0.8"/>
+            <line x1="48" y1="14" x2="48" y2="54" stroke="#b45309" stroke-width="0.8"/>
+            <text x="39" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#b45309">TABLE</text>
+
+            <!-- SVG icon -->
+            <circle cx="100" cy="34" r="18" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <path d="M 90 34 L 98 42 L 112 28" stroke="#aa1141" stroke-width="2" fill="none"/>
+            <text x="100" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#aa1141">SVG</text>
+
+            <!-- script -->
+            <rect x="135" y="14" width="55" height="40" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.3"/>
+            <text x="162" y="29" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" fill="#6d28d9">&lt;/&gt;</text>
+            <text x="162" y="42" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#6d28d9">script</text>
+            <text x="162" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#6d28d9">JS</text>
+
+            <!-- canvas -->
+            <rect x="205" y="14" width="40" height="40" fill="#cffafe" stroke="#0e7490" stroke-width="1.3"/>
+            <path d="M 210 50 Q 215 30 220 40 T 230 35 T 240 45" stroke="#0e7490" stroke-width="1.3" fill="none"/>
+            <text x="225" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#0e7490">CANVAS</text>
+
+            <!-- 底部 footnote -->
+            <text x="130" y="95" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#9ca3af" letter-spacing="0.05em">几乎所有数据都能高效表达</text>
+          </svg>
+        </div>
+        <div class="num">01 · INFORMATION DENSITY</div>
+        <h3>信息密度</h3>
+        <p>表格、CSS、SVG 插图、script 交互、canvas 空间数据、image 等等。原文断言："几乎不存在 Claude 能读但 HTML 不能高效表达的数据。"作为对比，Markdown 里 ASCII 画图、unicode 估色都是"硬撑"的痕迹。</p>
+      </article>
+
+      <!-- 2. 视觉清晰 -->
+      <article class="adv-card">
+        <div class="adv-svg">
+          <svg viewBox="0 0 260 110" aria-label="视觉清晰">
+            <!-- desktop -->
+            <rect x="20" y="16" width="100" height="62" rx="4" fill="#ffffff" stroke="#aa1141" stroke-width="1.5"/>
+            <rect x="20" y="16" width="100" height="10" rx="4" fill="#fce4e4"/>
+            <line x1="30" y1="36" x2="110" y2="36" stroke="#aa1141" stroke-width="1"/>
+            <line x1="30" y1="44" x2="100" y2="44" stroke="#aa1141" stroke-width="1"/>
+            <line x1="30" y1="52" x2="105" y2="52" stroke="#aa1141" stroke-width="1"/>
+            <rect x="30" y="60" width="35" height="12" fill="#fef3c7" stroke="#b45309" stroke-width="0.8"/>
+            <rect x="70" y="60" width="35" height="12" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+            <rect x="20" y="83" width="100" height="10" fill="none"/>
+            <text x="70" y="92" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#9ca3af">DESKTOP</text>
+
+            <!-- mobile -->
+            <rect x="160" y="20" width="36" height="58" rx="5" fill="#ffffff" stroke="#aa1141" stroke-width="1.5"/>
+            <rect x="160" y="20" width="36" height="8" rx="5" fill="#fce4e4"/>
+            <line x1="165" y1="34" x2="191" y2="34" stroke="#aa1141" stroke-width="0.8"/>
+            <line x1="165" y1="40" x2="191" y2="40" stroke="#aa1141" stroke-width="0.8"/>
+            <rect x="165" y="46" width="26" height="10" fill="#fef3c7" stroke="#b45309" stroke-width="0.6"/>
+            <rect x="165" y="60" width="26" height="10" fill="#cffafe" stroke="#0e7490" stroke-width="0.6"/>
+            <text x="178" y="92" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#9ca3af">MOBILE</text>
+
+            <!-- responsive arrow -->
+            <path d="M 130 47 L 152 47" stroke="#15803d" stroke-width="1.8" marker-end="url(#arr-cherry)"/>
+            <text x="141" y="40" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#15803d">responsive</text>
+
+            <!-- 底部 -->
+            <text x="225" y="50" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#9ca3af"></text>
+          </svg>
+        </div>
+        <div class="num">02 · VISUAL CLARITY</div>
+        <h3>视觉清晰 · 易读</h3>
+        <p>大型 spec / plan 在 Markdown 里超过 100 行就没人读，但同样体量的 HTML 可以用 tabs、章节锚点、配图、mobile responsive 让一个人也能舒服读完——更重要的是，<strong>团队成员愿意点开</strong>。</p>
+      </article>
+
+      <!-- 3. 易分享 -->
+      <article class="adv-card">
+        <div class="adv-svg">
+          <svg viewBox="0 0 260 110" aria-label="易分享">
+            <!-- Markdown attachment (slate) -->
+            <g>
+              <rect x="14" y="22" width="52" height="44" rx="4" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.3"/>
+              <text x="40" y="48" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#475569">.md</text>
+              <!-- 邮件附件 paperclip -->
+              <path d="M 70 36 C 75 30, 85 30, 88 38 L 82 50 C 80 54, 74 54, 72 50 L 76 40" stroke="#94a3b8" stroke-width="1.4" fill="none"/>
+              <text x="40" y="82" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#94a3b8">附件 / 渲染差</text>
+            </g>
+
+            <!-- VS -->
+            <text x="130" y="50" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#9ca3af">VS</text>
+
+            <!-- HTML link (cherry) -->
+            <g>
+              <rect x="170" y="22" width="76" height="44" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+              <text x="208" y="40" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="#aa1141">🔗 s3.../</text>
+              <text x="208" y="56" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" fill="#aa1141">plan.html</text>
+              <text x="208" y="82" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#aa1141">一键分享 · 浏览器开</text>
+            </g>
+          </svg>
+        </div>
+        <div class="num">03 · EASE OF SHARING</div>
+        <h3>易分享</h3>
+        <p>浏览器不原生渲染 .md，分享要么走附件、要么转图、要么贴 GitHub。HTML 上传到 S3 / GitHub Pages 就是一个能直接点开的链接。原文：<strong>"别人真的读你 spec 的概率提高一个数量级。"</strong></p>
+      </article>
+
+      <!-- 4. 双向交互 -->
+      <article class="adv-card">
+        <div class="adv-svg">
+          <svg viewBox="0 0 260 110" aria-label="双向交互">
+            <!-- slider -->
+            <line x1="20" y1="35" x2="140" y2="35" stroke="#aa1141" stroke-width="2"/>
+            <circle cx="78" cy="35" r="7" fill="#aa1141"/>
+            <text x="80" y="22" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#aa1141">slider · easing curve</text>
+
+            <!-- knobs -->
+            <circle cx="30" cy="74" r="9" fill="#fef3c7" stroke="#b45309" stroke-width="1.4"/>
+            <line x1="30" y1="74" x2="36" y2="68" stroke="#b45309" stroke-width="1.6"/>
+            <text x="30" y="98" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#b45309">knob</text>
+
+            <circle cx="60" cy="74" r="9" fill="#cffafe" stroke="#0e7490" stroke-width="1.4"/>
+            <line x1="60" y1="74" x2="65" y2="80" stroke="#0e7490" stroke-width="1.6"/>
+            <text x="60" y="98" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#0e7490">knob</text>
+
+            <!-- copy button -->
+            <rect x="160" y="28" width="80" height="22" rx="6" fill="#aa1141"/>
+            <text x="200" y="43" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#ffffff">📋 COPY</text>
+
+            <!-- arrow into prompt -->
+            <path d="M 200 53 L 200 75 L 145 92" stroke="#aa1141" stroke-width="1.5" fill="none" marker-end="url(#arr-cherry)"/>
+            <rect x="100" y="84" width="50" height="16" rx="3" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+            <text x="125" y="95" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#6d28d9">prompt</text>
+          </svg>
+        </div>
+        <div class="num">04 · TWO-WAY INTERACTION</div>
+        <h3>双向交互</h3>
+        <p>不只是看——还能调参。slider、knob、表单、拖拽看板，调出满意的状态后一键"copy as prompt"塞回 Claude。原文中提到自己 prototype 动画时常做这种"用完即扔的专用编辑器"。</p>
+      </article>
+
+      <!-- 5. 上下文吸收 -->
+      <article class="adv-card">
+        <div class="adv-svg">
+          <svg viewBox="0 0 260 110" aria-label="上下文吸收">
+            <!-- 多源输入 -->
+            <g font-family="'JetBrains Mono', monospace" font-size="7" font-weight="600">
+              <rect x="10" y="14" width="52" height="14" rx="3" fill="#cffafe" stroke="#0e7490" stroke-width="1"/>
+              <text x="36" y="24" text-anchor="middle" fill="#0e7490">FS · 代码库</text>
+
+              <rect x="10" y="34" width="52" height="14" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+              <text x="36" y="44" text-anchor="middle" fill="#b45309">git history</text>
+
+              <rect x="10" y="54" width="52" height="14" rx="3" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+              <text x="36" y="64" text-anchor="middle" fill="#6d28d9">MCP · Slack</text>
+
+              <rect x="10" y="74" width="52" height="14" rx="3" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+              <text x="36" y="84" text-anchor="middle" fill="#15803d">browser</text>
+            </g>
+
+            <!-- 漏斗 -->
+            <path d="M 72 16 L 130 48 L 130 65 L 72 88 Z" fill="#fce4e4" stroke="#aa1141" stroke-width="1.3" opacity="0.55"/>
+
+            <!-- 输出 .html -->
+            <rect x="160" y="38" width="78" height="36" rx="5" fill="#ffffff" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="199" y="55" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#9a0036">⚡</text>
+            <text x="199" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" fill="#9a0036">single .html</text>
+
+            <line x1="132" y1="56" x2="160" y2="56" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-cherry)"/>
+
+            <text x="130" y="103" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#9ca3af">多源 context → 单文件出口</text>
+          </svg>
+        </div>
+        <div class="num">05 · DATA INGESTION</div>
+        <h3>上下文吸收</h3>
+        <p>Claude Code 能从代码库、git 历史、MCP（Slack / Linear）、浏览器扩展、本地文件等多源吸收上下文，再 synthesize 成单个 HTML。原文里他写这篇文章时，就是让 Claude Code 翻自己的 code folder 找出所有 HTML 文件，归类后输出可视化对照。</p>
+      </article>
+
+      <!-- 6. 愉悦感 -->
+      <article class="adv-card">
+        <div class="adv-svg">
+          <svg viewBox="0 0 260 110" aria-label="愉悦感">
+            <!-- 烟花 + spark -->
+            <g>
+              <circle cx="130" cy="58" r="22" fill="none" stroke="#aa1141" stroke-width="1.2" stroke-dasharray="3 3"/>
+              <g stroke-width="2.4" stroke-linecap="round">
+                <line x1="130" y1="20" x2="130" y2="32" stroke="#aa1141"/>
+                <line x1="130" y1="84" x2="130" y2="96" stroke="#aa1141"/>
+                <line x1="92" y1="58" x2="104" y2="58" stroke="#b45309"/>
+                <line x1="156" y1="58" x2="168" y2="58" stroke="#b45309"/>
+                <line x1="104" y1="32" x2="113" y2="41" stroke="#15803d"/>
+                <line x1="156" y1="84" x2="147" y2="75" stroke="#15803d"/>
+                <line x1="104" y1="84" x2="113" y2="75" stroke="#6d28d9"/>
+                <line x1="156" y1="32" x2="147" y2="41" stroke="#6d28d9"/>
+              </g>
+              <circle cx="130" cy="58" r="9" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+              <text x="130" y="62" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#aa1141">✦</text>
+            </g>
+            <text x="130" y="102" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#9ca3af">"feel more involved"</text>
+          </svg>
+        </div>
+        <div class="num">06 · IT'S JOYFUL</div>
+        <h3>它令人愉悦</h3>
+        <p>原文最后一个理由没有"硬指标"，但作者强调它真实存在：用 HTML 跟 Claude 共同打磨产物时，人会重新感到"参与感"——这在 Markdown plan 越写越长、越来越不忍读的时代里，是被让渡的体验。</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Section 3: 五大用例
+       ============================================================ -->
+  <section class="section">
+    <p class="section-title">③ 用例</p>
+    <h2 class="section-h2">五个具体场景 · 示例 prompt</h2>
+    <p class="section-lead">
+      原文给出五类已在生产中验证的用例。每张卡：场景图 + 中文意译 prompt（点开看英文原文）+ 适用场景标签。
+    </p>
+
+    <div class="uc-list">
+
+      <!-- UC1: Specs / Planning -->
+      <article class="uc-card">
+        <div class="uc-svg">
+          <svg viewBox="0 0 200 130" aria-label="Specs Planning Exploration">
+            <g>
+              <rect x="14" y="14" width="50" height="34" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.3"/>
+              <line x1="20" y1="22" x2="56" y2="22" stroke="#aa1141" stroke-width="0.8"/>
+              <line x1="20" y1="28" x2="50" y2="28" stroke="#aa1141" stroke-width="0.8"/>
+              <line x1="20" y1="34" x2="54" y2="34" stroke="#aa1141" stroke-width="0.8"/>
+              <text x="39" y="44" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#aa1141">v1</text>
+
+              <rect x="75" y="14" width="50" height="34" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.3"/>
+              <line x1="81" y1="22" x2="117" y2="22" stroke="#b45309" stroke-width="0.8"/>
+              <circle cx="100" cy="32" r="6" fill="#b45309"/>
+              <text x="100" y="44" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#b45309">v2</text>
+
+              <rect x="136" y="14" width="50" height="34" rx="4" fill="#cffafe" stroke="#0e7490" stroke-width="1.3"/>
+              <rect x="142" y="20" width="38" height="6" fill="#0e7490"/>
+              <line x1="142" y1="32" x2="180" y2="32" stroke="#0e7490" stroke-width="0.8"/>
+              <line x1="142" y1="38" x2="175" y2="38" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="161" y="44" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#0e7490">v3</text>
+
+              <rect x="14" y="58" width="50" height="34" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.3"/>
+              <text x="39" y="79" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#6d28d9">▢▢</text>
+              <text x="39" y="88" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#6d28d9">v4</text>
+
+              <rect x="75" y="58" width="50" height="34" rx="4" fill="#dcfce7" stroke="#15803d" stroke-width="1.3"/>
+              <path d="M 82 88 L 90 70 L 102 80 L 118 64" stroke="#15803d" stroke-width="1.4" fill="none"/>
+              <text x="100" y="88" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#15803d">v5</text>
+
+              <rect x="136" y="58" width="50" height="34" rx="4" fill="#fff5ea" stroke="#aa1141" stroke-width="1.3"/>
+              <text x="161" y="78" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="14" font-weight="700" fill="#aa1141">★</text>
+              <text x="161" y="88" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#aa1141">v6 · pick</text>
+            </g>
+            <text x="100" y="115" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#9ca3af">6 variants · side-by-side</text>
+          </svg>
+        </div>
+        <div class="uc-body">
+          <span class="uc-num">USE CASE 01</span>
+          <span class="uc-en">Specs · Planning · Exploration</span>
+          <h3 class="uc-title">Spec / 规划 / 多方案探索</h3>
+          <p class="uc-desc">
+            原文里 Thariq 已经不写单文件 markdown plan 了，取而代之是<strong>一组 HTML 文件互相引用</strong>——先让 Claude 探索多个方向、再钻一个、做 mockup、写实现计划，最后开新 session 把这些文件作为 context 喂给 implementation agent。
+          </p>
+          <div class="uc-prompt">
+            <div class="prompt-tag">EXAMPLE PROMPT · 中文意译</div>
+            <div class="prompt-body">"onboarding 屏幕方向没定。给我 6 个明显不同的方案——layout、tone、density 都要变，排版到单个 HTML 文件里做网格对比。每个标注它在牺牲什么。"</div>
+          </div>
+          <details class="uc-original">
+            <summary>展开英文原版 prompt</summary>
+            <div class="orig-body">I'm not sure what direction to take the onboarding screen. Generate 6 distinctly different approaches — vary layout, tone, and density — and lay them out as a single HTML file in a grid so I can compare them side by side. Label each with the tradeoff it's making.</div>
+          </details>
+          <div class="uc-tags">
+            <span>多方向并行探索</span>
+            <span>实现计划</span>
+            <span>跨 session 上下文</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- UC2: Code Review -->
+      <article class="uc-card">
+        <div class="uc-svg">
+          <svg viewBox="0 0 200 130" aria-label="Code Review">
+            <!-- diff viewer mock -->
+            <rect x="12" y="12" width="176" height="80" rx="5" fill="#ffffff" stroke="#aa1141" stroke-width="1.4"/>
+            <rect x="12" y="12" width="176" height="14" rx="5" fill="#fce4e4"/>
+            <text x="20" y="22" font-family="'JetBrains Mono', monospace" font-size="7" font-weight="700" fill="#9a0036">PR · streaming.rs</text>
+
+            <!-- old line (red bg) -->
+            <rect x="14" y="30" width="174" height="11" fill="#fee2e2"/>
+            <text x="20" y="38" font-family="'JetBrains Mono', monospace" font-size="6" fill="#9a0036">- old logic</text>
+
+            <!-- new line (green bg) -->
+            <rect x="14" y="42" width="174" height="11" fill="#dcfce7"/>
+            <text x="20" y="50" font-family="'JetBrains Mono', monospace" font-size="6" fill="#15803d">+ new backpressure</text>
+
+            <!-- annotation arrow -->
+            <line x1="120" y1="48" x2="156" y2="64" stroke="#b45309" stroke-width="1.2" marker-end="url(#arr-cherry)"/>
+            <rect x="130" y="60" width="56" height="22" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <text x="158" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" font-weight="600" fill="#b45309">⚠️ severity</text>
+            <text x="158" y="76" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#b45309">HIGH</text>
+
+            <!-- below: flow chart hint -->
+            <rect x="14" y="58" width="100" height="28" rx="3" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8"/>
+            <circle cx="30" cy="72" r="4" fill="#0e7490"/>
+            <line x1="34" y1="72" x2="56" y2="72" stroke="#0e7490" stroke-width="1" marker-end="url(#arr-cherry)"/>
+            <circle cx="62" cy="72" r="4" fill="#0e7490"/>
+            <line x1="66" y1="72" x2="88" y2="72" stroke="#0e7490" stroke-width="1"/>
+            <circle cx="94" cy="72" r="4" fill="#0e7490"/>
+            <text x="60" y="88" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#475569">data flow</text>
+
+            <text x="100" y="115" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#9ca3af">inline annotations + flow</text>
+          </svg>
+        </div>
+        <div class="uc-body">
+          <span class="uc-num">USE CASE 02</span>
+          <span class="uc-en">Code Review · Understanding</span>
+          <h3 class="uc-title">代码审查 / 代码理解</h3>
+          <p class="uc-desc">
+            把 PR diff、模块图、流程图、严重程度标注同时渲染在一个 HTML 里——比默认的 GitHub diff 视图更适合复杂逻辑（如 streaming / backpressure）。原文作者现在每个 PR 都附一个 HTML code explainer。
+          </p>
+          <div class="uc-prompt">
+            <div class="prompt-tag">EXAMPLE PROMPT · 中文意译</div>
+            <div class="prompt-body">"帮我 review 这个 PR，输出一个 HTML 文档描述它。我对 streaming/backpressure 部分不熟，重点解释那块。把真实 diff 渲染出来 + 在 margin 上加注释、按严重程度配色、加任何能帮助理解的元素。"</div>
+          </div>
+          <details class="uc-original">
+            <summary>展开英文原版 prompt</summary>
+            <div class="orig-body">Help me review this PR by creating an HTML artifact that describes it. I'm not very familiar with the streaming/backpressure logic so focus on that. Render the actual diff with inline margin annotations, color-code findings by severity and whatever else might be needed to convey the concept well.</div>
+          </details>
+          <div class="uc-tags">
+            <span>创建 PR</span>
+            <span>审查 PR</span>
+            <span>代码主题理解</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- UC3: Design & Prototypes -->
+      <article class="uc-card">
+        <div class="uc-svg">
+          <svg viewBox="0 0 200 130" aria-label="Design Prototypes">
+            <!-- color picker -->
+            <circle cx="36" cy="36" r="18" fill="url(#designGrad)"/>
+            <defs>
+              <radialGradient id="designGrad">
+                <stop offset="0%" stop-color="#fef3c7"/>
+                <stop offset="50%" stop-color="#fce4e4"/>
+                <stop offset="100%" stop-color="#ede9fe"/>
+              </radialGradient>
+            </defs>
+            <circle cx="36" cy="36" r="18" fill="none" stroke="#aa1141" stroke-width="1.3"/>
+            <text x="36" y="62" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#aa1141">color</text>
+
+            <!-- easing curve -->
+            <rect x="70" y="18" width="56" height="40" rx="4" fill="#ffffff" stroke="#0e7490" stroke-width="1.2"/>
+            <path d="M 74 54 Q 90 52, 100 38 T 122 22" stroke="#0e7490" stroke-width="1.5" fill="none"/>
+            <text x="98" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#0e7490">easing</text>
+
+            <!-- duration slider -->
+            <line x1="138" y1="30" x2="186" y2="30" stroke="#b45309" stroke-width="1.6"/>
+            <circle cx="160" cy="30" r="5" fill="#b45309"/>
+            <text x="162" y="44" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" fill="#b45309">duration</text>
+
+            <!-- preview button -->
+            <rect x="50" y="80" width="100" height="22" rx="11" fill="#aa1141"/>
+            <text x="100" y="95" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#ffffff">CHECKOUT</text>
+
+            <text x="100" y="118" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#9ca3af">tune live · copy params</text>
+          </svg>
+        </div>
+        <div class="uc-body">
+          <span class="uc-num">USE CASE 03</span>
+          <span class="uc-en">Design · Prototypes</span>
+          <h3 class="uc-title">设计与原型</h3>
+          <p class="uc-desc">
+            HTML 即便不是最终交付介质，也是极好的"中间设计语言"——可以先在 HTML 里 sketch，再翻译到 React / Swift / SwiftUI。Thariq 强调要把 slider / knob 用起来：调到满意，再用"copy params"按钮把结果带回 prompt。
+          </p>
+          <div class="uc-prompt">
+            <div class="prompt-tag">EXAMPLE PROMPT · 中文意译</div>
+            <div class="prompt-body">"我想 prototype 一个 checkout button：点击时播放一段动画，然后快速变成紫色。做一个 HTML 文件，带几个 slider / option 让我试不同参数；调好后给我一个 copy 按钮把参数复制出来。"</div>
+          </div>
+          <details class="uc-original">
+            <summary>展开英文原版 prompt</summary>
+            <div class="orig-body">I want to prototype a new checkout button, when clicked it does a play animation and then turns purple quickly. Create a HTML file with several sliders and options for me to try different options on this animation, give me a copy button to copy the parameters that worked well.</div>
+          </details>
+          <div class="uc-tags">
+            <span>设计系统物料</span>
+            <span>组件微调</span>
+            <span>组件库可视化</span>
+            <span>动画原型</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- UC4: Reports / Research -->
+      <article class="uc-card">
+        <div class="uc-svg">
+          <svg viewBox="0 0 200 130" aria-label="Reports Research">
+            <!-- doc + chart inline -->
+            <rect x="20" y="14" width="160" height="100" rx="5" fill="#ffffff" stroke="#aa1141" stroke-width="1.3"/>
+            <!-- title -->
+            <rect x="30" y="22" width="60" height="6" fill="#aa1141"/>
+            <line x1="30" y1="35" x2="170" y2="35" stroke="#cbd5e1" stroke-width="0.8"/>
+            <line x1="30" y1="41" x2="160" y2="41" stroke="#cbd5e1" stroke-width="0.8"/>
+            <!-- mini chart -->
+            <rect x="30" y="48" width="64" height="32" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <polyline points="32,76 44,62 56,68 68,52 80,58 92,48" stroke="#b45309" stroke-width="1.5" fill="none"/>
+            <!-- right column text -->
+            <line x1="100" y1="50" x2="170" y2="50" stroke="#cbd5e1" stroke-width="0.8"/>
+            <line x1="100" y1="56" x2="166" y2="56" stroke="#cbd5e1" stroke-width="0.8"/>
+            <line x1="100" y1="62" x2="170" y2="62" stroke="#cbd5e1" stroke-width="0.8"/>
+            <line x1="100" y1="68" x2="158" y2="68" stroke="#cbd5e1" stroke-width="0.8"/>
+            <line x1="100" y1="74" x2="170" y2="74" stroke="#cbd5e1" stroke-width="0.8"/>
+            <!-- gotchas -->
+            <rect x="30" y="86" width="140" height="22" rx="3" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+            <text x="100" y="100" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="700" fill="#aa1141">⚠ GOTCHAS</text>
+            <text x="100" y="125" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#9ca3af">explain · annotate · synth</text>
+          </svg>
+        </div>
+        <div class="uc-body">
+          <span class="uc-num">USE CASE 04</span>
+          <span class="uc-en">Reports · Research · Learning</span>
+          <h3 class="uc-title">报告 / 调研 / 学习</h3>
+          <p class="uc-desc">
+            Claude Code 跨多数据源 synthesize 出研究报告是它的强项——代码、git history、Slack、网络资料汇总成一份高可读性 HTML。Thariq 自己写 prompt caching 系列文章前，先让 Claude 翻 git history 生成一份深度内部研究 HTML 给自己读。
+          </p>
+          <div class="uc-prompt">
+            <div class="prompt-tag">EXAMPLE PROMPT · 中文意译</div>
+            <div class="prompt-body">"我搞不清我们的 rate limiter 怎么工作。读相关代码，做一个单页 HTML 讲解：一张 token-bucket 流程图、3-4 段关键代码 + 注释、底部一个'gotchas'清单。针对只读一遍的人来优化。"</div>
+          </div>
+          <details class="uc-original">
+            <summary>展开英文原版 prompt</summary>
+            <div class="orig-body">I don't understand how our rate limiter actually works. Read the relevant code and produce a single HTML explainer page: a diagram of the token-bucket flow, the 3–4 key code snippets annotated, and a "gotchas" section at the bottom. Optimize it for someone reading it once.</div>
+          </details>
+          <div class="uc-tags">
+            <span>特性总结</span>
+            <span>概念解释</span>
+            <span>周报 / 状态汇报</span>
+            <span>故障复盘</span>
+            <span>SVG 技术示意图</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- UC5: Custom Editors -->
+      <article class="uc-card">
+        <div class="uc-svg">
+          <svg viewBox="0 0 200 130" aria-label="Custom Editing Interfaces">
+            <!-- kanban columns -->
+            <g>
+              <rect x="14" y="14" width="40" height="86" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1.2"/>
+              <text x="34" y="26" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" font-weight="700" fill="#9a0036">NOW</text>
+              <rect x="18" y="30" width="32" height="14" rx="2" fill="#ffffff" stroke="#aa1141" stroke-width="0.8"/>
+              <rect x="18" y="46" width="32" height="14" rx="2" fill="#ffffff" stroke="#aa1141" stroke-width="0.8"/>
+
+              <rect x="60" y="14" width="40" height="86" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
+              <text x="80" y="26" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" font-weight="700" fill="#b45309">NEXT</text>
+              <rect x="64" y="30" width="32" height="14" rx="2" fill="#ffffff" stroke="#b45309" stroke-width="0.8"/>
+              <rect x="64" y="46" width="32" height="14" rx="2" fill="#ffffff" stroke="#b45309" stroke-width="0.8"/>
+              <rect x="64" y="62" width="32" height="14" rx="2" fill="#ffffff" stroke="#b45309" stroke-width="0.8"/>
+
+              <rect x="106" y="14" width="40" height="86" rx="4" fill="#cffafe" stroke="#0e7490" stroke-width="1.2"/>
+              <text x="126" y="26" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" font-weight="700" fill="#0e7490">LATER</text>
+              <rect x="110" y="30" width="32" height="14" rx="2" fill="#ffffff" stroke="#0e7490" stroke-width="0.8"/>
+
+              <rect x="152" y="14" width="40" height="86" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.2"/>
+              <text x="172" y="26" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="6" font-weight="700" fill="#475569">CUT</text>
+              <rect x="156" y="30" width="32" height="14" rx="2" fill="#ffffff" stroke="#94a3b8" stroke-width="0.8"/>
+            </g>
+            <text x="100" y="118" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#9ca3af">throwaway editor · export</text>
+          </svg>
+        </div>
+        <div class="uc-body">
+          <span class="uc-num">USE CASE 05</span>
+          <span class="uc-en">Custom Editing Interfaces</span>
+          <h3 class="uc-title">一次性自定义编辑器</h3>
+          <p class="uc-desc">
+            纯文本难以描述的操作（拖拽排序、颜色 / 缓动曲线 / 正则、structured 编辑），让 Claude 做一个<strong>"用完即扔"的专属编辑器</strong>——不是产品、不是复用工具，就一个 HTML 文件，结尾必须有 "copy as JSON" / "copy as prompt" 按钮把结果带回 Claude。
+          </p>
+          <div class="uc-prompt">
+            <div class="prompt-tag">EXAMPLE PROMPT · 中文意译</div>
+            <div class="prompt-body">"我要给 30 张 Linear ticket 重新排优先级。做一个 HTML：每张 ticket 一张可拖拽卡片，分 Now / Next / Later / Cut 四列。你先用最佳猜测预排，加一个 'copy as markdown' 按钮导出最终顺序，每列一句理由。"</div>
+          </div>
+          <details class="uc-original">
+            <summary>展开英文原版 prompt</summary>
+            <div class="orig-body">I need to reprioritize these 30 Linear tickets. Make me an HTML file with each ticket as a draggable card across Now / Next / Later / Cut columns. Pre-sort them by your best guess. Add a "copy as markdown" button that exports the final ordering with a one-line rationale per bucket.</div>
+          </details>
+          <div class="uc-tags">
+            <span>排序 / 三分法</span>
+            <span>结构化配置编辑</span>
+            <span>prompt 双侧 editor</span>
+            <span>数据集策展</span>
+            <span>颜色 / 缓动 / 正则</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Section 4: FAQ
+       ============================================================ -->
+  <section class="section">
+    <p class="section-title">④ FAQ</p>
+    <h2 class="section-h2">六条答疑 · 原文 Q&amp;A 摘录</h2>
+    <p class="section-lead">
+      原文末尾给出六条最常被问到的问题与作者本人的回答。这里是中文转述：
+    </p>
+
+    <div class="faq-list">
+      <div class="faq-card">
+        <div class="faq-q"><span class="q-mark">Q1</span>HTML 不是更费 token 吗？</div>
+        <div class="faq-a">是。<strong>但 Opus 4.7 的 1M context</strong> 让这个开销在 context window 里几乎察觉不到；而且 HTML 带来的"实际被读到"和"表达力"溢价远超 token 成本——产物质量整体更高。</div>
+      </div>
+
+      <div class="faq-card">
+        <div class="faq-q"><span class="q-mark">Q2</span>那还用 Markdown 吗？</div>
+        <div class="faq-a">原作者承认自己<strong>已经几乎不用了</strong>，并自嘲是"HTML maximalist"。日常 spec / report / plan / review 全部 HTML 化。</div>
+      </div>
+
+      <div class="faq-card">
+        <div class="faq-q"><span class="q-mark">Q3</span>HTML 文件怎么看？</div>
+        <div class="faq-a">本地直接<strong>浏览器双击打开</strong>（也可以让 Claude 直接 <code>open</code>）；需要分享时<strong>上传到 S3 / GitHub Pages</strong>，给链接就行。</div>
+      </div>
+
+      <div class="faq-card">
+        <div class="faq-q"><span class="q-mark">Q4</span>生成 HTML 慢吗？</div>
+        <div class="faq-a">慢。原作者实测<strong> 2-4x </strong>于 Markdown。但他认为产出价值抵得过这部分时间——更少 round trip + 更高被消费率。</div>
+      </div>
+
+      <div class="faq-card">
+        <div class="faq-q"><span class="q-mark">Q5</span>版本控制怎么办？</div>
+        <div class="faq-a"><strong>这是 HTML 最大的短板</strong>——diff 噪音大、review 起来比 Markdown 累得多。原文没给出解决方案，作者把它视为可接受的代价。</div>
+      </div>
+
+      <div class="faq-card">
+        <div class="faq-q"><span class="q-mark">Q6</span>怎么让它不丑、匹配公司风格？</div>
+        <div class="faq-a">用 <code>frontend-design</code> plugin 提升基础审美；想匹配公司风格，让 Claude 读你代码库后生成一个 <strong>design system HTML 文件</strong>，之后所有 HTML 都以这个为参考。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Section 5: Stay in the Loop
+       ============================================================ -->
+  <section class="stay-loop">
+    <div class="stay-title">⑤ STAY IN THE LOOP</div>
+    <blockquote>
+      用 HTML 之前我担心因为不再深读 plan 就只能把决策权交给 Claude。但事实正相反——我比以往任何时候都更 in the loop。希望你也是。
+    </blockquote>
+    <div class="stay-cite">—— Thariq · 原文结语意译</div>
+  </section>
+
+  <!-- ============================================================
+       Footer
+       ============================================================ -->
+  <footer>
+    <a href="https://x.com/trq212/status/2052809885763747935" target="_blank" rel="noopener">原文 · trq212</a>
+    <span class="sep">·</span>
+    <a href="https://thariqs.github.io/html-effectiveness/" target="_blank" rel="noopener">示例库 · html-effectiveness</a>
+    <span class="sep">·</span>
+    <a href="../index.html">返回 iostiny / doc</a>
+    <span class="sep">·</span>
+    <span>CC-BY 4.0 · 图谱整理</span>
+  </footer>
+
+</div>
+</body>
+</html>

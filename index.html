@@ -197,6 +197,48 @@ main {
   transition: transform 0.18s ease;
 }
 
+/* ============ Section header (分组) ============ */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin: 2.8rem 0 1.1rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.section-header:first-of-type { margin-top: 0.4rem; }
+.section-header .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--cherry-pink);
+  letter-spacing: 0.04em;
+}
+.section-header .name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  letter-spacing: 0.05em;
+}
+.section-header .desc {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: auto;
+  letter-spacing: 0;
+}
+.section-empty {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1.4rem 0 0.4rem;
+  letter-spacing: 0.02em;
+}
+.section-empty .accent { color: var(--cherry); margin: 0 0.3em; }
+
 /* ============ Upcoming hint ============ */
 .upcoming {
   font-family: 'JetBrains Mono', monospace;
@@ -242,6 +284,8 @@ footer .sep { color: var(--rule); user-select: none; }
   .hero-mark { font-size: 1.2rem; }
   .card-title { font-size: 1.15rem; }
   .preview { padding: 1.1rem 1rem; }
+  .section-header { flex-wrap: wrap; gap: 0.4rem 0.7rem; }
+  .section-header .desc { margin-left: 0; flex-basis: 100%; }
 }
 </style>
 </head>
@@ -252,6 +296,12 @@ footer .sep { color: var(--rule); user-select: none; }
     <div class="hero-mark">iostiny<span class="slash">/</span>doc</div>
     <div class="hero-tag">中文技术文档与图谱</div>
   </header>
+
+  <h2 class="section-header">
+    <span class="num">01</span>
+    <span class="name">IM 安全通信</span>
+    <span class="desc">端到端加密 · 握手 · 群组 · 多设备</span>
+  </h2>
 
   <a class="topic-card" href="./signal-protocol/index.html">
 
@@ -343,6 +393,78 @@ footer .sep { color: var(--rule); user-select: none; }
 
   </a>
 
+  <a class="topic-card" href="./noise-protocol/index.html">
+
+    <div class="preview">
+      <div class="preview-bg"></div>
+      <!-- Noise · XX handshake three rounds preview -->
+      <svg viewBox="0 0 760 170" preserveAspectRatio="xMidYMid meet" aria-label="Noise XX handshake preview">
+        <defs>
+          <marker id="prev-arr-cherry-noise" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+          <marker id="prev-arr-teal-noise" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7490"/>
+          </marker>
+        </defs>
+
+        <!-- top label -->
+        <text x="380" y="16" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="11" fill="#9ca3af">Noise · XX handshake · 三轮完成 mutual auth + identity hiding</text>
+
+        <!-- Alice (left, cherry) -->
+        <circle cx="50" cy="80" r="24" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+        <text x="50" y="86" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="14" fill="#aa1141">A</text>
+        <text x="50" y="120" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#aa1141">initiator</text>
+
+        <!-- Bob (right, teal) -->
+        <circle cx="710" cy="80" r="24" fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
+        <text x="710" y="86" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="14" fill="#0e7490">B</text>
+        <text x="710" y="120" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#0e7490">responder</text>
+
+        <!-- Round 1: -> e (cherry, plain) -->
+        <line x1="78" y1="46" x2="682" y2="46" stroke="#aa1141" stroke-width="2" marker-end="url(#prev-arr-cherry-noise)"/>
+        <text x="380" y="40" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" fill="#aa1141">→ e</text>
+
+        <!-- Round 2: <- e, ee, s, es (teal, with locked s_B mid arrow) -->
+        <line x1="78" y1="80" x2="682" y2="80" stroke="#0e7490" stroke-width="2" marker-end="url(#prev-arr-teal-noise)" marker-start="url(#prev-arr-teal-noise)"/>
+        <rect x="318" y="68" width="124" height="24" rx="4" fill="#cffafe" stroke="#b45309" stroke-width="1.3"/>
+        <text x="380" y="84" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600" fill="#0e7490">← e, ee, 🔒s, es</text>
+
+        <!-- Round 3: -> s, se (cherry, with locked s_A mid arrow) -->
+        <line x1="78" y1="114" x2="682" y2="114" stroke="#aa1141" stroke-width="2" marker-end="url(#prev-arr-cherry-noise)"/>
+        <rect x="328" y="102" width="104" height="24" rx="4" fill="#fce4e4" stroke="#b45309" stroke-width="1.3"/>
+        <text x="380" y="118" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600" fill="#aa1141">→ 🔒s, se</text>
+
+        <!-- Footer: Split (amber) -->
+        <rect x="220" y="142" width="320" height="22" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
+        <text x="380" y="157" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600" fill="#b45309">Split() → sendCipher / recvCipher</text>
+      </svg>
+      <p class="preview-caption">PREVIEW &nbsp;·&nbsp; NOISE PROTOCOL · XX HANDSHAKE</p>
+    </div>
+
+    <div class="card-body">
+      <span class="card-tag">NOISE · HANDSHAKE · 渐进入门</span>
+      <h2 class="card-title">Noise Protocol · 渐进图谱</h2>
+      <p class="card-desc">
+        以 bitchat 这个 BLE peer-to-peer 聊天 app 为载体，16 步看穿 Noise XX 握手三轮、ck/h 双账本、Split 分桨、Transport phase。每个关键步骤附对齐 bitchat 真实源码的 Swift + CryptoKit 骨架。
+      </p>
+      <ul class="card-bullets">
+        <li>16 步交互教程 · 含 #step-N 锚点</li>
+        <li>e/s/ee/es/se/ss 记号系统</li>
+        <li>Swift + CryptoKit 骨架</li>
+        <li>对齐 bitchat 真实 BLE 落地</li>
+      </ul>
+      <span class="card-cta">开始阅读 <span class="cta-arrow">→</span></span>
+    </div>
+
+  </a>
+
+  <h2 class="section-header">
+    <span class="num">02</span>
+    <span class="name">区块链密码学</span>
+    <span class="desc">零知识证明 · 承诺方案 · 椭圆曲线</span>
+  </h2>
+
   <a class="topic-card" href="./zkp/index.html">
 
     <div class="preview">
@@ -408,66 +530,83 @@ footer .sep { color: var(--rule); user-select: none; }
 
   </a>
 
-  <a class="topic-card" href="./noise-protocol/index.html">
+  <h2 class="section-header">
+    <span class="num">03</span>
+    <span class="name">AGENT / LLM</span>
+    <span class="desc">智能体协议 · 推理与上下文工程</span>
+  </h2>
+
+  <a class="topic-card" href="./html-over-markdown/index.html">
 
     <div class="preview">
       <div class="preview-bg"></div>
-      <!-- Noise · XX handshake three rounds preview -->
-      <svg viewBox="0 0 760 170" preserveAspectRatio="xMidYMid meet" aria-label="Noise XX handshake preview">
+      <!-- HTML over Markdown · agent-human channel shift preview -->
+      <svg viewBox="0 0 760 170" preserveAspectRatio="xMidYMid meet" aria-label="Markdown 时代 vs HTML 时代 channel shift preview">
         <defs>
-          <marker id="prev-arr-cherry-noise" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          <marker id="prev-arr-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
           </marker>
-          <marker id="prev-arr-teal-noise" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7490"/>
+          <marker id="prev-arr-cherry-htm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
           </marker>
         </defs>
 
         <!-- top label -->
-        <text x="380" y="16" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="11" fill="#9ca3af">Noise · XX handshake · 三轮完成 mutual auth + identity hiding</text>
+        <text x="380" y="18" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="11" fill="#9ca3af">Agent ↔ Human 通道：MARKDOWN → HTML 格式转移</text>
 
-        <!-- Alice (left, cherry) -->
-        <circle cx="50" cy="80" r="24" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
-        <text x="50" y="86" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="14" fill="#aa1141">A</text>
-        <text x="50" y="120" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#aa1141">initiator</text>
+        <!-- 中央 AGENT 节点 -->
+        <circle cx="380" cy="90" r="28" fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/>
+        <text x="380" y="88" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="11" fill="#6d28d9">AGENT</text>
+        <text x="380" y="100" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#6d28d9">Claude Code</text>
 
-        <!-- Bob (right, teal) -->
-        <circle cx="710" cy="80" r="24" fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
-        <text x="710" y="86" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="14" fill="#0e7490">B</text>
-        <text x="710" y="120" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#0e7490">responder</text>
+        <!-- 左侧：Markdown (slate, 退场) -->
+        <g>
+          <rect x="44" y="48" width="172" height="84" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.3"/>
+          <text x="130" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#475569" letter-spacing="0.06em"># PLAN.MD</text>
+          <line x1="60" y1="80" x2="200" y2="80" stroke="#cbd5e1" stroke-width="1.3"/>
+          <line x1="60" y1="88" x2="190" y2="88" stroke="#cbd5e1" stroke-width="1.3"/>
+          <text x="60" y="105" font-family="'JetBrains Mono', monospace" font-size="8" fill="#94a3b8">+----+   +----+</text>
+          <text x="60" y="118" font-family="'JetBrains Mono', monospace" font-size="8" fill="#94a3b8">| A  |-&gt;| B  |</text>
+          <text x="130" y="148" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#475569" letter-spacing="0.04em">已死 · MARKDOWN</text>
+          <!-- slate 虚线通道 -->
+          <line x1="222" y1="90" x2="350" y2="90" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#prev-arr-slate)" marker-start="url(#prev-arr-slate)"/>
+        </g>
 
-        <!-- Round 1: -> e (cherry, plain) -->
-        <line x1="78" y1="46" x2="682" y2="46" stroke="#aa1141" stroke-width="2" marker-end="url(#prev-arr-cherry-noise)"/>
-        <text x="380" y="40" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" fill="#aa1141">→ e</text>
-
-        <!-- Round 2: <- e, ee, s, es (teal, with locked s_B mid arrow) -->
-        <line x1="78" y1="80" x2="682" y2="80" stroke="#0e7490" stroke-width="2" marker-end="url(#prev-arr-teal-noise)" marker-start="url(#prev-arr-teal-noise)"/>
-        <rect x="318" y="68" width="124" height="24" rx="4" fill="#cffafe" stroke="#b45309" stroke-width="1.3"/>
-        <text x="380" y="84" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600" fill="#0e7490">← e, ee, 🔒s, es</text>
-
-        <!-- Round 3: -> s, se (cherry, with locked s_A mid arrow) -->
-        <line x1="78" y1="114" x2="682" y2="114" stroke="#aa1141" stroke-width="2" marker-end="url(#prev-arr-cherry-noise)"/>
-        <rect x="328" y="102" width="104" height="24" rx="4" fill="#fce4e4" stroke="#b45309" stroke-width="1.3"/>
-        <text x="380" y="118" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600" fill="#aa1141">→ 🔒s, se</text>
-
-        <!-- Footer: Split (amber) -->
-        <rect x="220" y="142" width="320" height="22" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
-        <text x="380" y="157" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600" fill="#b45309">Split() → sendCipher / recvCipher</text>
+        <!-- 右侧：HTML (cherry, 当立) -->
+        <g>
+          <rect x="544" y="48" width="172" height="84" rx="8" fill="#fff5ea" stroke="#aa1141" stroke-width="1.5"/>
+          <text x="630" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" fill="#9a0036" letter-spacing="0.06em">⚡ PLAN.HTML</text>
+          <!-- mini bars -->
+          <rect x="558" y="78" width="8" height="14" fill="#fce4e4" stroke="#aa1141" stroke-width="0.8"/>
+          <rect x="569" y="74" width="8" height="18" fill="#fce4e4" stroke="#aa1141" stroke-width="0.8"/>
+          <rect x="580" y="80" width="8" height="12" fill="#fce4e4" stroke="#aa1141" stroke-width="0.8"/>
+          <!-- mini table -->
+          <rect x="595" y="76" width="42" height="18" fill="#fef3c7" stroke="#b45309" stroke-width="0.8"/>
+          <line x1="595" y1="82" x2="637" y2="82" stroke="#b45309" stroke-width="0.5"/>
+          <line x1="616" y1="76" x2="616" y2="94" stroke="#b45309" stroke-width="0.5"/>
+          <!-- slider -->
+          <line x1="645" y1="84" x2="704" y2="84" stroke="#aa1141" stroke-width="1.5"/>
+          <circle cx="675" cy="84" r="4" fill="#aa1141"/>
+          <text x="630" y="110" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="7" fill="#aa1141">table · svg · slider · responsive</text>
+          <text x="630" y="148" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#9a0036" letter-spacing="0.04em">当立 · HTML</text>
+          <!-- cherry 实线通道 -->
+          <line x1="410" y1="90" x2="538" y2="90" stroke="#aa1141" stroke-width="2" marker-end="url(#prev-arr-cherry-htm)" marker-start="url(#prev-arr-cherry-htm)"/>
+        </g>
       </svg>
-      <p class="preview-caption">PREVIEW &nbsp;·&nbsp; NOISE PROTOCOL · XX HANDSHAKE</p>
+      <p class="preview-caption">PREVIEW &nbsp;·&nbsp; AGENT 时代 · MARKDOWN → HTML</p>
     </div>
 
     <div class="card-body">
-      <span class="card-tag">NOISE · HANDSHAKE · 渐进入门</span>
-      <h2 class="card-title">Noise Protocol · 渐进图谱</h2>
+      <span class="card-tag">AGENT · HTML · 工作流转移</span>
+      <h2 class="card-title">AGENT 时代，Markdown 已死，HTML 当立</h2>
       <p class="card-desc">
-        以 bitchat 这个 BLE peer-to-peer 聊天 app 为载体，16 步看穿 Noise XX 握手三轮、ck/h 双账本、Split 分桨、Transport phase。每个关键步骤附对齐 bitchat 真实源码的 Swift + CryptoKit 骨架。
+        Thariq 原文《Using Claude Code: The Unreasonable Effectiveness of HTML》图谱化解读。提炼 Anthropic Claude Code 团队的工作流转移：Agent 写、人读时，"易编辑"已是被牺牲的优势，"信息密度 + 易分享 + 可交互"才是新核心。含 6 大优势、5 大用例（中英双语 prompt）、6 条 FAQ。
       </p>
       <ul class="card-bullets">
-        <li>16 步交互教程 · 含 #step-N 锚点</li>
-        <li>e/s/ee/es/se/ss 记号系统</li>
-        <li>Swift + CryptoKit 骨架</li>
-        <li>对齐 bitchat 真实 BLE 落地</li>
+        <li>核心命题：4 维通道转移图</li>
+        <li>6 大优势 · 每条配 mini SVG</li>
+        <li>5 大用例 · 双语 prompt 对照</li>
+        <li>FAQ：版本控制 / token / 速度</li>
       </ul>
       <span class="card-cta">开始阅读 <span class="cta-arrow">→</span></span>
     </div>

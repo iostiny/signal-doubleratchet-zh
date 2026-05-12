@@ -8,15 +8,15 @@
 
 ```
 doc/
-├── index.html                 ← 主入口 hub：列出所有专题卡
+├── index.html                 ← 主入口 hub：按三组列出所有专题卡
 ├── README.md / AGENTS.md / CLAUDE.md / CNAME / .gitignore
-└── signal-double-ratchet/     ← 当前唯一专题
-    ├── index.html             ← 专题 landing
-    ├── beginner/              ← 25 步渐进教程
-    └── advanced/              ← 11 张架构图
+├── signal-protocol/           ← IM 安全通信组
+├── noise-protocol/            ← IM 安全通信组
+├── zkp/                       ← 区块链密码学组
+└── html-over-markdown/        ← AGENT / LLM 组
 ```
 
-未来加新专题就是 `mkdir <topic-slug>/` + 在主 `index.html` 加一张卡。每个专题完全独立，可单独下载离线查看。
+未来加新专题就是 `mkdir <topic-slug>/` + 在主 `index.html` 对应分组下加一张卡。每个专题完全独立，可单独下载离线查看。
 
 ## 全仓通用约束（所有专题必须遵守）
 
@@ -38,10 +38,29 @@ doc/
    - 左：`iostiny / doc` 用 JetBrains Mono 字体，`/` 用 `--cherry-pink` 色
    - 右（推到 main 末端）：一行灰色 tagline，如"中文技术文档与图谱"
    - 下方 1px 浅灰分隔线
-2. **专题卡片**（核心）— 每张专题一张大卡 (`.topic-card`)，上下两段结构（见下）
+2. **分组 + 专题卡片**（核心）— 三个固定分组，每组一个 `.section-header`，下挂若干 `.topic-card`
 3. **Upcoming hint** — 单行 mono 灰字 `下一个专题在路上 · X · Y · Z · ……`
    - **绝对不要**做"占位卡"（虚线框 + "更多专题陆续添加"）—— 视觉上强调"啥都没有"
 4. **Footer** — 一行 mono：`github.com/iostiny/doc · CC-BY 4.0 · 源码 MIT`
+
+### 三个固定分组（顺序不变）
+
+| 序号 | 名称 | 范畴 |
+|---|---|---|
+| 01 | `IM 安全通信` | 端到端加密 · 握手 · 群组 · 多设备（Signal / Noise / 未来 MLS / TLS / WebRTC E2EE） |
+| 02 | `区块链密码学` | 零知识证明 · 承诺方案 · 椭圆曲线 · Pairing · FHE |
+| 03 | `AGENT / LLM` | 智能体协议 · 推理与上下文工程 · 工具调用 |
+
+**`.section-header` 结构**：`<h2 class="section-header">` 内含三个 span：
+- `.num` — `01` / `02` / `03`，cherry-pink，mono
+- `.name` — 分组名，cherry-deep，mono 700
+- `.desc` — 一行灰字范畴说明，Noto Sans SC，推到右端（小屏自动换行到下方）
+
+边框：底部 `1px solid var(--rule-soft)`，跟 hero 分隔线保持视觉一致。
+
+**空分组规则**：分组下暂无专题时，用 `.section-empty` 单行 mono 灰字（如 `专题筹备中 · 近期上新`）占位，**不要**做卡片样式的占位框。该分组挂上第一个专题后立即删除 `.section-empty`。
+
+**新增分组规则**：当前三组是终态，**不要**新增第 04/05 组。新主题归类到最贴近的组里，若都不贴近再回头讨论分组定义。
 
 ### `.topic-card` 的结构
 
@@ -85,16 +104,17 @@ doc/
 1. **选 slug**：`kebab-case`，名词性，避免实现细节。例：`zkp-tutorial` ✓ / `zkp-htmls` ✗
 2. **写专题内容**：`mkdir <slug>/` → 至少有一个 `<slug>/index.html` 作为专题 landing；若有多种讲法可分 `<slug>/beginner/` `<slug>/advanced/` 等语义子目录（参考 Signal 专题）
 3. **挑 hero SVG**：在专题内容里选**最具标识度**的一张图，缩略为 760×170 viewBox。如果没有现成的，先做这张图再上线
-4. **复制 `.topic-card` 块到主 `index.html`**：
+4. **复制 `.topic-card` 块到主 `index.html`，挂在对应分组 `.section-header` 之下**：
    - 改 `href="./<slug>/"`
    - **重写 SVG preview**：保留 viewBox 760×170 和顶部小字 + 底部 caption 结构；图内主体换成新专题的标志性可视化；颜色用该专题的标志性配色
    - 改 `.card-tag` 为该专题的类型标签（如 `ZKP · COMMITMENT · 入门`）
    - 改 `.card-title` 为专题完整名（保留 `· 副标题` 格式）
    - 改 `.card-desc` 3-4 行简介
    - 改 `.card-bullets` 4 条要点（保持 2×2，每条约 10-16 字）
-5. **更新 upcoming hint**：从未来列表里**移除**这个专题
-6. **不要**改 hero、不要改 footer、不要改 CSS 变量、不要给主 hub 加新 section（如分组头）—— 只有专题 >= 3 个时才考虑分组
-7. 测试 hover、CTA、mobile 响应式（≤600px）
+5. **若该分组之前是空组**：删掉对应的 `.section-empty` 占位行
+6. **更新 upcoming hint**：从未来列表里**移除**这个专题
+7. **不要**改 hero、不要改 footer、不要改 CSS 变量、不要新增分组（三组是终态）
+8. 测试 hover、CTA、mobile 响应式（≤600px）
 
 ### 主 hub 永远只有一个文件
 
