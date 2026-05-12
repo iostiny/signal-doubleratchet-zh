@@ -113,12 +113,17 @@ doc/
    - 改 `.card-bullets` 4 条要点（保持 2×2，每条约 10-16 字）
 5. **若该分组之前是空组**：删掉对应的 `.section-empty` 占位行
 6. **更新 upcoming hint**：从未来列表里**移除**这个专题
-7. **不要**改 hero、不要改 footer、不要改 CSS 变量、不要新增分组（三组是终态）
-8. 测试 hover、CTA、mobile 响应式（≤600px）
+7. **同步更新仓库根 `README.md`**：在对应分组下加一行链接 + 一句话描述；若有子目录（beginner/advanced/…）一并列出；同步刷新「仓库结构」目录树。**README 与主 hub 必须保持同步**，不允许 hub 已上新而 README 仍是旧状态
+8. **不要**改 hero、不要改 footer、不要改 CSS 变量、不要新增分组（三组是终态）
+9. 测试 hover、CTA、mobile 响应式（≤600px）
 
 ### 主 hub 永远只有一个文件
 
 `index.html` 单文件包含所有 CSS、SVG、JS。增加专题不创建新 HTML 文件，只在主 hub 里新增一张 `.topic-card`。
+
+### README.md 必须随内容同步
+
+任何对外可见的新增内容——**新专题**、**既有专题下的新子页**（如 `signal-protocol/sesame/`）、**专题改名 / 移动 / 删除**——都必须**同一次提交**里同步更新仓库根 `README.md` 的「当前专题」列表与「仓库结构」目录树。判断标准：用户从 GitHub 看 README 时能否准确找到所有可读内容。允许仅修内文（错别字、措辞、Rust 骨架等）不动 README；只要目录结构 / 可见入口变了就必须改。
 
 ## 专题内容设计原则（基于"HTML 之力"对照自审）
 
