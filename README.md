@@ -19,6 +19,7 @@
   - [PQXDH · 后量子演进图谱](./signal-protocol/pqxdh/)：从 X3DH 到 PQXDH (2023) 再到 SPQR / Triple Ratchet (2025)，含 harvest-now-decrypt-later 威胁模型、KEM ≠ DH 心智迁移、hybrid 安全论证
 - 🌀 [**Noise Protocol · 中文渐进图谱（Bitchat 视角）**](./noise-protocol/) — 以 Bitchat 实战切入 Noise Framework
   - [渐进版教程](./noise-protocol/beginner/)
+- 🟢 [**Matrix · vodozemac 对照 Signal**](./matrix-protocol/) — 以 vodozemac 0.10.0 源码为切入点的 Matrix 加密栈（Olm + Megolm）与 Signal 对照图谱：3DH vs X3DH（含 fallback key 修正）、Megolm vs Sender Keys、联邦威胁面、2.5 年 PQ 差距、"PQ-Olm" 推演设计
 
 ### 02 · 区块链密码学
 
@@ -43,6 +44,8 @@ doc/
 ├── noise-protocol/         ← IM 安全通信 · Noise
 │   ├── index.html
 │   └── beginner/
+├── matrix-protocol/        ← IM 安全通信 · Matrix (vodozemac 对照 Signal)
+│   └── index.html
 ├── zkp/                    ← 区块链密码学
 │   ├── index.html
 │   └── beginner/

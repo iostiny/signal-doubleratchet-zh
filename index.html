@@ -459,6 +459,104 @@ footer .sep { color: var(--rule); user-select: none; }
 
   </a>
 
+  <a class="topic-card" href="./matrix-protocol/index.html">
+
+    <div class="preview">
+      <div class="preview-bg"></div>
+      <!-- Matrix · Megolm group fan-out preview -->
+      <svg viewBox="0 0 760 170" preserveAspectRatio="xMidYMid meet" aria-label="Matrix Megolm fan-out preview">
+        <defs>
+          <marker id="prev-arr-matrix" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0fa57a"/>
+          </marker>
+        </defs>
+
+        <!-- Top label -->
+        <text x="380" y="16" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="11" fill="#9ca3af">Matrix · Megolm fan-out · 一个发送者 → 经 Olm 1:1 分发 session key</text>
+
+        <!-- Sender Alice (left) -->
+        <g>
+          <circle cx="70" cy="80" r="24" fill="#d6f5e7" stroke="#0fa57a" stroke-width="2"/>
+          <text x="70" y="86" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="14" fill="#0a7a5a">A</text>
+          <text x="70" y="118" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#0a7a5a">sender</text>
+
+          <!-- Outbound megolm session box -->
+          <rect x="36" y="128" width="68" height="26" rx="5" fill="#d6f5e7" stroke="#0fa57a" stroke-width="1.3"/>
+          <text x="70" y="145" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" fill="#0a7a5a">Megolm sk</text>
+        </g>
+
+        <!-- Devices on right: two groups -->
+        <!-- Bob's 3 devices -->
+        <g>
+          <rect x="380" y="32" width="200" height="48" rx="8" fill="#ffffff" stroke="#9ca3af" stroke-width="1" stroke-dasharray="3 2"/>
+          <text x="392" y="46" font-family="'JetBrains Mono', monospace" font-size="9" fill="#475569" font-weight="600">@bob</text>
+
+          <rect x="396" y="50" width="44" height="26" rx="4" fill="#cffafe" stroke="#0e7490" stroke-width="1"/>
+          <text x="418" y="60" text-anchor="middle" font-size="11">📱</text>
+          <text x="418" y="73" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#0e7490">mob</text>
+
+          <rect x="446" y="50" width="44" height="26" rx="4" fill="#cffafe" stroke="#0e7490" stroke-width="1"/>
+          <text x="468" y="60" text-anchor="middle" font-size="11">💻</text>
+          <text x="468" y="73" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#0e7490">desk</text>
+
+          <rect x="496" y="50" width="44" height="26" rx="4" fill="#cffafe" stroke="#0e7490" stroke-width="1"/>
+          <text x="518" y="60" text-anchor="middle" font-size="11">🖥</text>
+          <text x="518" y="73" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#0e7490">svr</text>
+
+          <rect x="546" y="50" width="28" height="26" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+          <text x="560" y="68" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#b45309">+1</text>
+        </g>
+
+        <!-- Carol's 2 devices -->
+        <g>
+          <rect x="380" y="92" width="200" height="48" rx="8" fill="#ffffff" stroke="#9ca3af" stroke-width="1" stroke-dasharray="3 2"/>
+          <text x="392" y="106" font-family="'JetBrains Mono', monospace" font-size="9" fill="#475569" font-weight="600">@carol</text>
+
+          <rect x="396" y="110" width="44" height="26" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+          <text x="418" y="120" text-anchor="middle" font-size="11">📱</text>
+          <text x="418" y="133" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#6d28d9">mob</text>
+
+          <rect x="446" y="110" width="44" height="26" rx="4" fill="#ede9fe" stroke="#6d28d9" stroke-width="1"/>
+          <text x="468" y="120" text-anchor="middle" font-size="11">💻</text>
+          <text x="468" y="133" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#6d28d9">desk</text>
+        </g>
+
+        <!-- Fan-out arrows: from Alice's session to each device -->
+        <g stroke="#0fa57a" stroke-width="1.2" fill="none" stroke-dasharray="3 2">
+          <path d="M 105 138 Q 240 80 394 62" marker-end="url(#prev-arr-matrix)"/>
+          <path d="M 105 140 Q 240 90 444 62" marker-end="url(#prev-arr-matrix)"/>
+          <path d="M 105 142 Q 240 100 494 62" marker-end="url(#prev-arr-matrix)"/>
+          <path d="M 105 144 Q 240 110 544 62" marker-end="url(#prev-arr-matrix)"/>
+          <path d="M 105 142 Q 240 130 394 122" marker-end="url(#prev-arr-matrix)"/>
+          <path d="M 105 144 Q 240 134 444 122" marker-end="url(#prev-arr-matrix)"/>
+        </g>
+
+        <!-- Side caption -->
+        <text x="240" y="60" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#0a7a5a" font-weight="600">每条 = 一次 Olm 1:1 加密</text>
+
+        <!-- bottom small note -->
+        <text x="640" y="162" text-anchor="end" font-family="'JetBrains Mono', monospace" font-size="9" fill="#9ca3af">每用户 N 设备</text>
+      </svg>
+      <p class="preview-caption">PREVIEW &nbsp;·&nbsp; MATRIX · MEGOLM GROUP FAN-OUT</p>
+    </div>
+
+    <div class="card-body">
+      <span class="card-tag">MATRIX · OLM + MEGOLM · 对照 Signal</span>
+      <h2 class="card-title">Matrix · vodozemac 对照 Signal</h2>
+      <p class="card-desc">
+        以 vodozemac 0.10.0 源码为切入点，把 Matrix 端到端加密（Olm + Megolm）逐项摆到 Signal 旁边对照——3DH vs X3DH（含 fallback key 修正）、Megolm vs Sender Keys 的设计哲学分叉、联邦威胁面，以及 2.5 年 PQ 差距。
+      </p>
+      <ul class="card-bullets">
+        <li>5 章节单页 · 1 toggle + 多 details</li>
+        <li>vodozemac 源码逐处引用</li>
+        <li>Megolm fan-out / 联邦威胁可视化</li>
+        <li>含 "PQ-Olm" 推演设计草案</li>
+      </ul>
+      <span class="card-cta">开始阅读 <span class="cta-arrow">→</span></span>
+    </div>
+
+  </a>
+
   <h2 class="section-header">
     <span class="num">02</span>
     <span class="name">区块链密码学</span>
