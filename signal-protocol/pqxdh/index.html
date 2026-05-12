@@ -1028,7 +1028,9 @@ SK  = HKDF(salt = 0×64, ikm = KM, info = "MyProtocol")</pre>
       </ul>
       <p>
         Signal 在 <strong>2025-10-02</strong> 公告了 <code>SPQR</code>（Sparse Post-Quantum Ratchet），并把它与 Double Ratchet 组合成
-        <em>Triple Ratchet</em>。截至 <strong>2026-05</strong>，SPQR 仍处于<em>分阶段灰度</em>阶段，需要会话双方客户端都升级才会启用。
+        <em>Triple Ratchet</em>。截至 <strong>2026-05</strong>，Signal-iOS 主分支已在 <code>AccountAttributes.swift</code> 把
+        <code>spqr</code> 标记为 <code>true</code>（client capability flag），即<strong>iOS 客户端正在向服务器宣告自己支持 SPQR</strong>。
+        但实际生效仍需要会话双方 capability 都打开——所以你的某个旧设备如果没更新，对应会话仍走老 Double Ratchet。
       </p>
     </div>
 
@@ -1210,7 +1212,7 @@ SK  = HKDF(salt = 0×64, ikm = KM, info = "MyProtocol")</pre>
           <td class="ver">SPQR / Triple Ratchet</td>
           <td class="year">2025-10</td>
           <td>DR + sparse ML-KEM hybrid, 形式化验证</td>
-          <td class="wkn">分阶段灰度 · 需双端升级</td>
+          <td class="wkn">iOS capability 已 ship · 等双端 capability 都开启才生效</td>
         </tr>
       </tbody>
     </table>
@@ -1224,6 +1226,8 @@ SK  = HKDF(salt = 0×64, ikm = KM, info = "MyProtocol")</pre>
         <li><a href="https://csrc.nist.gov/pubs/fips/203/final" target="_blank">FIPS 203 · ML-KEM</a> · NIST 标准化版 Kyber <span class="note">(2024-08)</span></li>
         <li><a href="https://eprint.iacr.org/2023/1395" target="_blank">Formal Verification of the PQXDH Post-Quantum Key Agreement</a> · Bhargavan et al. · IACR ePrint <span class="note">(论文)</span></li>
         <li><a href="https://github.com/signalapp/libsignal" target="_blank">signalapp/libsignal</a> · 生产 Rust 实现 <span class="note">(源码)</span></li>
+        <li><a href="https://github.com/signalapp/Signal-iOS/blob/main/SignalServiceKit/Network/API/Requests/AccountAttributes/AccountAttributes.swift" target="_blank">Signal-iOS · AccountAttributes.swift</a> · 含 <code>spqr = true</code> capability 声明 <span class="note">(iOS 已 ship)</span></li>
+        <li><a href="https://github.com/signalapp/Signal-iOS/tree/main/SignalServiceKit/Storage/AxolotlStore" target="_blank">Signal-iOS · KyberPreKeyStore</a> · PQXDH 的 Kyber prekey 存储实现 <span class="note">(iOS 已 ship)</span></li>
       </ul>
     </div>
   </section>
