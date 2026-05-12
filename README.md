@@ -12,10 +12,11 @@
 
 ### 01 · IM 安全通信
 
-- 🔐 [**Signal Protocol · 中文图谱**](./signal-protocol/) — 三套讲法
+- 🔐 [**Signal Protocol · 中文图谱**](./signal-protocol/) — 四套讲法
   - [渐进版 · 25 步交互教程](./signal-protocol/beginner/)：零基础推进 Double Ratchet，每步附 Rust 骨架与权威外链
   - [深度版 · 11 张架构图谱](./signal-protocol/advanced/)：面向已熟悉 Signal 的工程师做 recall，含服务端契约
   - [Sesame · 多设备会话管理](./signal-protocol/sesame/)：Signal 多设备分发模型
+  - [PQXDH · 后量子演进图谱](./signal-protocol/pqxdh/)：从 X3DH 到 PQXDH (2023) 再到 SPQR / Triple Ratchet (2025)，含 harvest-now-decrypt-later 威胁模型、KEM ≠ DH 心智迁移、hybrid 安全论证
 - 🌀 [**Noise Protocol · 中文渐进图谱（Bitchat 视角）**](./noise-protocol/) — 以 Bitchat 实战切入 Noise Framework
   - [渐进版教程](./noise-protocol/beginner/)
 
@@ -37,7 +38,8 @@ doc/
 │   ├── index.html          ← 专题 landing
 │   ├── beginner/           ← 25 步渐进教程
 │   ├── advanced/           ← 11 张架构图
-│   └── sesame/             ← 多设备会话
+│   ├── sesame/             ← 多设备会话
+│   └── pqxdh/              ← 后量子演进 (PQXDH + SPQR)
 ├── noise-protocol/         ← IM 安全通信 · Noise
 │   ├── index.html
 │   └── beginner/

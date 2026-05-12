@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal PQXDH · 后量子升级图谱</title>
+<meta name="description" content="Signal Protocol 的后量子演进：从 X3DH 到 PQXDH（2023）再到 SPQR / Triple Ratchet（2025）。KEM ≠ DH 的心智迁移、hybrid 安全论证、harvest-now-decrypt-later 威胁模型。">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page:        #fdfaf6;
+  --bg-card:        #ffffff;
+  --bg-soft:        #fff5ea;
+
+  --text-primary:   #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted:     #9ca3af;
+
+  --cherry:         #aa1141;
+  --cherry-deep:    #9a0036;
+  --cherry-pink:    #ea68b6;
+  --cherry-glass:   #fce4e4;
+  --cherry-soft:    #ffa6a6;
+
+  --teal:           #0e7490;
+  --teal-soft:      #cffafe;
+  --amber:          #b45309;
+  --amber-soft:     #fef3c7;
+  --green:          #15803d;
+  --green-soft:     #dcfce7;
+  --violet:         #6d28d9;
+  --violet-soft:    #ede9fe;
+  --slate:          #475569;
+  --slate-soft:     #f1f5f9;
+  --red-deep:       #b91c1c;
+  --red-soft:       #fee2e2;
+
+  --rule:           #e5e7eb;
+  --rule-soft:      #f1f1f0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans SC', 'JetBrains Mono', -apple-system, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.65;
+}
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 2.4rem 1.6rem 4rem; }
+
+/* ============== Hero ============== */
+.hero {
+  padding-bottom: 1.6rem;
+  border-bottom: 2px solid var(--cherry);
+  margin-bottom: 2rem;
+}
+.hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--cherry-pink);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.hero-eyebrow a {
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--rule);
+}
+.hero-eyebrow a:hover { color: var(--cherry); border-bottom-color: var(--cherry); }
+.hero-title {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+.hero-title .accent { color: var(--cherry-pink); }
+.hero-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  max-width: 720px;
+  margin-bottom: 1rem;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.hero-meta span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  border-radius: 10px;
+}
+
+/* ============== Section nav ============== */
+.section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+  margin-bottom: 2.4rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+}
+.section-nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.section-nav a:hover { color: var(--cherry); border-bottom-color: var(--cherry-pink); }
+.section-nav .num { color: var(--cherry-pink); margin-right: 0.3em; }
+
+/* ============== Section ============== */
+.section {
+  margin-bottom: 3.4rem;
+  scroll-margin-top: 1rem;
+}
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.section-header .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--cherry-pink);
+}
+.section-header .name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--cherry-deep);
+}
+.section-header .desc {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.prose {
+  font-size: 0.95rem;
+  max-width: 820px;
+  margin-bottom: 1.3rem;
+}
+.prose p { margin-bottom: 0.8rem; }
+.prose p:last-child { margin-bottom: 0; }
+.prose strong { color: var(--cherry-deep); }
+.prose code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.86em;
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.prose em {
+  font-style: normal;
+  color: var(--violet);
+  font-weight: 600;
+}
+
+/* ============== Cards ============== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.1rem;
+  box-shadow: 0 1px 3px rgba(170,17,65,0.03);
+}
+.card.svg-card { padding: 1rem 1rem 0.6rem; }
+.card-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.svg-wrap svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============== Two-col compare ============== */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+.compare > div {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+.compare h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
+}
+.compare .lhs { border-left: 3px solid var(--teal); }
+.compare .lhs h4 { color: var(--teal); }
+.compare .rhs { border-left: 3px solid var(--cherry); }
+.compare .rhs h4 { color: var(--cherry-deep); }
+.compare ul {
+  list-style: none;
+  font-size: 0.84rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.compare li::before { content: '·'; color: var(--cherry-pink); font-weight: 700; margin-right: 0.5em; }
+.compare code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.86em;
+  background: var(--slate-soft);
+  color: var(--slate);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* ============== Slider ============== */
+.slider-card {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--amber);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.1rem;
+}
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+.slider-row label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  min-width: 5em;
+}
+.slider-row input[type=range] {
+  flex: 1;
+  min-width: 180px;
+  accent-color: var(--cherry);
+}
+.slider-row .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--cherry-deep);
+  font-weight: 700;
+  min-width: 4em;
+}
+.slider-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ============== Toggle ============== */
+.toggle-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+.toggle-row button {
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 6px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+.toggle-row button:hover { border-color: var(--cherry); color: var(--cherry-deep); }
+.toggle-row button.active {
+  background: var(--cherry);
+  color: white;
+  border-color: var(--cherry);
+}
+
+/* ============== Details ============== */
+details.extras {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--violet);
+  border-radius: 10px;
+  padding: 0.7rem 1.1rem;
+  margin-bottom: 1rem;
+  font-size: 0.86rem;
+}
+details.extras summary {
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--violet);
+  font-weight: 600;
+  list-style: none;
+}
+details.extras summary::-webkit-details-marker { display: none; }
+details.extras summary::before {
+  content: '▸ ';
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+details.extras[open] summary::before { transform: rotate(90deg); }
+details.extras .body {
+  margin-top: 0.7rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--rule);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+details.extras .body p { margin-bottom: 0.6rem; }
+details.extras .body p:last-child { margin-bottom: 0; }
+details.extras .body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85em;
+  background: var(--violet-soft);
+  color: var(--violet);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+details.extras .body pre {
+  background: #fafff7;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+  line-height: 1.55;
+}
+
+/* ============== Timeline table ============== */
+.timeline {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.timeline th, .timeline td {
+  padding: 0.65rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.timeline thead th {
+  background: var(--cherry-glass);
+  color: var(--cherry-deep);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+.timeline tbody tr:last-child td { border-bottom: none; }
+.timeline tbody tr:hover { background: var(--bg-soft); }
+.timeline .ver {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--cherry-deep);
+}
+.timeline .year {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.timeline .wkn { color: var(--red-deep); font-size: 0.8rem; }
+
+/* ============== Refs ============== */
+.refs {
+  background: var(--bg-card);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--violet);
+  border-radius: 10px;
+  padding: 0.95rem 1.2rem;
+}
+.refs h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--violet);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.7rem;
+}
+.refs ul { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.85rem; }
+.refs li::before { content: '↗'; color: var(--violet); margin-right: 0.5em; }
+.refs a {
+  color: var(--cherry-deep);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--cherry-pink);
+}
+.refs a:hover { color: var(--cherry); border-bottom-style: solid; }
+.refs .note { color: var(--text-muted); font-size: 0.78rem; margin-left: 0.3em; }
+
+/* ============== Footer ============== */
+.footer {
+  margin-top: 3rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--rule);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.footer a { color: var(--cherry); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* ============== Mobile ============== */
+@media (max-width: 720px) {
+  .wrap { padding: 1.5rem 1rem 3rem; }
+  .hero-title { font-size: 1.6rem; }
+  .hero-subtitle { font-size: 0.88rem; }
+  .section-header { flex-wrap: wrap; }
+  .section-header .desc { margin-left: 0; width: 100%; }
+  .compare { grid-template-columns: 1fr; }
+  .timeline { font-size: 0.78rem; }
+  .timeline th, .timeline td { padding: 0.5rem 0.6rem; }
+  .timeline .year { font-size: 0.72rem; }
+  .footer { flex-direction: column; }
+}
+@media (max-width: 600px) {
+  /* Hide decorative SVG layers in narrow viewport */
+  svg .decor { display: none; }
+  .slider-row label { min-width: 0; width: 100%; }
+}
+
+/* ============== SVG palette helpers ============== */
+.svg-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  fill: var(--text-primary);
+}
+.svg-small {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  fill: var(--text-muted);
+}
+.svg-note {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 11px;
+  fill: var(--text-secondary);
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ==================== HERO ==================== -->
+  <header class="hero">
+    <div class="hero-eyebrow">
+      <a href="../">← signal-protocol</a> · POST-QUANTUM EVOLUTION
+    </div>
+    <h1 class="hero-title">PQXDH <span class="accent">·</span> Signal 的后量子升级</h1>
+    <p class="hero-subtitle">
+      从 2016 年的 X3DH 到 2023 年的 PQXDH，再到 2025 年的 SPQR / Triple Ratchet——
+      Signal 协议是怎样在不破坏 forward secrecy 的前提下，把每一段密钥协商都"加上抗量子保险"的。
+    </p>
+    <div class="hero-meta">
+      <span>X3DH → PQXDH</span>
+      <span>ML-KEM / Kyber-1024</span>
+      <span>Hybrid 安全</span>
+      <span>harvest-now-decrypt-later</span>
+      <span>Triple Ratchet</span>
+    </div>
+  </header>
+
+  <nav class="section-nav">
+    <a href="#why"><span class="num">01</span>演进驱动力</a>
+    <a href="#kem"><span class="num">02</span>KEM ≠ DH</a>
+    <a href="#alg"><span class="num">03</span>PQXDH 算法</a>
+    <a href="#future"><span class="num">04</span>SPQR · 演进未完</a>
+    <a href="#timeline"><span class="num">05</span>时间表 · Refs</a>
+  </nav>
+
+  <!-- ==================== §1 WHY ==================== -->
+  <section class="section" id="why">
+    <div class="section-header">
+      <span class="num">01</span>
+      <span class="name">演进驱动力</span>
+      <span class="desc">为什么 2023 年要动 X3DH</span>
+    </div>
+
+    <div class="prose">
+      <p>
+        Signal 2016 年定型的 <strong>X3DH</strong> 在异步握手里做 4 次 DH，全部跑在 <code>Curve25519</code> 上。
+        安全性押在 <em>椭圆曲线离散对数难题</em>——Shor 算法跑在足够大的量子计算机上就能在多项式时间内打掉。
+      </p>
+      <p>
+        真正的威胁不是"等量子计算机来了再换"，而是<strong>今天</strong>就发生的
+        <em>harvest-now-decrypt-later</em>：国家级对手现在录下所有密文，等 CRQC（密码相关规模量子计算机）问世——
+        预计 10–20 年——一次性解密。Signal 主打的 forward secrecy 在这套威胁模型下<strong>失效</strong>：
+        虽然每条消息密钥都已删除，但<em>首密钥</em>能被反算出来，整段历史会话照样泄漏。
+      </p>
+      <p>
+        所以 PQ 升级不能等。Signal 在 <strong>2023-09-19</strong> 公告了 <code>PQXDH</code>
+        (Post-Quantum Extended Diffie-Hellman)，把一个后量子 KEM 拼到 X3DH 旁边，hybrid 协商首密钥。
+      </p>
+    </div>
+
+    <div class="card svg-card">
+      <div class="card-title">harvest-now-decrypt-later · 调节窃听者等待的年份</div>
+      <div class="svg-wrap">
+        <svg viewBox="0 0 760 240" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background -->
+          <rect x="0" y="0" width="760" height="240" fill="#fdfaf6"/>
+
+          <!-- Top: today / harvest -->
+          <g>
+            <rect x="40" y="30" width="200" height="60" rx="10" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="140" y="52" text-anchor="middle" class="svg-label" fill="#9a0036" font-weight="700">今天 · 2026</text>
+            <text x="140" y="72" text-anchor="middle" class="svg-small">Alice ↔ Bob</text>
+            <text x="140" y="86" text-anchor="middle" class="svg-small">发送加密消息</text>
+
+            <!-- Eve -->
+            <circle cx="380" cy="60" r="22" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+            <text x="380" y="65" text-anchor="middle" font-size="20">👁</text>
+            <text x="380" y="100" text-anchor="middle" class="svg-small" fill="#b91c1c">Eve · 国家级</text>
+
+            <!-- Storage -->
+            <rect x="520" y="30" width="200" height="60" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+            <text x="620" y="52" text-anchor="middle" class="svg-label" fill="#b45309" font-weight="700">归档密文</text>
+            <text x="620" y="72" text-anchor="middle" class="svg-small">每条消息</text>
+            <text x="620" y="86" text-anchor="middle" class="svg-small">+ 首密钥协商记录</text>
+
+            <!-- Arrows -->
+            <path d="M 240 60 Q 310 60 358 60" stroke="#b91c1c" stroke-width="1.5" fill="none" marker-end="url(#arr-r)"/>
+            <path d="M 402 60 Q 470 60 518 60" stroke="#b45309" stroke-width="1.5" fill="none" marker-end="url(#arr-a)"/>
+          </g>
+
+          <!-- Timeline axis -->
+          <g class="decor">
+            <line x1="60" y1="160" x2="720" y2="160" stroke="#9ca3af" stroke-width="1"/>
+            <text x="60" y="180" class="svg-small">2026</text>
+            <text x="720" y="180" text-anchor="end" class="svg-small">2050</text>
+            <text x="390" y="200" text-anchor="middle" class="svg-note">⬇ 拖动 slider 调节窃听者等待年份 ⬇</text>
+          </g>
+
+          <!-- Year cursor (dynamic) -->
+          <g id="yr-cursor">
+            <line id="yr-line" x1="60" y1="140" x2="60" y2="180" stroke="#aa1141" stroke-width="2.5"/>
+            <circle id="yr-dot" cx="60" cy="160" r="6" fill="#aa1141"/>
+            <text id="yr-text" x="60" y="130" text-anchor="middle" class="svg-label" fill="#9a0036" font-weight="700">2026</text>
+          </g>
+
+          <!-- Outcome box (dynamic) -->
+          <g id="yr-outcome">
+            <rect x="40" y="210" width="680" height="22" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+            <text id="yr-msg" x="380" y="226" text-anchor="middle" class="svg-label" fill="#15803d" font-weight="600">CRQC 尚未问世 · 全栈 X25519 暂时安全</text>
+          </g>
+
+          <defs>
+            <marker id="arr-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/>
+            </marker>
+            <marker id="arr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#b45309"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+      <div class="slider-card" style="margin: 0.6rem 0 0;">
+        <div class="slider-row">
+          <label>窃听年份</label>
+          <input type="range" id="yr-slider" min="2026" max="2050" step="1" value="2026">
+          <span class="val" id="yr-val">2026</span>
+        </div>
+        <div class="slider-hint">
+          <em>注</em>：CRQC 出现年份是<strong>估计区间</strong>，业界普遍预期 2035–2045。本图采用中间值 2040 作为分界。
+          关键不是精确年份，而是<strong>密文今天就在被存</strong>。
+        </div>
+      </div>
+    </div>
+
+    <details class="extras">
+      <summary>展开 · NIST PQ 标准化与 ML-KEM</summary>
+      <div class="body">
+        <p>
+          NIST 在 2016 年发起后量子密码标准化竞赛。2022 年 7 月，<code>CRYSTALS-Kyber</code> 入选为<strong>唯一</strong>的 KEM 标准化候选；
+          2024 年 8 月，正式发布 <strong>FIPS 203 · ML-KEM</strong>（Module-Lattice-based KEM），是 Kyber 的标准化版本。
+        </p>
+        <p>
+          ML-KEM 基于 <em>Module Learning With Errors</em> (MLWE) 困难假设，参数集：
+        </p>
+        <pre>ML-KEM-512   公钥  800 B  · 密文  768 B  · 类比 AES-128
+ML-KEM-768   公钥 1184 B  · 密文 1088 B  · 类比 AES-192
+ML-KEM-1024  公钥 1568 B  · 密文 1568 B  · 类比 AES-256</pre>
+        <p>
+          Signal 在 PQXDH 中明确推荐用 <code>Kyber-1024</code>（最高安全等级），现在等价于 <code>ML-KEM-1024</code>。
+          Spec 原文：<em>"an application could choose ... <strong>pqkem</strong> as CRYSTALS-KYBER-1024"</em>。
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== §2 KEM ≠ DH ==================== -->
+  <section class="section" id="kem">
+    <div class="section-header">
+      <span class="num">02</span>
+      <span class="name">KEM ≠ DH · 心智迁移</span>
+      <span class="desc">这不是"加一次 DH"</span>
+    </div>
+
+    <div class="prose">
+      <p>
+        在看 PQXDH 算法之前必须先迁移一个心智：<strong>后量子原语主流不是"DH 的替换品"，而是 KEM</strong>（Key Encapsulation Mechanism）。
+        二者的 API 形态根本不同——这一节看不懂的话，第 03 节的算法图会一直被误读成"加了第 5 个 DH"。
+      </p>
+    </div>
+
+    <div class="compare">
+      <div class="lhs">
+        <h4>DH · Diffie-Hellman</h4>
+        <ul>
+          <li><strong>对称</strong>：双方各持私钥</li>
+          <li><strong>可交换</strong>：<code>DH(a, B) = DH(b, A)</code></li>
+          <li>用<em>对方</em>的公钥就能算出 shared</li>
+          <li>典型：X25519，公钥 32 B</li>
+          <li>双向"亮公钥 → 同时算出 shared"</li>
+        </ul>
+      </div>
+      <div class="rhs">
+        <h4>KEM · Key Encapsulation</h4>
+        <ul>
+          <li><strong>非对称</strong>：发起方 / 接收方角色不同</li>
+          <li><strong>不可交换</strong>：(Encap, Decap) 不对偶</li>
+          <li>发起方拿<em>对方</em>公钥 Encap，吐 <code>(ct, ss)</code></li>
+          <li>典型：ML-KEM-1024，公钥 1568 B、密文 1568 B</li>
+          <li>单向"密文要在网上飞"</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card svg-card">
+      <div class="card-title">API 对照 · 双方算同一 shared 的两种姿势</div>
+      <div class="svg-wrap">
+        <svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="760" height="260" fill="#fdfaf6"/>
+
+          <!-- LHS: DH -->
+          <g>
+            <rect x="20" y="20" width="350" height="220" rx="12" fill="#cffafe" fill-opacity="0.3" stroke="#0e7490" stroke-width="1.5" stroke-dasharray="6 4"/>
+            <text x="195" y="42" text-anchor="middle" class="svg-label" fill="#0e7490" font-weight="700">DH · 双向对称</text>
+
+            <!-- Alice -->
+            <circle cx="80" cy="100" r="22" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="80" y="106" text-anchor="middle" font-size="20">👤</text>
+            <text x="80" y="140" text-anchor="middle" class="svg-small" fill="#aa1141">Alice (a, A)</text>
+
+            <!-- Bob -->
+            <circle cx="310" cy="100" r="22" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="310" y="106" text-anchor="middle" font-size="20">👤</text>
+            <text x="310" y="140" text-anchor="middle" class="svg-small" fill="#0e7490">Bob (b, B)</text>
+
+            <!-- Bidirectional arrow with pubkeys -->
+            <path d="M 105 100 L 285 100" stroke="#475569" stroke-width="1.5" marker-start="url(#arr-l2)" marker-end="url(#arr-r2)"/>
+            <text x="195" y="92" text-anchor="middle" class="svg-small">公钥 A ↔ 公钥 B</text>
+
+            <!-- Computation -->
+            <rect x="40" y="170" width="310" height="56" rx="8" fill="#ffffff" stroke="#0e7490" stroke-width="1"/>
+            <text x="195" y="190" text-anchor="middle" class="svg-label" font-family="JetBrains Mono">DH(a,B) = DH(b,A) = ss</text>
+            <text x="195" y="210" text-anchor="middle" class="svg-small">双方各自本地算，无需第三方</text>
+          </g>
+
+          <!-- RHS: KEM -->
+          <g>
+            <rect x="390" y="20" width="350" height="220" rx="12" fill="#fce4e4" fill-opacity="0.3" stroke="#aa1141" stroke-width="1.5" stroke-dasharray="6 4"/>
+            <text x="565" y="42" text-anchor="middle" class="svg-label" fill="#9a0036" font-weight="700">KEM · 单向 Encap/Decap</text>
+
+            <!-- Alice -->
+            <circle cx="450" cy="100" r="22" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="450" y="106" text-anchor="middle" font-size="20">👤</text>
+            <text x="450" y="140" text-anchor="middle" class="svg-small" fill="#aa1141">发起方</text>
+
+            <!-- Bob -->
+            <circle cx="680" cy="100" r="22" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="680" y="106" text-anchor="middle" font-size="20">👤</text>
+            <text x="680" y="140" text-anchor="middle" class="svg-small" fill="#0e7490">接收方 (pk, sk)</text>
+
+            <!-- Step 1: Bob sends pk -->
+            <path d="M 655 88 Q 565 70 475 88" stroke="#0e7490" stroke-width="1.5" fill="none" marker-end="url(#arr-c)"/>
+            <text x="565" y="70" text-anchor="middle" class="svg-small">① 拿公钥 pk</text>
+
+            <!-- Step 2: Alice sends ct -->
+            <path d="M 475 112 Q 565 132 655 112" stroke="#aa1141" stroke-width="2" fill="none" marker-end="url(#arr-d)"/>
+            <text x="565" y="135" text-anchor="middle" class="svg-small" fill="#aa1141">② 发密文 ct (1568B)</text>
+
+            <!-- Computation -->
+            <rect x="410" y="170" width="310" height="56" rx="8" fill="#ffffff" stroke="#aa1141" stroke-width="1"/>
+            <text x="565" y="186" text-anchor="middle" class="svg-label" font-family="JetBrains Mono">(ct, ss) = Encap(pk)</text>
+            <text x="565" y="202" text-anchor="middle" class="svg-label" font-family="JetBrains Mono">ss = Decap(sk, ct)</text>
+            <text x="565" y="219" text-anchor="middle" class="svg-small">发起方先算 ss · 接收方靠 ct 还原</text>
+          </g>
+
+          <defs>
+            <marker id="arr-l2" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M10,0 L0,5 L10,10 z" fill="#475569"/>
+            </marker>
+            <marker id="arr-r2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+            </marker>
+            <marker id="arr-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#0e7490"/>
+            </marker>
+            <marker id="arr-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#aa1141"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>
+        这个差异决定了 PQXDH 的整体形态。<strong>不是"用 ML-KEM 替换 X25519"</strong>，而是
+        <em>X25519 的 4 个 DH 保持不变，旁边并联一个 ML-KEM 的 Encap/Decap</em>，
+        两套各算出一段 shared secret，再用 KDF 揉到一起。
+      </p>
+      <p>
+        同样的原因，会话内的 Double Ratchet 也不能"直接换 KEM"——下文第 04 节会展开。
+      </p>
+    </div>
+  </section>
+
+  <!-- ==================== §3 ALGORITHM ==================== -->
+  <section class="section" id="alg">
+    <div class="section-header">
+      <span class="num">03</span>
+      <span class="name">PQXDH 完整算法</span>
+      <span class="desc">X3DH ⊕ Kyber, hybrid</span>
+    </div>
+
+    <div class="prose">
+      <p>
+        看图。左侧是 <strong>Bob 的 prekey bundle</strong>——除 X3DH 原有字段外，多了两类 ML-KEM 公钥（PQSPK 长期、PQOPK 一次性），
+        以及它们各自由 <code>IK_B</code> 做的签名。中间是 <strong>Alice 的本地计算</strong>：4 个 DH 一切照旧（沿用 X3DH），
+        外加一次 <code>Encap(PQPK_B)</code> 吐出 <code>(CT, SS)</code>。右侧是 <strong>共同的 KDF 输入</strong>——
+        <code>DH1‖DH2‖DH3‖DH4‖SS</code> 一起喂给 HKDF 得到首密钥 <code>SK</code>。
+      </p>
+    </div>
+
+    <div class="card svg-card">
+      <div class="card-title">PQXDH 数据流 · Bob bundle → Alice 计算 → SK</div>
+      <div class="svg-wrap">
+        <svg viewBox="0 0 1080 520" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="1080" height="520" fill="#fdfaf6"/>
+
+          <!-- ========== Bob bundle (left) ========== -->
+          <g>
+            <rect x="20" y="30" width="260" height="460" rx="14" fill="#ffffff" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="150" y="58" text-anchor="middle" class="svg-label" fill="#0e7490" font-weight="700">Bob's Prekey Bundle</text>
+            <text x="150" y="76" text-anchor="middle" class="svg-small">服务器存放 · Alice 拉取</text>
+
+            <!-- X3DH legacy fields -->
+            <g>
+              <rect x="40" y="98" width="220" height="22" rx="5" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="50" y="114" class="svg-label" fill="#0e7490">IK_B</text>
+              <text x="252" y="114" text-anchor="end" class="svg-small">身份长公钥</text>
+
+              <rect x="40" y="124" width="220" height="22" rx="5" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="50" y="140" class="svg-label" fill="#0e7490">SPK_B + Sig(IK_B, SPK_B)</text>
+
+              <rect x="40" y="150" width="220" height="22" rx="5" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="50" y="166" class="svg-label" fill="#0e7490">OPK_B (one-time)</text>
+              <text x="252" y="166" text-anchor="end" class="svg-small">可选</text>
+            </g>
+
+            <!-- Separator -->
+            <text x="150" y="200" text-anchor="middle" class="svg-small" fill="#9a0036">— PQXDH 新增 —</text>
+            <line x1="40" y1="208" x2="260" y2="208" stroke="#fce4e4" stroke-width="1"/>
+
+            <!-- PQ fields -->
+            <g>
+              <rect x="40" y="222" width="220" height="42" rx="5" fill="#fce4e4" stroke="#aa1141" stroke-width="0.8"/>
+              <text x="50" y="238" class="svg-label" fill="#9a0036">PQSPK_B</text>
+              <text x="252" y="238" text-anchor="end" class="svg-small">last-resort</text>
+              <text x="50" y="256" class="svg-small">+ Sig(IK_B, PQSPK_B)</text>
+
+              <rect x="40" y="270" width="220" height="42" rx="5" fill="#fce4e4" stroke="#aa1141" stroke-width="0.8"/>
+              <text x="50" y="286" class="svg-label" fill="#9a0036">PQOPK_B (one-time)</text>
+              <text x="252" y="286" text-anchor="end" class="svg-small">优先用</text>
+              <text x="50" y="304" class="svg-small">+ Sig(IK_B, PQOPK_B)</text>
+
+              <rect x="40" y="320" width="220" height="56" rx="5" fill="#fef3c7" stroke="#b45309" stroke-width="0.8"/>
+              <text x="50" y="336" class="svg-label" fill="#b45309" font-weight="700">PQPK_B</text>
+              <text x="252" y="336" text-anchor="end" class="svg-small">= 运行时选中</text>
+              <text x="50" y="354" class="svg-small">= PQOPK 若有，否则 PQSPK</text>
+              <text x="50" y="370" class="svg-small">Alice 拿它 Encap</text>
+            </g>
+
+            <!-- Note -->
+            <g class="decor">
+              <text x="150" y="410" text-anchor="middle" class="svg-small" fill="#9ca3af">所有 PQ 公钥</text>
+              <text x="150" y="424" text-anchor="middle" class="svg-small" fill="#9ca3af">都被 IK_B 签名 → 防 MitM</text>
+              <text x="150" y="450" text-anchor="middle" class="svg-note" fill="#0e7490">ML-KEM-1024 公钥 ≈ 1568 B</text>
+              <text x="150" y="466" text-anchor="middle" class="svg-note" fill="#9ca3af">是 X25519 公钥的 49 倍</text>
+            </g>
+          </g>
+
+          <!-- ========== Alice computation (center) ========== -->
+          <g>
+            <rect x="310" y="30" width="420" height="460" rx="14" fill="#ffffff" stroke="#aa1141" stroke-width="1.5"/>
+            <text x="520" y="58" text-anchor="middle" class="svg-label" fill="#9a0036" font-weight="700">Alice's Local Computation</text>
+            <text x="520" y="76" text-anchor="middle" class="svg-small">拉到 bundle 后本地一气呵成</text>
+
+            <!-- 4 DH boxes -->
+            <g>
+              <rect x="330" y="98" width="380" height="28" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="340" y="116" class="svg-label" fill="#0e7490" font-family="JetBrains Mono">DH1 = DH(IK_A,  SPK_B)</text>
+
+              <rect x="330" y="132" width="380" height="28" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="340" y="150" class="svg-label" fill="#0e7490" font-family="JetBrains Mono">DH2 = DH(EK_A,  IK_B)</text>
+
+              <rect x="330" y="166" width="380" height="28" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="340" y="184" class="svg-label" fill="#0e7490" font-family="JetBrains Mono">DH3 = DH(EK_A,  SPK_B)</text>
+
+              <rect x="330" y="200" width="380" height="28" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="340" y="218" class="svg-label" fill="#0e7490" font-family="JetBrains Mono">DH4 = DH(EK_A,  OPK_B)   ⓘ optional</text>
+            </g>
+
+            <text x="520" y="252" text-anchor="middle" class="svg-small" fill="#475569">— 沿用 X3DH，无任何变化 —</text>
+
+            <!-- KEM Encap (highlighted) -->
+            <g>
+              <rect x="330" y="268" width="380" height="42" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+              <text x="340" y="286" class="svg-label" fill="#b45309" font-family="JetBrains Mono" font-weight="700">(CT, SS) = Encap(PQPK_B)</text>
+              <text x="340" y="302" class="svg-small" fill="#b45309">ML-KEM-1024 · NEW</text>
+            </g>
+
+            <!-- KDF combine -->
+            <g>
+              <rect x="330" y="328" width="380" height="56" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+              <text x="520" y="350" text-anchor="middle" class="svg-label" fill="#9a0036" font-family="JetBrains Mono" font-weight="700">
+                SK = KDF(DH1 ‖ DH2 ‖ DH3 ‖ DH4 ‖ SS)
+              </text>
+              <text x="520" y="372" text-anchor="middle" class="svg-small" fill="#9a0036">HKDF-SHA512 · 把 4 个 DH 和 KEM shared 一起灌</text>
+            </g>
+
+            <!-- Initial message -->
+            <g class="decor">
+              <rect x="330" y="402" width="380" height="76" rx="8" fill="#fafff7" stroke="#15803d" stroke-width="1" stroke-dasharray="4 3"/>
+              <text x="520" y="420" text-anchor="middle" class="svg-label" fill="#15803d" font-weight="700">Initial Message → Bob</text>
+              <text x="340" y="438" class="svg-small">• IK_A,  EK_A</text>
+              <text x="340" y="452" class="svg-small">• CT (ML-KEM ciphertext, ≈1568 B)</text>
+              <text x="340" y="466" class="svg-small">• prekey ids (SPK, OPK, PQPK)</text>
+            </g>
+          </g>
+
+          <!-- ========== Bob recv (right) ========== -->
+          <g>
+            <rect x="760" y="30" width="300" height="460" rx="14" fill="#ffffff" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="910" y="58" text-anchor="middle" class="svg-label" fill="#0e7490" font-weight="700">Bob Receives</text>
+            <text x="910" y="76" text-anchor="middle" class="svg-small">用 sk 还原同一个 SK</text>
+
+            <g>
+              <rect x="780" y="98" width="260" height="28" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="0.8"/>
+              <text x="790" y="116" class="svg-label" fill="#b45309" font-family="JetBrains Mono">SS = Decap(sk, CT)</text>
+
+              <rect x="780" y="132" width="260" height="28" rx="6" fill="#cffafe" stroke="#0e7490" stroke-width="0.8"/>
+              <text x="790" y="150" class="svg-label" fill="#0e7490" font-family="JetBrains Mono">重算 DH1..4</text>
+
+              <rect x="780" y="166" width="260" height="50" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+              <text x="910" y="186" text-anchor="middle" class="svg-label" fill="#9a0036" font-family="JetBrains Mono" font-weight="700">SK = KDF(...)</text>
+              <text x="910" y="204" text-anchor="middle" class="svg-small" fill="#9a0036">与 Alice 一致</text>
+            </g>
+
+            <!-- Verify AEAD -->
+            <g>
+              <rect x="780" y="240" width="260" height="60" rx="6" fill="#dcfce7" stroke="#15803d" stroke-width="1"/>
+              <text x="910" y="258" text-anchor="middle" class="svg-label" fill="#15803d" font-weight="700">AEAD 解密 ✓</text>
+              <text x="910" y="276" text-anchor="middle" class="svg-small">用 SK + AD 验证</text>
+              <text x="910" y="292" text-anchor="middle" class="svg-small">成功 → 删 OPK / PQOPK</text>
+            </g>
+
+            <!-- AD note -->
+            <g class="decor">
+              <text x="910" y="340" text-anchor="middle" class="svg-small" fill="#9ca3af">Associated Data</text>
+              <text x="910" y="356" text-anchor="middle" class="svg-small" fill="#9ca3af" font-family="JetBrains Mono">
+                AD = IK_A ‖ IK_B [‖ PQPK_B]
+              </text>
+              <text x="910" y="372" text-anchor="middle" class="svg-small" fill="#9ca3af">绑定身份 + PQ 公钥</text>
+
+              <line x1="780" y1="400" x2="1040" y2="400" stroke="#fce4e4" stroke-width="1"/>
+              <text x="910" y="420" text-anchor="middle" class="svg-note" fill="#15803d">→ 进入 Double Ratchet</text>
+              <text x="910" y="438" text-anchor="middle" class="svg-small" fill="#9ca3af">用 SK 做 root key 初始值</text>
+            </g>
+          </g>
+
+          <!-- Arrows between columns -->
+          <path d="M 280 250 L 308 250" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-e)"/>
+          <path d="M 730 250 L 758 250" stroke="#aa1141" stroke-width="1.5" marker-end="url(#arr-e)"/>
+
+          <defs>
+            <marker id="arr-e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#aa1141"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>
+        <strong>Hybrid 的安全论证</strong>：KDF 是密码学伪随机函数，只要<em>任意一个</em>输入有足够熵且无法被反算，输出 <code>SK</code> 就安全。
+        所以——
+      </p>
+    </div>
+
+    <div class="card svg-card">
+      <div class="card-title">Hybrid 安全 · 点击切换"假设谁被打穿"</div>
+      <div class="toggle-row" id="hybrid-toggle">
+        <button data-h="safe" class="active">两者都安全</button>
+        <button data-h="ecdh">X25519 被 Shor 打穿</button>
+        <button data-h="kem">ML-KEM 被经典攻击打穿</button>
+        <button data-h="both">两者都被打穿</button>
+      </div>
+      <div class="svg-wrap">
+        <svg viewBox="0 0 760 220" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="760" height="220" fill="#fdfaf6"/>
+
+          <!-- 4DH input -->
+          <g>
+            <rect id="h-ecdh" x="40" y="40" width="220" height="60" rx="10" fill="#cffafe" stroke="#0e7490" stroke-width="2"/>
+            <text id="h-ecdh-t" x="150" y="64" text-anchor="middle" class="svg-label" fill="#0e7490" font-weight="700">4 DH (X25519)</text>
+            <text x="150" y="84" text-anchor="middle" class="svg-small" fill="#0e7490">~32B × 4 = 128B 熵</text>
+          </g>
+
+          <!-- KEM input -->
+          <g>
+            <rect id="h-kem" x="40" y="120" width="220" height="60" rx="10" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>
+            <text id="h-kem-t" x="150" y="144" text-anchor="middle" class="svg-label" fill="#b45309" font-weight="700">ML-KEM SS</text>
+            <text x="150" y="164" text-anchor="middle" class="svg-small" fill="#b45309">32B 熵</text>
+          </g>
+
+          <!-- KDF box -->
+          <g>
+            <path d="M 260 70 Q 330 70 380 100" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#arr-k)"/>
+            <path d="M 260 150 Q 330 150 380 120" stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#arr-k)"/>
+
+            <rect x="380" y="80" width="180" height="60" rx="10" fill="#ffffff" stroke="#9a0036" stroke-width="2"/>
+            <text x="470" y="104" text-anchor="middle" class="svg-label" fill="#9a0036" font-weight="700">HKDF-SHA512</text>
+            <text x="470" y="124" text-anchor="middle" class="svg-small">混合输入</text>
+          </g>
+
+          <!-- SK output -->
+          <g>
+            <path d="M 560 110 L 600 110" stroke="#9a0036" stroke-width="2" marker-end="url(#arr-k)"/>
+            <rect id="h-sk" x="600" y="80" width="120" height="60" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+            <text id="h-sk-t" x="660" y="104" text-anchor="middle" class="svg-label" fill="#15803d" font-weight="700">SK ✓</text>
+            <text id="h-sk-s" x="660" y="124" text-anchor="middle" class="svg-small" fill="#15803d">安全</text>
+          </g>
+
+          <!-- Verdict line -->
+          <text id="h-verdict" x="380" y="200" text-anchor="middle" class="svg-label" fill="#15803d" font-weight="700">两个 secret 都未被打穿 → SK 显然安全</text>
+
+          <defs>
+            <marker id="arr-k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+      <div class="slider-hint" style="margin-top: 0.4rem;">
+        <em>论证</em>：<strong>4DH 安全 OR ML-KEM 安全 → SK 安全</strong>。攻击者必须同时打穿两个独立的数学假设
+        （离散对数 <em>且</em> Module-LWE），才能反推 SK。Hybrid 是不让 PQ 算法"风险单点"的工程妥协。
+      </div>
+    </div>
+
+    <details class="extras">
+      <summary>展开 · KDF 输入顺序与 AD 拼接细节</summary>
+      <div class="body">
+        <p>PQXDH spec § 3.3 定义的 KDF 输入：</p>
+        <pre>F   = b'\xFF' × 32       // domain separation prefix
+KM  = F ‖ DH1 ‖ DH2 ‖ DH3 [‖ DH4] ‖ SS
+SK  = HKDF(salt = 0×64, ikm = KM, info = "MyProtocol")</pre>
+        <p>
+          关键约束（来自 spec 原文）：<em>"If <strong>pqkem</strong> does not incorporate <code>PQPK_B</code>
+          into the ciphertext, Alice must also append <code>EncodeKEM(PQPK_B)</code> to <code>AD</code>."</em>
+        </p>
+        <p>
+          这是防 <strong>KEM key-substitution</strong> 攻击——若 KEM ciphertext 本身没把 <code>pk</code> 绑死，
+          需要靠 AD 在 AEAD 这层把 pk 绑定到会话身份上，否则攻击者可以替换 PQPK 重放。
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== §4 SPQR ==================== -->
+  <section class="section" id="future">
+    <div class="section-header">
+      <span class="num">04</span>
+      <span class="name">演进尚未完成 · SPQR / Triple Ratchet</span>
+      <span class="desc">2025-10 公告</span>
+    </div>
+
+    <div class="prose">
+      <p>
+        PQXDH <strong>只升级了初始握手</strong>。一旦会话建立，后续靠 <strong>Double Ratchet</strong> 持续派生消息密钥；
+        其中 <em>DH Ratchet</em> 那一支——每条消息附带的临时公钥——仍然是 <code>X25519</code>。
+        意味着：
+      </p>
+      <ul style="font-size: 0.95rem; padding-left: 1.2em; margin: 0.6rem 0 1rem;">
+        <li><strong>初始握手抗量子</strong>：harvest-now-decrypt-later 录音机看不到首密钥 ✓</li>
+        <li><strong>会话内 Post-Compromise Security 不抗量子</strong>：CRQC 时代攻击者拿到瞬时状态后，能用 Shor 打 DH Ratchet 重新接管会话 ✗</li>
+      </ul>
+      <p>
+        Signal 在 <strong>2025-10-02</strong> 公告了 <code>SPQR</code>（Sparse Post-Quantum Ratchet），并把它与 Double Ratchet 组合成
+        <em>Triple Ratchet</em>。截至 <strong>2026-05</strong>，SPQR 仍处于<em>分阶段灰度</em>阶段，需要会话双方客户端都升级才会启用。
+      </p>
+    </div>
+
+    <div class="card svg-card">
+      <div class="card-title">Triple Ratchet · DR + SPQR 并行</div>
+      <div class="svg-wrap">
+        <svg viewBox="0 0 1000 320" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="0" width="1000" height="320" fill="#fdfaf6"/>
+
+          <!-- Layer headers -->
+          <text x="40" y="40" class="svg-label" fill="#0e7490" font-weight="700">DH Ratchet · X25519</text>
+          <text x="40" y="140" class="svg-label" fill="#b45309" font-weight="700">Symmetric Ratchet · HKDF</text>
+          <text x="40" y="240" class="svg-label" fill="#aa1141" font-weight="700">SPQR · ML-KEM (hybrid, sparse)</text>
+
+          <!-- DH ratchet chain -->
+          <g>
+            <circle cx="160" cy="70" r="18" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="160" y="76" text-anchor="middle" class="svg-small" fill="#0e7490">RK₀</text>
+            <path d="M 178 70 L 232 70" stroke="#0e7490" stroke-width="1.5" marker-end="url(#a1)"/>
+            <circle cx="250" cy="70" r="18" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="250" y="76" text-anchor="middle" class="svg-small" fill="#0e7490">RK₁</text>
+            <path d="M 268 70 L 322 70" stroke="#0e7490" stroke-width="1.5" marker-end="url(#a1)"/>
+            <circle cx="340" cy="70" r="18" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="340" y="76" text-anchor="middle" class="svg-small" fill="#0e7490">RK₂</text>
+            <path d="M 358 70 L 412 70" stroke="#0e7490" stroke-width="1.5" marker-end="url(#a1)"/>
+            <circle cx="430" cy="70" r="18" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="430" y="76" text-anchor="middle" class="svg-small" fill="#0e7490">RK₃</text>
+            <path d="M 448 70 L 502 70" stroke="#0e7490" stroke-width="1.5" marker-end="url(#a1)"/>
+            <circle cx="520" cy="70" r="18" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+            <text x="520" y="76" text-anchor="middle" class="svg-small" fill="#0e7490">RK₄</text>
+
+            <text x="700" y="74" class="svg-note" fill="#0e7490">每次回合 DH(eph_a, eph_b)</text>
+          </g>
+
+          <!-- Symmetric ratchet -->
+          <g>
+            <rect x="140" y="155" width="40" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <text x="160" y="171" text-anchor="middle" class="svg-small" fill="#b45309">CK</text>
+            <rect x="230" y="155" width="40" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <text x="250" y="171" text-anchor="middle" class="svg-small" fill="#b45309">CK</text>
+            <rect x="320" y="155" width="40" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <text x="340" y="171" text-anchor="middle" class="svg-small" fill="#b45309">CK</text>
+            <rect x="410" y="155" width="40" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <text x="430" y="171" text-anchor="middle" class="svg-small" fill="#b45309">CK</text>
+            <rect x="500" y="155" width="40" height="22" rx="4" fill="#fef3c7" stroke="#b45309" stroke-width="1"/>
+            <text x="520" y="171" text-anchor="middle" class="svg-small" fill="#b45309">CK</text>
+
+            <text x="700" y="171" class="svg-note" fill="#b45309">每条消息派生 MK（不变）</text>
+          </g>
+
+          <!-- SPQR sparse hops -->
+          <g>
+            <rect x="140" y="252" width="40" height="22" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+            <text x="160" y="268" text-anchor="middle" class="svg-small" fill="#aa1141">SS₀</text>
+
+            <!-- Sparse arrow: skip 2 -->
+            <path d="M 180 263 Q 280 240 318 263" stroke="#aa1141" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#a2)"/>
+            <text x="245" y="240" text-anchor="middle" class="svg-small" fill="#aa1141">erasure-coded</text>
+
+            <rect x="320" y="252" width="40" height="22" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+            <text x="340" y="268" text-anchor="middle" class="svg-small" fill="#aa1141">SS₁</text>
+
+            <path d="M 360 263 Q 460 240 498 263" stroke="#aa1141" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#a2)"/>
+            <text x="425" y="240" text-anchor="middle" class="svg-small" fill="#aa1141">~ KB 拆分多消息</text>
+
+            <rect x="500" y="252" width="40" height="22" rx="4" fill="#fce4e4" stroke="#aa1141" stroke-width="1"/>
+            <text x="520" y="268" text-anchor="middle" class="svg-small" fill="#aa1141">SS₂</text>
+
+            <text x="700" y="268" class="svg-note" fill="#aa1141">几条消息一次 KEM Encap</text>
+          </g>
+
+          <!-- Combine indicator (dashed vertical) -->
+          <g class="decor">
+            <line x1="600" y1="60" x2="600" y2="280" stroke="#9ca3af" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="610" y="55" class="svg-small" fill="#9ca3af">每个 RK 派生时</text>
+            <text x="610" y="305" class="svg-small" fill="#9ca3af">RK_{n+1} = KDF(RK_n, DH_n, SS_⌊n/k⌋)</text>
+          </g>
+
+          <defs>
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#0e7490"/>
+            </marker>
+            <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#aa1141"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>
+        SPQR 的核心工程难点是<strong>带宽</strong>：ML-KEM ciphertext ~1568 B，远大于 X25519 的 32 B。
+        如果每条消息都附一个完整 KEM ciphertext，移动网络成本无法接受。
+        SPQR 用了两个手段缓解——
+      </p>
+      <ul style="font-size: 0.95rem; padding-left: 1.2em; margin: 0 0 1rem;">
+        <li><strong>Sparse</strong>：不是每条消息都跑 KEM，而是每隔若干条消息做一次"PQ hop"</li>
+        <li><strong>Erasure-coded</strong>：把一次 KEM 输出的 ciphertext 拆成多份编码块，分摊到后续若干条消息里发送；丢一两条不影响恢复</li>
+      </ul>
+    </div>
+
+    <details class="extras">
+      <summary>展开 · SPQR 形式化验证与 Triple Ratchet 命名</summary>
+      <div class="body">
+        <p>
+          官方公告：<em>"Signal Protocol and Post-Quantum Ratchets" · signal.org/blog/spqr · 2025-10-02</em>。
+        </p>
+        <p>
+          技术亮点：
+        </p>
+        <ul style="padding-left: 1.2em;">
+          <li>使用 <strong>ProVerif</strong>（符号模型）+ <strong>F*</strong>（计算模型）双重形式化验证</li>
+          <li>Triple Ratchet = DH Ratchet (X25519) + KEM Ratchet (ML-KEM, sparse) + Symmetric Ratchet (HKDF)，前两层 hybrid 喂给同一个 RK</li>
+          <li>保持原有 forward secrecy 和 post-compromise security 在量子模型下成立</li>
+        </ul>
+        <p>
+          "Triple" 这个命名学界其实 2024 年就有论文用过（如 "The Triple Ratchet" by Alwen et al.），但 Signal 工程实现与论文方案在细节（erasure code 形式、状态机布局）上不完全相同。
+        </p>
+      </div>
+    </details>
+
+    <details class="extras">
+      <summary>展开 · 为什么 DR 不能直接平移到 KEM</summary>
+      <div class="body">
+        <p>
+          DR 的 DH Ratchet 之所以优雅，靠的是 DH 的<strong>对称性</strong>：双方都"亮一次自己的临时公钥"，对方就能算出共享。
+          KEM 没有这个性质：
+        </p>
+        <ul style="padding-left: 1.2em;">
+          <li><strong>角色不对偶</strong>：谁 Encap 谁 Decap 是必须明确的，对称的 "ping-pong eph 公钥" 模式不成立</li>
+          <li><strong>带宽爆炸</strong>：每条消息一对 (pk, ct) 接近 3 KB，是 X25519 的 50 倍</li>
+          <li><strong>乱序处理复杂</strong>：DR 用 message-number + skipped-keys 处理乱序，KEM 状态机切换的乱序语义需要重新设计</li>
+        </ul>
+        <p>
+          所以 SPQR 选了"sparse + erasure-coded"这条折中路：保留 DH Ratchet 不变，把 KEM 作为<em>并联的、稀疏触发的</em>第三条链。
+        </p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ==================== §5 TIMELINE & REFS ==================== -->
+  <section class="section" id="timeline">
+    <div class="section-header">
+      <span class="num">05</span>
+      <span class="name">演进时间表 · Refs</span>
+      <span class="desc">2013 – 2025</span>
+    </div>
+
+    <table class="timeline">
+      <thead>
+        <tr>
+          <th>版本</th>
+          <th>时间</th>
+          <th>关键变化</th>
+          <th>仍然脆弱的部分</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="ver">Axolotl / DR</td>
+          <td class="year">2013</td>
+          <td>DH Ratchet + Symmetric Ratchet 雏形</td>
+          <td class="wkn">异步首握手不优雅</td>
+        </tr>
+        <tr>
+          <td class="ver">X3DH + DR</td>
+          <td class="year">2016</td>
+          <td>引入 SPK + OPK 解决异步握手</td>
+          <td class="wkn">全栈 X25519 → 量子来即崩</td>
+        </tr>
+        <tr>
+          <td class="ver">PQXDH</td>
+          <td class="year">2023-09</td>
+          <td>X3DH ⊕ Kyber-1024, hybrid 初始握手</td>
+          <td class="wkn">会话内 DH Ratchet 仍 X25519</td>
+        </tr>
+        <tr>
+          <td class="ver">SPQR / Triple Ratchet</td>
+          <td class="year">2025-10</td>
+          <td>DR + sparse ML-KEM hybrid, 形式化验证</td>
+          <td class="wkn">分阶段灰度 · 需双端升级</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="refs">
+      <h3>📚 权威 References</h3>
+      <ul>
+        <li><a href="https://signal.org/docs/specifications/pqxdh/" target="_blank">PQXDH Specification</a> · signal.org · 完整算法、AD 拼接、安全模型 <span class="note">(必读)</span></li>
+        <li><a href="https://signal.org/blog/pqxdh/" target="_blank">Quantum Resistance and the Signal Protocol</a> · 2023-09-19 公告 <span class="note">(背景)</span></li>
+        <li><a href="https://signal.org/blog/spqr/" target="_blank">Signal Protocol and Post-Quantum Ratchets (SPQR)</a> · 2025-10-02 <span class="note">(Triple Ratchet)</span></li>
+        <li><a href="https://csrc.nist.gov/pubs/fips/203/final" target="_blank">FIPS 203 · ML-KEM</a> · NIST 标准化版 Kyber <span class="note">(2024-08)</span></li>
+        <li><a href="https://eprint.iacr.org/2023/1395" target="_blank">Formal Verification of the PQXDH Post-Quantum Key Agreement</a> · Bhargavan et al. · IACR ePrint <span class="note">(论文)</span></li>
+        <li><a href="https://github.com/signalapp/libsignal" target="_blank">signalapp/libsignal</a> · 生产 Rust 实现 <span class="note">(源码)</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="footer">
+    <span>PQXDH 中文图谱 · 内容用 CC-BY 4.0 自由分享</span>
+    <span>
+      <a href="../">← 返回 Signal Protocol</a>
+      <span style="color: var(--rule); margin: 0 0.6em;">·</span>
+      <a href="../../">主入口</a>
+    </span>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// ============== Year slider ==============
+const yrSlider = document.getElementById('yr-slider');
+const yrVal    = document.getElementById('yr-val');
+const yrLine   = document.getElementById('yr-line');
+const yrDot    = document.getElementById('yr-dot');
+const yrText   = document.getElementById('yr-text');
+const yrMsg    = document.getElementById('yr-msg');
+const yrBox    = document.querySelector('#yr-outcome rect');
+
+// timeline axis maps year 2026→x=60, 2050→x=720
+function yearToX(y) {
+  const t = (y - 2026) / (2050 - 2026);
+  return 60 + t * (720 - 60);
+}
+
+function updateYear(y) {
+  yrVal.textContent = y;
+  const x = yearToX(y);
+  yrLine.setAttribute('x1', x); yrLine.setAttribute('x2', x);
+  yrDot.setAttribute('cx', x);
+  yrText.setAttribute('x', x); yrText.textContent = y;
+
+  let bg, stroke, fill, msg;
+  if (y < 2035) {
+    bg = '#dcfce7'; stroke = '#15803d'; fill = '#15803d';
+    msg = 'CRQC 尚未问世 · 全栈 X25519 暂时安全（但密文已被存）';
+  } else if (y < 2040) {
+    bg = '#fef3c7'; stroke = '#b45309'; fill = '#b45309';
+    msg = '⚠ CRQC 早期 · 部分曲线参数已可被攻破 · X3DH 历史会话开始泄漏';
+  } else {
+    bg = '#fee2e2'; stroke = '#b91c1c'; fill = '#b91c1c';
+    msg = '☠ CRQC 成熟 · 2026 录的全部 X3DH 密文一次性解密 · 仅 PQXDH 会话仍安全';
+  }
+  yrBox.setAttribute('fill', bg);
+  yrBox.setAttribute('stroke', stroke);
+  yrMsg.setAttribute('fill', fill);
+  yrMsg.textContent = msg;
+}
+yrSlider.addEventListener('input', e => updateYear(+e.target.value));
+updateYear(2026);
+
+// ============== Hybrid toggle ==============
+const hToggle = document.getElementById('hybrid-toggle');
+const hEcdh   = document.getElementById('h-ecdh');
+const hKem    = document.getElementById('h-kem');
+const hEcdhT  = document.getElementById('h-ecdh-t');
+const hKemT   = document.getElementById('h-kem-t');
+const hSk     = document.getElementById('h-sk');
+const hSkT    = document.getElementById('h-sk-t');
+const hSkS    = document.getElementById('h-sk-s');
+const hVerdict= document.getElementById('h-verdict');
+
+function setHybrid(state) {
+  hToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.h === state));
+
+  const ecdhBroken = state === 'ecdh' || state === 'both';
+  const kemBroken  = state === 'kem'  || state === 'both';
+
+  // ECDH box
+  hEcdh.setAttribute('fill', ecdhBroken ? '#fee2e2' : '#cffafe');
+  hEcdh.setAttribute('stroke', ecdhBroken ? '#b91c1c' : '#0e7490');
+  hEcdhT.setAttribute('fill', ecdhBroken ? '#b91c1c' : '#0e7490');
+  hEcdhT.textContent = ecdhBroken ? '4 DH (X25519) ☠' : '4 DH (X25519)';
+
+  // KEM box
+  hKem.setAttribute('fill', kemBroken ? '#fee2e2' : '#fef3c7');
+  hKem.setAttribute('stroke', kemBroken ? '#b91c1c' : '#b45309');
+  hKemT.setAttribute('fill', kemBroken ? '#b91c1c' : '#b45309');
+  hKemT.textContent = kemBroken ? 'ML-KEM SS ☠' : 'ML-KEM SS';
+
+  // SK verdict
+  const skBroken = ecdhBroken && kemBroken;
+  hSk.setAttribute('fill', skBroken ? '#fee2e2' : '#dcfce7');
+  hSk.setAttribute('stroke', skBroken ? '#b91c1c' : '#15803d');
+  hSkT.setAttribute('fill', skBroken ? '#b91c1c' : '#15803d');
+  hSkS.setAttribute('fill', skBroken ? '#b91c1c' : '#15803d');
+  hSkT.textContent = skBroken ? 'SK ☠' : 'SK ✓';
+  hSkS.textContent = skBroken ? '泄漏' : '安全';
+
+  let v;
+  if (state === 'safe')      v = ['两个 secret 都未被打穿 → SK 显然安全', '#15803d'];
+  else if (state === 'ecdh') v = ['X25519 被 Shor 打穿 · ML-KEM 兜底 → SK 仍安全 ✓', '#15803d'];
+  else if (state === 'kem')  v = ['ML-KEM 被经典攻击打穿 · X25519 兜底 → SK 仍安全 ✓', '#15803d'];
+  else                       v = ['两者都被打穿 (极不可能 · 需独立打穿两个数学假设) → SK 泄漏', '#b91c1c'];
+  hVerdict.textContent = v[0];
+  hVerdict.setAttribute('fill', v[1]);
+}
+hToggle.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (btn) setHybrid(btn.dataset.h);
+});
+setHybrid('safe');
+
+// ============== Smooth anchor scroll ==============
+document.querySelectorAll('.section-nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.replaceState(null, '', '#' + id);
+    }
+  });
+});
+</script>
+</body>
+</html>
