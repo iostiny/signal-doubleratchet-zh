@@ -120,12 +120,83 @@ doc/
 
 `index.html` 单文件包含所有 CSS、SVG、JS。增加专题不创建新 HTML 文件，只在主 hub 里新增一张 `.topic-card`。
 
-## Signal Double Ratchet 专题（`signal-double-ratchet/`）
+## 专题内容设计原则（基于"HTML 之力"对照自审）
+
+参考 `html-over-markdown/` 那一专题对 Thariq《Unreasonable Effectiveness of HTML》的总结，本站的产物形态有一些**与原文建议同向、但侧重点不同**的取舍。后续做新专题时按本节走，避免重复踩坑。
+
+### 赛道认知：long-lived explainer，不是 throwaway artifact
+
+Thariq 文中的 5 大用例（spec / code review / design / report / custom editor）**几乎全是用完即扔**——"快糙好"是合理优化。**本站不是**：每篇专题是**长期价值的中文图谱**，读者会反复回访、深读、对照原文。这决定了：
+
+- ✅ 单文件 1500-1900 行的"过度投入"是合理的（精度、SVG 设计、累积演进机制都该认真做）
+- ✅ 视觉基线（cherry + cream + JetBrains Mono）不应让步给 throwaway 风格
+- ❌ 不要套用 Thariq 的"让 Claude Design 或 frontend-design plugin 一键生成"——那是从零起步的优化，对已建立设计语言的本站会破坏一致性
+
+### 已做到的 HTML 之力维度（继续保持）
+
+| 维度 | 怎么体现的 |
+|---|---|
+| 信息密度 | SVG 不写 ASCII；语义化配色 + Rust/Swift 骨架 + refs 卡 + 章节累积图 |
+| 易分享 | 单文件 self-contained + `#step-N` URL 锚点（"看第 12 步"能直接发链接，比一般 HTML 分享更进一步） |
+| 视觉清晰 | step 制让一屏只展示一步，长文不疲劳 |
+| 愉悦感 | 配色 + Mono 字体 + 累积演进 SVG 动效共同贡献 |
+
+### 三条 cheap 但加分多的实践（必做）
+
+新做专题时，把这三条加进每个 step 或每张 SVG 旁边——成本低、价值高、能补齐前几篇专题的短板。
+
+**1. 用 `<details>` 折叠次要内容（默认必加）**
+
+历史专题的所有内容都是"打开就看见"。把权威外链解读、数学推导、扩展材料、英文原版、备选实现等**辅料**折起来，主线更干净，深度内容还在。参考 `html-over-markdown/index.html` 的 `.uc-original` 用法（中文 prompt 主显示，英文原版折叠）。
+
+```html
+<details class="extras-card">
+  <summary>展开数学推导 / 扩展阅读</summary>
+  <div class="orig-body">...</div>
+</details>
+```
+
+**2. 把"确定性计算"做成 slider（教学语境下最自然的 two-way interaction）**
+
+历史专题的交互只有 prev/next/replay 三个按钮——是"导航"不是"参数"。教学型 HTML 真正强大的交互是**让公式可触**：
+
+- Signal Symmetric Ratchet：拖 "消息序号 N=[5]" → 实时算出 CK₅、MK₅ 和中间所有 KDF 步骤
+- ZKP Schnorr：拖 `r` → 实时显示 `t = g^r`、`c = H(...)`、`s = r + c·x`、verifier 端 `g^s ≟ t · h^c` 的值
+- Noise XX：拖"轮次" → 高亮当前 round 涉及的 e/s/ee/es/se/ss 记号
+
+实现成本：一个 `<input type="range">` + 一个 `oninput` 回调更新几个 `<text>`。**不需要外部库**，符合零依赖。
+
+**3. mobile responsive 认真做（不是只加 2 条 @media 应付）**
+
+历史专题每页只 2 条 @media 规则、SVG viewBox 全部是 1100×520 desktop 尺寸，窄屏会缩到看不清。新专题至少做到：
+
+- hero / nav / extras-card 在 ≤720px 时 flex-column 重排
+- 主 SVG 在 ≤600px 时启用"裁剪非关键元素"分支（用 CSS `display:none` 隐藏装饰性 `<g class="decor">`）
+- 至少加一个 `max-width: 100%; height: auto;` 让 SVG 自然缩放
+- 长 step caption 在窄屏改为 1.5× 行高
+
+### 可选实践（按专题需要决定）
+
+- **"copy as prompt" 按钮** —— `advanced/` 这种 god-view 图可以加，让读者把概念清单复制后继续问 Claude 深挖；教学型 step 页通常不需要。
+- **step diff 视图** —— 在 step N → N+1 之间显式列出"哪个变量变了、哪个新增"。当前是靠累积 SVG 让读者自己看出来；如果某一步的变化太多、读者容易漏，加一个折叠 diff。
+- **章节锚定 mini-map** —— 长专题（25+ step）右侧加一个固定的章节缩略导航。Signal beginner 现在没做，下次大改时考虑。
+
+### 评分自查表（PR 前过一遍）
+
+新专题上线前在 commit message 里自评一句（不必硬性，方便复盘）：
+
+- [ ] 信息密度：SVG 不是 ASCII，配色语义化
+- [ ] 易分享：单文件 self-contained + 有 step/章节 URL 锚点
+- [ ] 双向交互：**至少一个 slider / details / copy 按钮**（不要再纯 prev/next 了）
+- [ ] mobile：除主断点外，主 SVG 在 ≤600px 可读
+- [ ] 视觉一致：cherry + cream 主调、JetBrains Mono 代码、cherry-glass 卡片底色
+
+## Signal Protocol 专题（`signal-protocol/`）
 
 当前唯一专题。Signal Protocol 的中文渐进图谱。两个子目录：
 
-- `signal-double-ratchet/beginner/index.html` — 单页 25 步交互教程
-- `signal-double-ratchet/advanced/index.html` — 11 张独立架构图的总览 + `01..11-*.html` 11 个文件
+- `signal-protocol/beginner/index.html` — 单页 25 步交互教程
+- `signal-protocol/advanced/index.html` — 11 张独立架构图的总览 + `01..11-*.html` 11 个文件
 
 ### 累积演进机制（`beginner/index.html` 的核心）
 
