@@ -1028,9 +1028,16 @@ SK  = HKDF(salt = 0×64, ikm = KM, info = "MyProtocol")</pre>
       </ul>
       <p>
         Signal 在 <strong>2025-10-02</strong> 公告了 <code>SPQR</code>（Sparse Post-Quantum Ratchet），并把它与 Double Ratchet 组合成
-        <em>Triple Ratchet</em>。截至 <strong>2026-05</strong>，Signal-iOS 主分支已在 <code>AccountAttributes.swift</code> 把
-        <code>spqr</code> 标记为 <code>true</code>（client capability flag），即<strong>iOS 客户端正在向服务器宣告自己支持 SPQR</strong>。
-        但实际生效仍需要会话双方 capability 都打开——所以你的某个旧设备如果没更新，对应会话仍走老 Double Ratchet。
+        <em>Triple Ratchet</em>。截至 <strong>2026-05</strong>，<strong>iOS 和 Android 主分支都已在 capability 层无条件声明 <code>spqr = true</code></strong>：
+      </p>
+      <ul style="font-size: 0.9rem; padding-left: 1.2em; margin: 0 0 0.9rem; font-family: 'JetBrains Mono', monospace;">
+        <li>Signal-iOS · <code>AccountAttributes.swift:105</code> · <code>public let spqr = true</code></li>
+        <li>Signal-Android · <code>AppCapabilities.kt</code> · <code>spqr = true</code>（硬编码）</li>
+      </ul>
+      <p>
+        意味着两端客户端都<strong>已经 ship 了 SPQR 支持代码</strong>，并向服务器宣告自己具备这个能力。
+        实际生效仍需会话双方都已升级（不然就 fallback 到老 Double Ratchet）——但既然两个主流客户端都是无条件 <code>true</code>，
+        随着自动更新覆盖到大部分用户，<em>大部分新会话现在应该都是 Triple Ratchet</em> 了。
       </p>
     </div>
 
@@ -1212,7 +1219,7 @@ SK  = HKDF(salt = 0×64, ikm = KM, info = "MyProtocol")</pre>
           <td class="ver">SPQR / Triple Ratchet</td>
           <td class="year">2025-10</td>
           <td>DR + sparse ML-KEM hybrid, 形式化验证</td>
-          <td class="wkn">iOS capability 已 ship · 等双端 capability 都开启才生效</td>
+          <td class="wkn">iOS + Android 双端 capability 已硬编码 <code>spqr = true</code> · 旧设备未升前会话仍走 DR</td>
         </tr>
       </tbody>
     </table>
@@ -1227,6 +1234,7 @@ SK  = HKDF(salt = 0×64, ikm = KM, info = "MyProtocol")</pre>
         <li><a href="https://eprint.iacr.org/2023/1395" target="_blank">Formal Verification of the PQXDH Post-Quantum Key Agreement</a> · Bhargavan et al. · IACR ePrint <span class="note">(论文)</span></li>
         <li><a href="https://github.com/signalapp/libsignal" target="_blank">signalapp/libsignal</a> · 生产 Rust 实现 <span class="note">(源码)</span></li>
         <li><a href="https://github.com/signalapp/Signal-iOS/blob/main/SignalServiceKit/Network/API/Requests/AccountAttributes/AccountAttributes.swift" target="_blank">Signal-iOS · AccountAttributes.swift</a> · 含 <code>spqr = true</code> capability 声明 <span class="note">(iOS 已 ship)</span></li>
+        <li><a href="https://github.com/signalapp/Signal-Android/blob/main/app/src/main/java/org/thoughtcrime/securesms/AppCapabilities.kt" target="_blank">Signal-Android · AppCapabilities.kt</a> · 同样硬编码 <code>spqr = true</code> <span class="note">(Android 已 ship)</span></li>
         <li><a href="https://github.com/signalapp/Signal-iOS/tree/main/SignalServiceKit/Storage/AxolotlStore" target="_blank">Signal-iOS · KyberPreKeyStore</a> · PQXDH 的 Kyber prekey 存储实现 <span class="note">(iOS 已 ship)</span></li>
       </ul>
     </div>
