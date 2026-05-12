@@ -1737,7 +1737,6 @@ function renderDots() {
     for (let n = c.range[0]; n <= c.range[1]; n++) {
       const d = document.createElement('div');
       d.className = 'dot';
-      d.dataset.step = n;
       d.title = `Step ${n}`;
       if (n < current) d.classList.add('read');
       if (n === current) d.classList.add('active');
