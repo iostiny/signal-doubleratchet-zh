@@ -38,21 +38,22 @@ doc/
    - 左：`iostiny / doc` 用 JetBrains Mono 字体，`/` 用 `--cherry-pink` 色
    - 右（推到 main 末端）：一行灰色 tagline，如"中文技术文档与图谱"
    - 下方 1px 浅灰分隔线
-2. **分组 + 专题卡片**（核心）— 三个固定分组，每组一个 `.section-header`，下挂若干 `.topic-card`
+2. **分组 + 专题卡片**（核心）— 四个固定分组，每组一个 `.section-header`，下挂若干 `.topic-card`
 3. **Upcoming hint** — 单行 mono 灰字 `下一个专题在路上 · X · Y · Z · ……`
    - **绝对不要**做"占位卡"（虚线框 + "更多专题陆续添加"）—— 视觉上强调"啥都没有"
 4. **Footer** — 一行 mono：`github.com/iostiny/doc · CC-BY 4.0 · 源码 MIT`
 
-### 三个固定分组（顺序不变）
+### 四个固定分组（顺序不变）
 
 | 序号 | 名称 | 范畴 |
 |---|---|---|
 | 01 | `IM 安全通信` | 端到端加密 · 握手 · 群组 · 多设备（Signal / Noise / 未来 MLS / TLS / WebRTC E2EE） |
 | 02 | `区块链密码学` | 零知识证明 · 承诺方案 · 椭圆曲线 · Pairing · FHE |
 | 03 | `AGENT / LLM` | 智能体协议 · 推理与上下文工程 · 工具调用 |
+| 04 | `网络与系统` | 流量代理 · 虚拟网卡 · 路由 · DNS · 系统调用（VPN / TUN / Surge·Clash 原理 / 抓包 / NAT） |
 
 **`.section-header` 结构**：`<h2 class="section-header">` 内含三个 span：
-- `.num` — `01` / `02` / `03`，cherry-pink，mono
+- `.num` — `01` / `02` / `03` / `04`，cherry-pink，mono
 - `.name` — 分组名，cherry-deep，mono 700
 - `.desc` — 一行灰字范畴说明，Noto Sans SC，推到右端（小屏自动换行到下方）
 
@@ -60,7 +61,7 @@ doc/
 
 **空分组规则**：分组下暂无专题时，用 `.section-empty` 单行 mono 灰字（如 `专题筹备中 · 近期上新`）占位，**不要**做卡片样式的占位框。该分组挂上第一个专题后立即删除 `.section-empty`。
 
-**新增分组规则**：当前三组是终态，**不要**新增第 04/05 组。新主题归类到最贴近的组里，若都不贴近再回头讨论分组定义。
+**新增分组规则**：当前四组是终态，**不要**新增第 05/06 组。新主题归类到最贴近的组里，若都不贴近再回头讨论分组定义。
 
 ### `.topic-card` 的结构
 
@@ -86,6 +87,7 @@ doc/
   - Signal: `--amber`（CK / 链）+ `--cherry`（MK / 消息）—— 跟教程内部一致
   - ZKP (未来): 建议 `--violet`（commitment）+ `--green`（verify）
   - TLS (未来): 建议 `--teal`（handshake）+ `--cherry`（cipher）
+  - VPN/代理: `--violet`（用户态/TUN 进程）+ `--teal`（物理网卡/真实网络）+ `--amber`（路由表/规则引擎）
 - **Card body**: 永远用 `--cherry`（site 主色），跨专题统一
 - 视觉语义："preview 是内容的色，card body 是 site 的色"
 
@@ -114,7 +116,7 @@ doc/
 5. **若该分组之前是空组**：删掉对应的 `.section-empty` 占位行
 6. **更新 upcoming hint**：从未来列表里**移除**这个专题
 7. **同步更新仓库根 `README.md`**：在对应分组下加一行链接 + 一句话描述；若有子目录（beginner/advanced/…）一并列出；同步刷新「仓库结构」目录树。**README 与主 hub 必须保持同步**，不允许 hub 已上新而 README 仍是旧状态
-8. **不要**改 hero、不要改 footer、不要改 CSS 变量、不要新增分组（三组是终态）
+8. **不要**改 hero、不要改 footer、不要改 CSS 变量、不要新增分组（四组是终态）
 9. 测试 hover、CTA、mobile 响应式（≤600px）
 
 ### 主 hub 永远只有一个文件

@@ -8,7 +8,7 @@
 
 ## 当前专题
 
-主入口 `index.html` 按三个分组组织：
+主入口 `index.html` 按四个分组组织：
 
 ### 01 · IM 安全通信
 
@@ -30,11 +30,15 @@
 
 - 📄 [**AGENT 时代，Markdown 已死，HTML 当立**](./html-over-markdown/) — Thariq《Unreasonable Effectiveness of HTML》原文图谱与中文解读
 
+### 04 · 网络与系统
+
+- 🌐 [**VPN / 代理工具原理 · 渐进图谱**](./vpn-tutorial/) — 30 步零基础渐进教程：从「包怎么离开你的电脑」讲起，逐步推到 NAT、conntrack、应用层代理、TUN 虚拟网卡、路由劫持、用户态分流、fake-ip、DNS 泄漏、IPv6 双栈、为什么重启前要先关 Surge。原理为主，Surge / Clash / sing-box / V2Ray 作为多个具体例子横向对照。含终端实操命令、Surge/Clash 配置对照、滑杆交互演示规则匹配。
+
 ## 仓库结构
 
 ```
 doc/
-├── index.html              ← 主入口 hub（三组导航）
+├── index.html              ← 主入口 hub（四组导航）
 ├── e2ee/                   ← IM 安全通信 · E2EE 协议族 (Signal + Matrix)
 │   ├── index.html          ← 专题 landing
 │   ├── beginner/           ← 25 步 DR 渐进教程
@@ -49,6 +53,8 @@ doc/
 │   ├── index.html
 │   └── beginner/
 ├── html-over-markdown/     ← AGENT / LLM
+│   └── index.html
+├── vpn-tutorial/           ← 网络与系统 · VPN/代理工具原理 (30 步)
 │   └── index.html
 ├── docs/                   ← 仓库内部 playbook（不部署给读者）
 ├── AGENTS.md               ← 给 AI 编码代理的项目指南

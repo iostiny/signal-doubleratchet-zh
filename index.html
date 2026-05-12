@@ -613,6 +613,109 @@ footer .sep { color: var(--rule); user-select: none; }
 
   </a>
 
+  <h2 class="section-header">
+    <span class="num">04</span>
+    <span class="name">网络与系统</span>
+    <span class="desc">流量代理 · 虚拟网卡 · 路由 · DNS</span>
+  </h2>
+
+  <a class="topic-card" href="./vpn-tutorial/index.html">
+
+    <div class="preview">
+      <div class="preview-bg"></div>
+      <!-- VPN/代理 · TUN 虚拟网卡 + 路由劫持 preview -->
+      <svg viewBox="0 0 760 170" preserveAspectRatio="xMidYMid meet" aria-label="VPN proxy · TUN device · route hijack preview">
+        <defs>
+          <marker id="prev-arr-slate-vpn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+          </marker>
+          <marker id="prev-arr-violet-vpn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6d28d9"/>
+          </marker>
+          <marker id="prev-arr-cherry-vpn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aa1141"/>
+          </marker>
+          <marker id="prev-arr-teal-vpn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0e7490"/>
+          </marker>
+        </defs>
+
+        <!-- top label -->
+        <text x="380" y="14" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="11" fill="#9ca3af">VPN/代理工具 · 默认路由 → TUN 虚拟网卡 → 用户态进程分流</text>
+
+        <!-- App stack (left, slate) -->
+        <g font-family="'JetBrains Mono', monospace" font-size="10">
+          <rect x="18" y="48" width="86" height="22" rx="4" fill="#f1f5f9" stroke="#475569" stroke-width="1.2"/>
+          <text x="61" y="63" text-anchor="middle" fill="#475569">Browser</text>
+          <rect x="18" y="76" width="86" height="22" rx="4" fill="#f1f5f9" stroke="#475569" stroke-width="1.2"/>
+          <text x="61" y="91" text-anchor="middle" fill="#475569">curl / Game</text>
+          <rect x="18" y="104" width="86" height="22" rx="4" fill="#f1f5f9" stroke="#475569" stroke-width="1.2"/>
+          <text x="61" y="119" text-anchor="middle" fill="#475569">System</text>
+        </g>
+
+        <!-- All traffic merges right -->
+        <g stroke="#475569" stroke-width="1.5" fill="none">
+          <line x1="106" y1="59"  x2="138" y2="87" marker-end="url(#prev-arr-slate-vpn)"/>
+          <line x1="106" y1="87"  x2="138" y2="87" marker-end="url(#prev-arr-slate-vpn)"/>
+          <line x1="106" y1="115" x2="138" y2="87" marker-end="url(#prev-arr-slate-vpn)"/>
+        </g>
+
+        <!-- Route Table (amber) -->
+        <rect x="142" y="62" width="98" height="50" rx="6" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+        <text x="191" y="80" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="11" font-weight="600" fill="#b45309">路由表</text>
+        <text x="191" y="98" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9.5" fill="#b45309">default → utun5</text>
+
+        <!-- arrow to TUN (violet, this is the hijack) -->
+        <line x1="245" y1="87" x2="277" y2="87" stroke="#6d28d9" stroke-width="2" marker-end="url(#prev-arr-violet-vpn)"/>
+        <text x="261" y="78" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" fill="#6d28d9">劫持</text>
+
+        <!-- TUN utun5 (violet) -->
+        <rect x="280" y="62" width="100" height="50" rx="6" fill="#ede9fe" stroke="#6d28d9" stroke-width="1.5"/>
+        <text x="330" y="80" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#6d28d9">TUN utun5</text>
+        <text x="330" y="98" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="9" fill="#6d28d9">(虚拟网卡)</text>
+
+        <!-- arrow to Surge -->
+        <line x1="385" y1="87" x2="415" y2="87" stroke="#6d28d9" stroke-width="1.5" marker-end="url(#prev-arr-violet-vpn)"/>
+
+        <!-- Surge / Clash (cherry, decision center) -->
+        <rect x="420" y="50" width="122" height="74" rx="6" fill="#fce4e4" stroke="#aa1141" stroke-width="2"/>
+        <text x="481" y="69" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#9a0036">Surge / Clash</text>
+        <text x="481" y="86" text-anchor="middle" font-family="'Noto Sans SC', sans-serif" font-size="10" fill="#aa1141">规则匹配</text>
+        <text x="481" y="103" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#aa1141">domain · IP · proc</text>
+        <text x="481" y="117" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#9ca3af">用户态进程</text>
+
+        <!-- branch up: PROXY → 远端代理 -->
+        <path d="M 543 65 Q 580 50 600 40" stroke="#aa1141" stroke-width="2" fill="none" marker-end="url(#prev-arr-cherry-vpn)"/>
+        <rect x="603" y="26" width="142" height="30" rx="5" fill="#fce4e4" stroke="#aa1141" stroke-width="1.5"/>
+        <text x="674" y="38" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" fill="#9a0036">PROXY · 远端代理</text>
+        <text x="674" y="50" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#aa1141">SS / Trojan / VLESS</text>
+
+        <!-- branch down: DIRECT → en0 -->
+        <path d="M 543 109 Q 580 124 600 134" stroke="#0e7490" stroke-width="2" fill="none" marker-end="url(#prev-arr-teal-vpn)"/>
+        <rect x="603" y="120" width="142" height="30" rx="5" fill="#cffafe" stroke="#0e7490" stroke-width="1.5"/>
+        <text x="674" y="132" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" fill="#0e7490">DIRECT · en0</text>
+        <text x="674" y="144" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="8" fill="#0e7490">物理网卡 → 网关</text>
+      </svg>
+      <p class="preview-caption">PREVIEW &nbsp;·&nbsp; VPN/代理 · TUN 虚拟网卡 + 路由劫持</p>
+    </div>
+
+    <div class="card-body">
+      <span class="card-tag">VPN · TUN · 代理工具原理</span>
+      <h2 class="card-title">VPN / 代理工具原理 · 渐进图谱</h2>
+      <p class="card-desc">
+        从最朴素的"包怎么离开你电脑"开始，30 步推到 NAT、应用层代理、TUN 虚拟网卡、路由劫持、用户态分流、fake-ip、DNS 泄漏、IPv6 双栈、为什么重启前要先关 Surge。原理为主，Surge / Clash / sing-box / V2Ray 作为多个具体例子横向对照。配终端实操命令与配置片段。
+      </p>
+      <ul class="card-bullets">
+        <li>30 步渐进教程 · 含 #step-N 锚点</li>
+        <li>TUN + 路由表劫持的工作机制</li>
+        <li>规则分流 / fake-ip / 进程级规则</li>
+        <li>Surge · Clash · sing-box 配置对照</li>
+      </ul>
+      <span class="card-cta">开始阅读 <span class="cta-arrow">→</span></span>
+    </div>
+
+  </a>
+
   <p class="upcoming">
     下一个专题在路上<span class="accent">·</span>TLS 1.3 解析<span class="accent">·</span>PQC 概览<span class="accent">·</span>WebRTC E2EE<span class="accent">·</span>……
   </p>
