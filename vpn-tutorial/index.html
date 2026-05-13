@@ -1397,7 +1397,7 @@ STEPS.push(
     body: '把所有概念串起来：浏览器输入 URL → DNS（fake-ip 拦截）→ TCP 连接 → IP 包进 TUN → Surge 规则匹配 → PROXY 走 SS/Trojan 封装到远端 / DIRECT 走物理网卡 → conntrack 翻译 → ISP → 互联网。<strong>每一步都对应了前面某个 step。</strong>' },
 
   { title: '30. 速查表：症状 → 原因',
-    body: '<strong>开了代理还能查到我的真实 IP</strong> → 多半是 IPv6 泄漏（step 23）。<strong>访问 google.com 显示"被运营商劫持"</strong> → DNS 没走 fake-ip / 远端解析（step 21-22）。<strong>开 Surge 后游戏延迟暴涨</strong> → 游戏 UDP 被强制走代理，加规则 PROCESS-NAME 命中 DIRECT（step 16）。<strong>突然全网断</strong> → 上次没正常关 Surge，路由表残留（step 25）。' }
+    body: '<strong>开了代理还能查到我的真实 IP</strong> → 多半是 IPv6 泄漏（step 23）。<strong>访问 google.com 显示"被运营商劫持"</strong> → DNS 没走 fake-ip / 远端解析（step 21-22）。<strong>开 Surge 后游戏延迟暴涨</strong> → 游戏 UDP 被强制走代理，加规则 PROCESS-NAME 命中 DIRECT（step 16）。<strong>突然全网断</strong> → 上次没正常关 Surge，路由表残留（step 25）。<strong>自己的小众域名 Chrome 打不开、关代理就好</strong> → 被代理规则误命中分配到 fake-ip <code>198.18.x.x</code>，但实际转发到节点时失败，Chrome 拿假 IP 连不通（step 22）。把域名加进 Surge 的 <code>always-real-ip</code> 或 Clash 的 <code>fake-ip-filter</code>，让它绕开 fake-ip 池走真实 DNS（step 28）。' }
 );
 STEP_EXTRAS[2] = {
   refs: [
